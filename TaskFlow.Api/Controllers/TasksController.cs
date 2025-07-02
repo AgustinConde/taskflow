@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TaskFlow.Api;
-using TaskFlow.Api.Models;
+using TaskFlow.Api.Services;
+using TaskFlow.Api.DTOs;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -8,26 +8,26 @@ namespace TaskFlow.Api.Controllers
     [Route("api/[controller]")]
     public class TasksController : ControllerBase
     {
-        private readonly TaskFlowDbContext _context;
+        private readonly TaskService _taskService;
 
-        public TasksController(TaskFlowDbContext context)
+        public TasksController(TaskService taskService)
         {
-            _context = context;
+            _taskService = taskService;
         }
 
         // GET: api/tasks
         [HttpGet]
         public IActionResult GetTasks()
         {
-            var tasks = _context.Tasks.ToList();
+            var tasks = _taskService.GetAll();
             return Ok(tasks);
         }
 
-        // GET: api/tasks/5
+        // GET: api/tasks/{id}
         [HttpGet("{id}")]
-        public IActionResult GetTask(int id)
+        public ActionResult<TaskDto> GetTask(int id)
         {
-            var task = _context.Tasks.Find(id);
+            var task = _taskService.GetById(id);
             if (task == null)
                 return NotFound();
             return Ok(task);
@@ -35,40 +35,29 @@ namespace TaskFlow.Api.Controllers
 
         // POST: api/tasks
         [HttpPost]
-        public IActionResult CreateTask([FromBody] TaskFlow.Api.Models.Task task)
+        public ActionResult<TaskDto> CreateTask([FromBody] TaskDto dto)
         {
-            _context.Tasks.Add(task);
-            _context.SaveChanges();
-            return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
+            var created = _taskService.Create(dto);
+            return CreatedAtAction(nameof(GetTask), new { id = created.Id }, created);
         }
 
-        // PUT: api/tasks/5
+        // PUT: api/tasks/{id}
         [HttpPut("{id}")]
-        public IActionResult UpdateTask(int id, [FromBody] TaskFlow.Api.Models.Task updatedTask)
+        public IActionResult UpdateTask(int id, [FromBody] TaskDto dto)
         {
-            var task = _context.Tasks.Find(id);
-            if (task == null)
+            var updated = _taskService.Update(id, dto);
+            if (!updated)
                 return NotFound();
-
-            task.Title = updatedTask.Title;
-            task.Description = updatedTask.Description;
-            task.IsCompleted = updatedTask.IsCompleted;
-            task.CreatedAt = updatedTask.CreatedAt;
-
-            _context.SaveChanges();
             return NoContent();
         }
 
-        // DELETE: api/tasks/5
+        // DELETE: api/tasks/{id}
         [HttpDelete("{id}")]
         public IActionResult DeleteTask(int id)
         {
-            var task = _context.Tasks.Find(id);
-            if (task == null)
+            var deleted = _taskService.Delete(id);
+            if (!deleted)
                 return NotFound();
-
-            _context.Tasks.Remove(task);
-            _context.SaveChanges();
             return NoContent();
         }
     }

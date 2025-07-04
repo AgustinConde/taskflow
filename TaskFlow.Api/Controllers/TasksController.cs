@@ -37,6 +37,9 @@ namespace TaskFlow.Api.Controllers
         [HttpPost]
         public ActionResult<TaskDto> CreateTask([FromBody] TaskDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var created = _taskService.Create(dto);
             return CreatedAtAction(nameof(GetTask), new { id = created.Id }, created);
         }
@@ -45,6 +48,9 @@ namespace TaskFlow.Api.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateTask(int id, [FromBody] TaskDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var updated = _taskService.Update(id, dto);
             if (!updated)
                 return NotFound();

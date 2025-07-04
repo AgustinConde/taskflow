@@ -1,6 +1,7 @@
 using TaskFlow.Api.Models;
 using TaskFlow.Api.DTOs;
 using Microsoft.EntityFrameworkCore;
+using TaskFlow.Api.Mappers;
 
 namespace TaskFlow.Api.Services
 {
@@ -16,40 +17,19 @@ namespace TaskFlow.Api.Services
         public List<TaskDto> GetAll()
         {
             return _context.Tasks
-                .Select(t => new TaskDto
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Description = t.Description,
-                    IsCompleted = t.IsCompleted,
-                    CreatedAt = t.CreatedAt
-                })
+                .Select(t => TaskMapper.ToDto(t))
                 .ToList();
         }
 
         public TaskDto? GetById(int id)
         {
             var t = _context.Tasks.Find(id);
-            if (t == null) return null;
-            return new TaskDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                IsCompleted = t.IsCompleted,
-                CreatedAt = t.CreatedAt
-            };
+            return t == null ? null : TaskMapper.ToDto(t);
         }
 
         public TaskDto Create(TaskDto dto)
         {
-            var task = new Task
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                IsCompleted = dto.IsCompleted,
-                CreatedAt = dto.CreatedAt
-            };
+            var task = TaskMapper.ToEntity(dto);
             _context.Tasks.Add(task);
             _context.SaveChanges();
             dto.Id = task.Id;

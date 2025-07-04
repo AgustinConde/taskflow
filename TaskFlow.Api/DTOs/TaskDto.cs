@@ -1,11 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TaskFlow.Api.DTOs
 {
     public class TaskDto
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(100, ErrorMessage = "Title can't be longer than 100 characters")]
+        public required string Title { get; set; }
+
+        [StringLength(500, ErrorMessage = "Description can't be longer than 500 characters")]
+        public string? Description { get; set; }
+
         public bool IsCompleted { get; set; }
+
+        [Required(ErrorMessage = "CreatedAt is required")]
         public DateTime CreatedAt { get; set; }
     }
 }

@@ -2,6 +2,8 @@ using TaskFlow.Api.Models;
 using TaskFlow.Api.DTOs;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Mappers;
+using Dapper;
+using Microsoft.Data.SqlClient;
 
 namespace TaskFlow.Api.Services
 {
@@ -55,6 +57,19 @@ namespace TaskFlow.Api.Services
             _context.Tasks.Remove(task);
             _context.SaveChanges();
             return true;
+        }
+
+        public List<TaskDto> GetAllWithStoredProcedure()
+        {
+            var connectionString = _context.Database.GetDbConnection().ConnectionString;
+            using (var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+            {
+                var tasks = connection.Query<TaskDto>(
+                    "GetAllTasks",
+                    commandType: System.Data.CommandType.StoredProcedure
+                ).ToList();
+                return tasks;
+            }
         }
     }
 }

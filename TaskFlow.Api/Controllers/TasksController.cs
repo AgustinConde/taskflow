@@ -30,6 +30,13 @@ namespace TaskFlow.Api.Controllers
             var task = _taskService.GetById(id);
             if (task == null)
                 return NotFound();
+            // GET: api/tasks/sp
+            [HttpGet("sp")]
+            public IActionResult GetTasksWithStoredProcedure()
+            {
+                var tasks = _taskService.GetAllWithStoredProcedure();
+                return Ok(tasks);
+            }
             return Ok(task);
         }
 

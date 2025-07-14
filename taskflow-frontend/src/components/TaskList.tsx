@@ -3,7 +3,6 @@ import type { Task } from "../types/Task";
 
 const API_URL = "http://localhost:5149/api/tasks";
 
-
 const TaskList: React.FC = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
@@ -11,7 +10,9 @@ const TaskList: React.FC = () => {
     const [description, setDescription] = useState("");
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
 
     const fetchTasks = () => {
         setLoading(true);
@@ -72,6 +73,41 @@ const TaskList: React.FC = () => {
         }
     };
 
+    const handleEdit = (task: Task) => {
+        setEditingId(task.id);
+        setEditTitle(task.title);
+        setEditDescription(task.description || "");
+    };
+
+    const handleEditCancel = () => {
+        setEditingId(null);
+        setEditTitle("");
+        setEditDescription("");
+    };
+
+    const handleEditSave = async (task: Task) => {
+        setError(null);
+        try {
+            const updatedTask = {
+                ...task,
+                title: editTitle,
+                description: editDescription,
+            };
+            const res = await fetch(`${API_URL}/${task.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedTask),
+            });
+            if (!res.ok) throw new Error("Error updating task");
+            setEditingId(null);
+            setEditTitle("");
+            setEditDescription("");
+            fetchTasks();
+        } catch (err: any) {
+            setError(err.message || "Error updating task");
+        }
+    };
+
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -106,11 +142,41 @@ const TaskList: React.FC = () => {
                 <ul>
                     {tasks.map((task) => (
                         <li key={task.id}>
-                            <strong>{task.title}</strong> - {task.description}
-                            {task.isCompleted ? " ✅" : ""}
-                            <button onClick={() => handleDelete(task.id)} style={{ marginLeft: 8 }}>
-                                Delete
-                            </button>
+                            {editingId === task.id ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={e => setEditTitle(e.target.value)}
+                                        maxLength={100}
+                                        style={{ marginRight: 8 }}
+                                    />
+                                    <input
+                                        type="text"
+                                        value={editDescription}
+                                        onChange={e => setEditDescription(e.target.value)}
+                                        maxLength={500}
+                                        style={{ marginRight: 8 }}
+                                    />
+                                    <button onClick={() => handleEditSave(task)} style={{ marginRight: 4 }}>
+                                        Save
+                                    </button>
+                                    <button onClick={handleEditCancel} type="button">
+                                        Cancel
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <strong>{task.title}</strong> - {task.description}
+                                    {task.isCompleted ? " ✅" : ""}
+                                    <button onClick={() => handleEdit(task)} style={{ marginLeft: 8 }}>
+                                        Edit
+                                    </button>
+                                    <button onClick={() => handleDelete(task.id)} style={{ marginLeft: 4 }}>
+                                        Delete
+                                    </button>
+                                </>
+                            )}
                         </li>
                     ))}
                 </ul>

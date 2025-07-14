@@ -173,12 +173,12 @@ const TaskList: React.FC = () => {
             }
         });
 
-    if (loading) return <div className="flex justify-center items-center h-64 text-lg font-semibold">Loading...</div>;
+    if (loading) return <div>Loading...</div>;
 
     return (
-        <div className="max-w-2xl mx-auto p-4 bg-white rounded-lg shadow-lg mt-8">
-            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Task List</h2>
-            <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3 mb-6">
+        <div>
+            <h2>Task List</h2>
+            <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
                 <input
                     type="text"
                     placeholder="Title"
@@ -186,7 +186,7 @@ const TaskList: React.FC = () => {
                     onChange={e => setTitle(e.target.value)}
                     required
                     maxLength={100}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    style={{ marginRight: 8 }}
                 />
                 <input
                     type="text"
@@ -194,139 +194,123 @@ const TaskList: React.FC = () => {
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     maxLength={500}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    style={{ marginRight: 8 }}
                 />
                 <input
                     type="datetime-local"
                     value={dueDate}
                     onChange={e => setDueDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    style={{ marginRight: 8 }}
                 />
-                <button
-                    type="submit"
-                    disabled={creating || !title}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50"
-                >
+                <button type="submit" disabled={creating || !title}>
                     {creating ? "Creating..." : "Add Task"}
                 </button>
             </form>
-            {error && <div className="text-red-600 mb-4 text-center">{error}</div>}
-            <div className="flex flex-col md:flex-row items-center gap-3 mb-4">
+            {error && <div style={{ color: "red" }}>{error}</div>}
+            <div style={{ marginBottom: 16 }}>
                 <input
                     type="text"
                     placeholder="Search tasks..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    style={{ marginRight: 16, padding: 4 }}
                 />
-                <label className="flex items-center gap-2">
-                    <span className="text-gray-700">Filter:</span>
-                    <select
-                        value={filter}
-                        onChange={e => setFilter(e.target.value as any)}
-                        className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
+                <label style={{ marginRight: 8 }}>
+                    Filter:
+                    <select value={filter} onChange={e => setFilter(e.target.value as any)} style={{ marginLeft: 4 }}>
                         <option value="all">All</option>
                         <option value="completed">Completed</option>
                         <option value="pending">Pending</option>
                     </select>
                 </label>
-                <label className="flex items-center gap-2">
-                    <span className="text-gray-700">Sort by:</span>
-                    <select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value as any)}
-                        className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
+                <label>
+                    Sort by:
+                    <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} style={{ marginLeft: 4 }}>
                         <option value="dueDate">Due date</option>
                         <option value="createdAt">Created at</option>
                     </select>
                 </label>
             </div>
             {filteredTasks.length === 0 ? (
-                <p className="text-center text-gray-500">No tasks found.</p>
+                <p>No tasks found.</p>
             ) : (
-                <ul className="space-y-4">
+                <ul>
                     {filteredTasks.map((task) => (
-                        <li key={task.id} className="bg-gray-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3 shadow-sm border border-gray-100">
+                        <li key={task.id}>
                             {editingId === task.id ? (
-                                <div className="flex flex-col md:flex-row gap-2 w-full">
+                                <>
                                     <input
                                         type="text"
                                         value={editTitle}
                                         onChange={e => setEditTitle(e.target.value)}
                                         maxLength={100}
-                                        className="flex-1 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        style={{ marginRight: 8 }}
                                     />
                                     <input
                                         type="text"
                                         value={editDescription}
                                         onChange={e => setEditDescription(e.target.value)}
                                         maxLength={500}
-                                        className="flex-1 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        style={{ marginRight: 8 }}
                                     />
                                     <input
                                         type="date"
                                         value={editDate}
                                         onChange={e => setEditDate(e.target.value)}
-                                        className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        style={{ marginRight: 8 }}
                                     />
                                     <input
                                         type="datetime-local"
                                         value={editDueDate}
                                         onChange={e => setEditDueDate(e.target.value)}
-                                        className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        style={{ marginRight: 8 }}
                                     />
-                                    <button
-                                        onClick={() => handleEditSave(task)}
-                                        className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-                                    >
+                                    <button onClick={() => handleEditSave(task)} style={{ marginRight: 4 }}>
                                         Save
                                     </button>
-                                    <button
-                                        onClick={handleEditCancel}
-                                        type="button"
-                                        className="px-3 py-1 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
-                                    >
+                                    <button onClick={handleEditCancel} type="button">
                                         Cancel
                                     </button>
-                                </div>
+                                </>
                             ) : (
-                                <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
+                                <>
                                     <input
                                         type="checkbox"
                                         checked={task.isCompleted}
                                         onChange={() => handleToggleCompleted(task)}
-                                        className="mr-2 accent-blue-600 w-5 h-5"
+                                        style={{ marginRight: 8 }}
                                     />
-                                    <span className={`flex-1 font-semibold text-lg ${task.isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}`}>{task.title}</span>
-                                    <span className="flex-1 text-gray-600 text-sm">{task.description}</span>
+                                    <strong>{task.title}</strong> - {task.description}
                                     {task.dueDate && (
-                                        <span className="ml-2 text-xs text-gray-500 font-medium">
+                                        <span style={{ marginLeft: 8, color: '#888' }}>
                                             (Due: {new Date(task.dueDate).toLocaleString()})
                                         </span>
                                     )}
-                                    {task.isCompleted && <span className="ml-2 text-green-600 text-xl">✔️</span>}
-                                    <button
-                                        onClick={() => handleEdit(task)}
-                                        className="px-3 py-1 bg-yellow-400 text-gray-900 rounded-md hover:bg-yellow-500 transition ml-2"
-                                    >
+                                    {task.isCompleted ? " ✅" : ""}
+                                    <button onClick={() => handleEdit(task)} style={{ marginLeft: 8 }}>
                                         Edit
                                     </button>
-                                    <button
-                                        onClick={() => handleDelete(task.id)}
-                                        className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition ml-2"
-                                    >
+                                    <button onClick={() => handleDelete(task.id)} style={{ marginLeft: 4 }}>
                                         Delete
                                     </button>
-                                </div>
+                                </>
                             )}
                         </li>
                     ))}
                 </ul>
             )}
             {toast && (
-                <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+                <div style={{
+                    position: 'fixed',
+                    top: 20,
+                    right: 20,
+                    background: '#333',
+                    color: '#fff',
+                    padding: '12px 24px',
+                    borderRadius: 8,
+                    zIndex: 1000,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                }}>
                     {toast}
                 </div>
             )}

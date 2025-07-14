@@ -14,6 +14,12 @@ const TaskList: React.FC = () => {
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
     const [editDate, setEditDate] = useState("");
+    const [dueDate, setDueDate] = useState("");
+    const [editDueDate, setEditDueDate] = useState("");
+    const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
+    const [sortBy, setSortBy] = useState<'dueDate' | 'createdAt'>('dueDate');
+    const [search, setSearch] = useState("");
+    const [toast, setToast] = useState<string | null>(null);
 
     const fetchTasks = () => {
         setLoading(true);
@@ -33,6 +39,11 @@ const TaskList: React.FC = () => {
         fetchTasks();
     }, []);
 
+    const showToast = (msg: string) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 2500);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setCreating(true);
@@ -42,6 +53,7 @@ const TaskList: React.FC = () => {
             description,
             isCompleted: false,
             createdAt: new Date().toISOString(),
+            dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         };
         try {
             const res = await fetch(API_URL, {
@@ -55,7 +67,9 @@ const TaskList: React.FC = () => {
             }
             setTitle("");
             setDescription("");
+            setDueDate("");
             fetchTasks();
+            showToast("Task created successfully!");
         } catch (err: any) {
             setError(err.message || "Error creating task");
         } finally {
@@ -69,6 +83,7 @@ const TaskList: React.FC = () => {
             const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Error deleting task");
             fetchTasks();
+            showToast("Task deleted successfully!");
         } catch (err: any) {
             setError(err.message || "Error deleting task");
         }
@@ -79,6 +94,7 @@ const TaskList: React.FC = () => {
         setEditTitle(task.title);
         setEditDescription(task.description || "");
         setEditDate(task.createdAt.slice(0, 10)); // YYYY-MM-DD
+        setEditDueDate(task.dueDate ? task.dueDate.slice(0, 16) : ""); // YYYY-MM-DDTHH:mm
     };
 
     const handleEditCancel = () => {
@@ -86,6 +102,7 @@ const TaskList: React.FC = () => {
         setEditTitle("");
         setEditDescription("");
         setEditDate("");
+        setEditDueDate("");
     };
 
     const handleEditSave = async (task: Task) => {
@@ -96,6 +113,7 @@ const TaskList: React.FC = () => {
                 title: editTitle,
                 description: editDescription,
                 createdAt: editDate ? new Date(editDate).toISOString() : task.createdAt,
+                dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
             };
             const res = await fetch(`${API_URL}/${task.id}`, {
                 method: "PUT",
@@ -107,7 +125,9 @@ const TaskList: React.FC = () => {
             setEditTitle("");
             setEditDescription("");
             setEditDate("");
+            setEditDueDate("");
             fetchTasks();
+            showToast("Task updated successfully!");
         } catch (err: any) {
             setError(err.message || "Error updating task");
         }
@@ -132,6 +152,27 @@ const TaskList: React.FC = () => {
         }
     };
 
+    const filteredTasks = tasks
+        .filter(task => {
+            if (search.trim() !== "") {
+                const text = (task.title + " " + (task.description || "")).toLowerCase();
+                if (!text.includes(search.toLowerCase())) return false;
+            }
+            if (filter === 'completed') return task.isCompleted;
+            if (filter === 'pending') return !task.isCompleted;
+            return true;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'dueDate') {
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return a.dueDate.localeCompare(b.dueDate);
+            } else {
+                return a.createdAt.localeCompare(b.createdAt);
+            }
+        });
+
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -155,16 +196,46 @@ const TaskList: React.FC = () => {
                     maxLength={500}
                     style={{ marginRight: 8 }}
                 />
+                <input
+                    type="datetime-local"
+                    value={dueDate}
+                    onChange={e => setDueDate(e.target.value)}
+                    style={{ marginRight: 8 }}
+                />
                 <button type="submit" disabled={creating || !title}>
                     {creating ? "Creating..." : "Add Task"}
                 </button>
             </form>
             {error && <div style={{ color: "red" }}>{error}</div>}
-            {tasks.length === 0 ? (
+            <div style={{ marginBottom: 16 }}>
+                <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    style={{ marginRight: 16, padding: 4 }}
+                />
+                <label style={{ marginRight: 8 }}>
+                    Filter:
+                    <select value={filter} onChange={e => setFilter(e.target.value as any)} style={{ marginLeft: 4 }}>
+                        <option value="all">All</option>
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </label>
+                <label>
+                    Sort by:
+                    <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} style={{ marginLeft: 4 }}>
+                        <option value="dueDate">Due date</option>
+                        <option value="createdAt">Created at</option>
+                    </select>
+                </label>
+            </div>
+            {filteredTasks.length === 0 ? (
                 <p>No tasks found.</p>
             ) : (
                 <ul>
-                    {tasks.map((task) => (
+                    {filteredTasks.map((task) => (
                         <li key={task.id}>
                             {editingId === task.id ? (
                                 <>
@@ -188,6 +259,12 @@ const TaskList: React.FC = () => {
                                         onChange={e => setEditDate(e.target.value)}
                                         style={{ marginRight: 8 }}
                                     />
+                                    <input
+                                        type="datetime-local"
+                                        value={editDueDate}
+                                        onChange={e => setEditDueDate(e.target.value)}
+                                        style={{ marginRight: 8 }}
+                                    />
                                     <button onClick={() => handleEditSave(task)} style={{ marginRight: 4 }}>
                                         Save
                                     </button>
@@ -204,6 +281,11 @@ const TaskList: React.FC = () => {
                                         style={{ marginRight: 8 }}
                                     />
                                     <strong>{task.title}</strong> - {task.description}
+                                    {task.dueDate && (
+                                        <span style={{ marginLeft: 8, color: '#888' }}>
+                                            (Due: {new Date(task.dueDate).toLocaleString()})
+                                        </span>
+                                    )}
                                     {task.isCompleted ? " ✅" : ""}
                                     <button onClick={() => handleEdit(task)} style={{ marginLeft: 8 }}>
                                         Edit
@@ -216,6 +298,21 @@ const TaskList: React.FC = () => {
                         </li>
                     ))}
                 </ul>
+            )}
+            {toast && (
+                <div style={{
+                    position: 'fixed',
+                    top: 20,
+                    right: 20,
+                    background: '#333',
+                    color: '#fff',
+                    padding: '12px 24px',
+                    borderRadius: 8,
+                    zIndex: 1000,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                }}>
+                    {toast}
+                </div>
             )}
         </div>
     );

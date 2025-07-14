@@ -13,6 +13,7 @@ const TaskList: React.FC = () => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
+    const [editDate, setEditDate] = useState("");
 
     const fetchTasks = () => {
         setLoading(true);
@@ -77,12 +78,14 @@ const TaskList: React.FC = () => {
         setEditingId(task.id);
         setEditTitle(task.title);
         setEditDescription(task.description || "");
+        setEditDate(task.createdAt.slice(0, 10)); // YYYY-MM-DD
     };
 
     const handleEditCancel = () => {
         setEditingId(null);
         setEditTitle("");
         setEditDescription("");
+        setEditDate("");
     };
 
     const handleEditSave = async (task: Task) => {
@@ -92,6 +95,7 @@ const TaskList: React.FC = () => {
                 ...task,
                 title: editTitle,
                 description: editDescription,
+                createdAt: editDate ? new Date(editDate).toISOString() : task.createdAt,
             };
             const res = await fetch(`${API_URL}/${task.id}`, {
                 method: "PUT",
@@ -102,6 +106,26 @@ const TaskList: React.FC = () => {
             setEditingId(null);
             setEditTitle("");
             setEditDescription("");
+            setEditDate("");
+            fetchTasks();
+        } catch (err: any) {
+            setError(err.message || "Error updating task");
+        }
+    };
+
+    const handleToggleCompleted = async (task: Task) => {
+        setError(null);
+        try {
+            const updatedTask = {
+                ...task,
+                isCompleted: !task.isCompleted,
+            };
+            const res = await fetch(`${API_URL}/${task.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedTask),
+            });
+            if (!res.ok) throw new Error("Error updating task");
             fetchTasks();
         } catch (err: any) {
             setError(err.message || "Error updating task");
@@ -158,6 +182,12 @@ const TaskList: React.FC = () => {
                                         maxLength={500}
                                         style={{ marginRight: 8 }}
                                     />
+                                    <input
+                                        type="date"
+                                        value={editDate}
+                                        onChange={e => setEditDate(e.target.value)}
+                                        style={{ marginRight: 8 }}
+                                    />
                                     <button onClick={() => handleEditSave(task)} style={{ marginRight: 4 }}>
                                         Save
                                     </button>
@@ -167,6 +197,12 @@ const TaskList: React.FC = () => {
                                 </>
                             ) : (
                                 <>
+                                    <input
+                                        type="checkbox"
+                                        checked={task.isCompleted}
+                                        onChange={() => handleToggleCompleted(task)}
+                                        style={{ marginRight: 8 }}
+                                    />
                                     <strong>{task.title}</strong> - {task.description}
                                     {task.isCompleted ? " ✅" : ""}
                                     <button onClick={() => handleEdit(task)} style={{ marginLeft: 8 }}>

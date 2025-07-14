@@ -46,6 +46,7 @@ namespace TaskFlow.Api.Services
             task.Description = dto.Description;
             task.IsCompleted = dto.IsCompleted;
             task.CreatedAt = dto.CreatedAt;
+            task.DueDate = dto.DueDate;
             _context.SaveChanges();
             return true;
         }

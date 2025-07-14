@@ -13,7 +13,8 @@ namespace TaskFlow.Api.Mappers
                 Title = task.Title,
                 Description = task.Description,
                 IsCompleted = task.IsCompleted,
-                CreatedAt = task.CreatedAt
+                CreatedAt = task.CreatedAt,
+                DueDate = task.DueDate
             };
         }
 
@@ -25,7 +26,8 @@ namespace TaskFlow.Api.Mappers
                 Title = dto.Title,
                 Description = dto.Description,
                 IsCompleted = dto.IsCompleted,
-                CreatedAt = dto.CreatedAt
+                CreatedAt = dto.CreatedAt,
+                DueDate = dto.DueDate
             };
         }
     }

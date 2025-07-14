@@ -61,6 +61,17 @@ const TaskList: React.FC = () => {
         }
     };
 
+    const handleDelete = async (id: number) => {
+        if (!window.confirm("Are you sure you want to delete this task?")) return;
+        try {
+            const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Error deleting task");
+            fetchTasks();
+        } catch (err: any) {
+            setError(err.message || "Error deleting task");
+        }
+    };
+
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -97,6 +108,9 @@ const TaskList: React.FC = () => {
                         <li key={task.id}>
                             <strong>{task.title}</strong> - {task.description}
                             {task.isCompleted ? " ✅" : ""}
+                            <button onClick={() => handleDelete(task.id)} style={{ marginLeft: 8 }}>
+                                Delete
+                            </button>
                         </li>
                     ))}
                 </ul>
@@ -104,5 +118,4 @@ const TaskList: React.FC = () => {
         </div>
     );
 };
-
 export default TaskList;

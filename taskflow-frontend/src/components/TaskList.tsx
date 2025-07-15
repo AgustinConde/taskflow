@@ -308,7 +308,23 @@ const TaskList: React.FC = () => {
                                     <Typography variant="subtitle1" sx={{ textDecoration: task.isCompleted ? 'line-through' : 'none', flex: 1 }}>
                                         {task.title}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ flex: 2 }}>{task.description}</Typography>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{
+                                            flex: 2,
+                                            maxWidth: 260,
+                                            whiteSpace: 'pre-line',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 2,
+                                            WebkitBoxOrient: 'vertical',
+                                        }}
+                                        title={task.description}
+                                    >
+                                        {task.description}
+                                    </Typography>
                                     <Box sx={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                         {task.dueDate && (
                                             <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>

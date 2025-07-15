@@ -309,11 +309,13 @@ const TaskList: React.FC = () => {
                                         {task.title}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ flex: 2 }}>{task.description}</Typography>
+                                    <Box sx={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                         {task.dueDate && (
                                             <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                                                 (Due: {new Date(task.dueDate).toLocaleString()})
                                             </Typography>
                                         )}
+                                    </Box>
                                     {task.isCompleted && <Typography color="primary.main" sx={{ ml: 1 }}>✔️</Typography>}
                                     <Stack direction="row" spacing={1}>
                                         <Button onClick={() => handleEdit(task)} variant="contained" color="primary">

@@ -9,6 +9,37 @@ function App() {
   const theme = useMemo(() => createTheme({
     palette: {
       mode,
+      primary: {
+        main: '#7C3AED', // Violeta principal (Purple 600)
+        light: '#A78BFA', // Purple 300
+        dark: '#4C1D95', // Purple 900
+        contrastText: '#fff',
+      },
+      secondary: {
+        main: '#6366F1', // Indigo 500
+        light: '#C7D2FE', // Indigo 200
+        dark: '#312E81', // Indigo 900
+        contrastText: '#fff',
+      },
+      background: {
+        default: mode === 'dark' ? '#18181B' : '#F3F4F6', // Gray 900 / Gray 100
+        paper: mode === 'dark' ? '#27272A' : '#fff', // Gray 800 / White
+      },
+      error: {
+        main: '#EF4444', // Red 500
+      },
+      warning: {
+        main: '#F59E42', // Orange 400
+      },
+      info: {
+        main: '#38BDF8', // Sky 400
+      },
+      success: {
+        main: '#22C55E', // Green 500
+      },
+    },
+    typography: {
+      fontFamily: 'Inter, Roboto, Arial, sans-serif',
     },
   }), [mode]);
 

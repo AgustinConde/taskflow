@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { Task } from "../types/Task";
 import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, Checkbox, AppBar, Toolbar } from "@mui/material";
+import ChecklistIcon from '@mui/icons-material/Checklist';
 
 const API_URL = "http://localhost:5149/api/tasks";
 
@@ -178,15 +179,46 @@ const TaskList: React.FC = () => {
 
     return (
         <Box sx={{ maxWidth: 900, margin: "0 auto", padding: 2 }}>
-            <AppBar position="static" color="primary" elevation={2} sx={{ borderRadius: 2, mb: 4 }}>
-                <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="h5" fontWeight={700} letterSpacing={1}>
+            <AppBar
+                position="static"
+                elevation={3}
+                sx={{
+                    borderRadius: 2,
+                    mb: 4,
+                    background: theme => `linear-gradient(90deg, ${theme.palette.primary.main} 60%, ${theme.palette.secondary.main} 100%)`,
+                    boxShadow: 4,
+                }}
+            >
+                <Toolbar sx={{ justifyContent: 'center', minHeight: 72 }}>
+                    <ChecklistIcon sx={{ fontSize: 38, mr: 2, color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.18))' }} />
+                    <Typography
+                        variant="h4"
+                        fontWeight={800}
+                        letterSpacing={2}
+                        sx={{
+                            color: 'white',
+                            textShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                            fontFamily: 'Montserrat, Roboto, Arial',
+                        }}
+                    >
                         TaskFlow
                     </Typography>
                 </Toolbar>
             </AppBar>
             <Paper elevation={3} sx={{ mb: 4, p: 3, backgroundColor: theme => theme.palette.primary.light + '22', borderRadius: 3 }}>
-                <Typography variant="h6" align="center" gutterBottom color="primary.main">Gestión de tareas</Typography>
+                <Typography
+                    variant="h6"
+                    align="center"
+                    gutterBottom
+                    sx={theme => ({
+                        color: theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main,
+                        textShadow: theme.palette.mode === 'dark' ? '0 1px 6px rgba(0,0,0,0.25)' : 'none',
+                        fontWeight: 700,
+                        letterSpacing: 1,
+                    })}
+                >
+                    Gestión de tareas
+                </Typography>
                 <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
                     <TextField
                         label="Title"

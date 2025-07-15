@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type { Task } from "../types/Task";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, Checkbox, AppBar, Toolbar } from "@mui/material";
 
 const API_URL = "http://localhost:5149/api/tasks";
 
@@ -177,70 +177,79 @@ const TaskList: React.FC = () => {
     if (loading) return <Typography align="center" variant="h6" sx={{ mt: 8 }}>Loading...</Typography>;
 
     return (
-        <Box sx={{ maxWidth: 800, margin: "0 auto", padding: 2 }}>
-            <Typography variant="h4" align="center" gutterBottom>Task List</Typography>
-            <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                <TextField
-                    label="Title"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    required
-                    slotProps={{ htmlInput: { maxLength: 100 } }}
-                    sx={{ minWidth: 160 }}
-                />
-                <TextField
-                    label="Description"
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    slotProps={{ htmlInput: { maxLength: 500 } }}
-                    sx={{ minWidth: 200 }}
-                />
-                <TextField
-                    label="Due Date"
-                    type="datetime-local"
-                    value={dueDate}
-                    onChange={e => setDueDate(e.target.value)}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                    sx={{ minWidth: 200 }}
-                />
-                <Button type="submit" variant="contained" color="primary" disabled={creating || !title} sx={{ minWidth: 120 }}>
-                    {creating ? "Creating..." : "Add Task"}
-                </Button>
-            </Box>
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                <TextField
-                    label="Search tasks..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    sx={{ minWidth: 200 }}
-                />
-                <Box>
-                    <Typography variant="body2" component="span" sx={{ mr: 1 }}>Filter:</Typography>
-                    <Select
-                        value={filter}
-                        onChange={e => setFilter(e.target.value as any)}
-                        size="small"
-                        sx={{ minWidth: 120 }}
-                    >
-                        <MenuItem value="all">All</MenuItem>
-                        <MenuItem value="completed">Completed</MenuItem>
-                        <MenuItem value="pending">Pending</MenuItem>
-                    </Select>
+        <Box sx={{ maxWidth: 900, margin: "0 auto", padding: 2 }}>
+            <AppBar position="static" color="primary" elevation={2} sx={{ borderRadius: 2, mb: 4 }}>
+                <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="h5" fontWeight={700} letterSpacing={1}>
+                        TaskFlow
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+            <Paper elevation={3} sx={{ mb: 4, p: 3, backgroundColor: theme => theme.palette.primary.light + '22', borderRadius: 3 }}>
+                <Typography variant="h6" align="center" gutterBottom color="primary.main">Gestión de tareas</Typography>
+                <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+                    <TextField
+                        label="Title"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        required
+                        slotProps={{ htmlInput: { maxLength: 100 } }}
+                        sx={{ minWidth: 160 }}
+                    />
+                    <TextField
+                        label="Description"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        slotProps={{ htmlInput: { maxLength: 500 } }}
+                        sx={{ minWidth: 200 }}
+                    />
+                    <TextField
+                        label="Due Date"
+                        type="datetime-local"
+                        value={dueDate}
+                        onChange={e => setDueDate(e.target.value)}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        sx={{ minWidth: 200 }}
+                    />
+                    <Button type="submit" variant="contained" color="primary" disabled={creating || !title} sx={{ minWidth: 120 }}>
+                        {creating ? "Creating..." : "Add Task"}
+                    </Button>
                 </Box>
-                <Box>
-                    <Typography variant="body2" component="span" sx={{ mr: 1 }}>Sort by:</Typography>
-                    <Select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value as any)}
-                        size="small"
-                        sx={{ minWidth: 120 }}
-                    >
-                        <MenuItem value="dueDate">Due date</MenuItem>
-                        <MenuItem value="createdAt">Created at</MenuItem>
-                    </Select>
-                </Box>
-            </Stack>
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2, justifyContent: 'center' }}>
+                    <TextField
+                        label="Search tasks..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        sx={{ minWidth: 200 }}
+                    />
+                    <Box>
+                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>Filter:</Typography>
+                        <Select
+                            value={filter}
+                            onChange={e => setFilter(e.target.value as any)}
+                            size="small"
+                            sx={{ minWidth: 120 }}
+                        >
+                            <MenuItem value="all">All</MenuItem>
+                            <MenuItem value="completed">Completed</MenuItem>
+                            <MenuItem value="pending">Pending</MenuItem>
+                        </Select>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>Sort by:</Typography>
+                        <Select
+                            value={sortBy}
+                            onChange={e => setSortBy(e.target.value as any)}
+                            size="small"
+                            sx={{ minWidth: 120 }}
+                        >
+                            <MenuItem value="dueDate">Due date</MenuItem>
+                            <MenuItem value="createdAt">Created at</MenuItem>
+                        </Select>
+                    </Box>
+                </Stack>
+            </Paper>
             {filteredTasks.length === 0 ? (
                 <Typography align="center" color="text.secondary">No tasks found.</Typography>
             ) : (
@@ -280,7 +289,7 @@ const TaskList: React.FC = () => {
                                         sx={{ minWidth: 160 }}
                                     />
                                     <Stack direction="row" spacing={1}>
-                                        <Button onClick={() => handleEditSave(task)} variant="contained" color="success">
+                                        <Button onClick={() => handleEditSave(task)} variant="contained" color="primary">
                                             Save
                                         </Button>
                                         <Button onClick={handleEditCancel} variant="contained" color="error">
@@ -290,24 +299,24 @@ const TaskList: React.FC = () => {
                                 </>
                             ) : (
                                 <>
-                                    <input
-                                        type="checkbox"
+                                    <Checkbox
                                         checked={task.isCompleted}
                                         onChange={() => handleToggleCompleted(task)}
-                                        style={{ marginRight: 8 }}
+                                        color="secondary"
+                                        sx={{ mr: 1 }}
                                     />
                                     <Typography variant="subtitle1" sx={{ textDecoration: task.isCompleted ? 'line-through' : 'none', flex: 1 }}>
                                         {task.title}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ flex: 2 }}>{task.description}</Typography>
-                                    {task.dueDate && (
-                                        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                            (Due: {new Date(task.dueDate).toLocaleString()})
-                                        </Typography>
-                                    )}
-                                    {task.isCompleted && <Typography color="success.main" sx={{ ml: 1 }}>✔️</Typography>}
+                                        {task.dueDate && (
+                                            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                                (Due: {new Date(task.dueDate).toLocaleString()})
+                                            </Typography>
+                                        )}
+                                    {task.isCompleted && <Typography color="primary.main" sx={{ ml: 1 }}>✔️</Typography>}
                                     <Stack direction="row" spacing={1}>
-                                        <Button onClick={() => handleEdit(task)} variant="contained" color="success">
+                                        <Button onClick={() => handleEdit(task)} variant="contained" color="primary">
                                             Edit
                                         </Button>
                                         <Button onClick={() => handleDelete(task.id)} variant="contained" color="error">

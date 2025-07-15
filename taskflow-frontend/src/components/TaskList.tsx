@@ -215,6 +215,7 @@ const TaskList: React.FC = () => {
                         textShadow: theme.palette.mode === 'dark' ? '0 1px 6px rgba(0,0,0,0.25)' : 'none',
                         fontWeight: 700,
                         letterSpacing: 1,
+                        mb: 3,
                     })}
                 >
                     Gestión de tareas
@@ -226,14 +227,14 @@ const TaskList: React.FC = () => {
                         onChange={e => setTitle(e.target.value)}
                         required
                         slotProps={{ htmlInput: { maxLength: 100 } }}
-                        sx={{ minWidth: 160 }}
+                        sx={{ minWidth: 200, maxWidth: 220 }}
                     />
                     <TextField
                         label="Description"
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                         slotProps={{ htmlInput: { maxLength: 500 } }}
-                        sx={{ minWidth: 200 }}
+                        sx={{ minWidth: 200, maxWidth: 220 }}
                     />
                     <TextField
                         label="Due Date"
@@ -241,7 +242,7 @@ const TaskList: React.FC = () => {
                         value={dueDate}
                         onChange={e => setDueDate(e.target.value)}
                         slotProps={{ inputLabel: { shrink: true } }}
-                        sx={{ minWidth: 200 }}
+                        sx={{ minWidth: 200, maxWidth: 220 }}
                     />
                     <Button type="submit" variant="contained" color="primary" disabled={creating || !title} sx={{ minWidth: 120 }}>
                         {creating ? "Creating..." : "Add Task"}
@@ -253,7 +254,8 @@ const TaskList: React.FC = () => {
                         label="Search tasks..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        sx={{ minWidth: 200 }}
+                        size="small"
+                        sx={{ minWidth: 200, maxWidth: 220, height: 40, '.MuiInputBase-root': { height: 40 } }}
                     />
                     <Box>
                         <Typography variant="body2" component="span" sx={{ mr: 1 }}>Filter:</Typography>

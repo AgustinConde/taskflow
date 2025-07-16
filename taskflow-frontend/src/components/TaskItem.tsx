@@ -61,7 +61,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
             bgColor = (theme) => alpha(theme.palette.warning.light, 0.25);
         }
     }
-    // Convierte string local (YYYY-MM-DDTHH:mm) a ISO UTC
+
     const localDateTimeToUTCISOString = (local: string) => {
         if (!local) return null;
         const [datePart, timePart] = local.split('T');
@@ -148,8 +148,8 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     >
                         {task.description}
                     </Typography>
-                    <Box sx={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                        {task.dueDate && (
+                    <Box sx={{ minWidth: 180, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                        {task.dueDate ? (
                             <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                                 (Due: {new Date(task.dueDate).toLocaleString(undefined, {
                                     year: 'numeric',
@@ -159,9 +159,17 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                     minute: '2-digit',
                                 })})
                             </Typography>
+                        ) : (
+                            <Box sx={{ width: '100%', height: 20, ml: 1 }} />
                         )}
                     </Box>
-                    {task.isCompleted && <Typography color="primary.main" sx={{ ml: 1 }}>✔️</Typography>}
+                    <Box sx={{ minWidth: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', ml: 1 }}>
+                        {task.isCompleted ? (
+                            <Typography color="primary.main">✔️</Typography>
+                        ) : (
+                            <Box sx={{ width: 20, height: 20 }} />
+                        )}
+                    </Box>
                     <Stack direction="row" spacing={1}>
                         <Button onClick={onEdit} variant="contained" color="primary">
                             Edit

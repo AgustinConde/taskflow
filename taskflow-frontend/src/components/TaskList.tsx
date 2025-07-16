@@ -118,21 +118,24 @@ const TaskList: React.FC = () => {
 
     const handleToggleCompleted = async (task: Task) => {
         setError(null);
-        try {
-            const updatedTask = {
-                ...task,
-                isCompleted: !task.isCompleted,
-            };
-            const res = await fetch(`${API_URL}/${task.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedTask),
+        setTasks(prevTasks => prevTasks.map(t =>
+            t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
+        ));
+        const updatedTask = { ...task, isCompleted: !task.isCompleted };
+        fetch(`${API_URL}/${task.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedTask),
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Error updating task");
+            })
+            .catch((err) => {
+                setError(err.message || "Error updating task");
+                setTasks(prevTasks => prevTasks.map(t =>
+                    t.id === task.id ? { ...t, isCompleted: task.isCompleted } : t
+                ));
             });
-            if (!res.ok) throw new Error("Error updating task");
-            fetchTasks();
-        } catch (err: any) {
-            setError(err.message || "Error updating task");
-        }
     };
 
     const filteredTasks = tasks

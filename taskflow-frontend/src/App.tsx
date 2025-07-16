@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TaskList from "./components/TaskList";
 import { ThemeProvider, createTheme, CssBaseline, IconButton, Box } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';

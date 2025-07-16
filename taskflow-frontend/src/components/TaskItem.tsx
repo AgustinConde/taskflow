@@ -91,14 +91,15 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                         label="Description"
                         sx={{ minWidth: 160 }}
                     />
-                    <TextField
-                        type="date"
-                        value={localDate}
-                        onChange={e => setLocalDate(e.target.value)}
-                        label="Created"
-                        slotProps={{ inputLabel: { shrink: true } }}
-                        sx={{ minWidth: 120 }}
-                    />
+                    <Box sx={{ minWidth: 120, display: 'flex', alignItems: 'center', pl: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
+                            Created: {new Date(task.createdAt).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                            })}
+                        </Typography>
+                    </Box>
                     <TextField
                         type="datetime-local"
                         value={localDueDate}
@@ -112,7 +113,6 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                             ...task,
                             title: localTitle,
                             description: localDescription,
-                            createdAt: localDate ? new Date(localDate).toISOString() : task.createdAt,
                             dueDate: localDueDate ? localDateTimeToUTCISOString(localDueDate) : null,
                         })} variant="contained" color="primary">
                             Save

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { Task } from "../types/Task";
 import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, Checkbox, AppBar, Toolbar } from "@mui/material";
+import { alpha } from '@mui/material/styles';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 
 const API_URL = "http://localhost:5149/api/tasks";
@@ -189,7 +190,7 @@ const TaskList: React.FC = () => {
                     boxShadow: 4,
                 }}
             >
-                <Toolbar sx={{ justifyContent: 'center', minHeight: 72 }}>
+                <Toolbar sx={{ justifyContent: 'center', minHeight: 72, pt: 1 }}>
                     <ChecklistIcon sx={{ fontSize: 38, mr: 2, color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.18))' }} />
                     <Typography
                         variant="h4"
@@ -288,97 +289,119 @@ const TaskList: React.FC = () => {
                 <Typography align="center" color="text.secondary">No tasks found.</Typography>
             ) : (
                 <Stack spacing={2}>
-                    {filteredTasks.map((task) => (
-                        <Paper key={task.id} elevation={2} sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                            {editingId === task.id ? (
-                                <>
-                                    <TextField
-                                        value={editTitle}
-                                        onChange={e => setEditTitle(e.target.value)}
-                                        slotProps={{ htmlInput: { maxLength: 100 } }}
-                                        label="Title"
-                                        sx={{ minWidth: 120 }}
-                                    />
-                                    <TextField
-                                        value={editDescription}
-                                        onChange={e => setEditDescription(e.target.value)}
-                                        slotProps={{ htmlInput: { maxLength: 500 } }}
-                                        label="Description"
-                                        sx={{ minWidth: 160 }}
-                                    />
-                                    <TextField
-                                        type="date"
-                                        value={editDate}
-                                        onChange={e => setEditDate(e.target.value)}
-                                        label="Created"
-                                        slotProps={{ inputLabel: { shrink: true } }}
-                                        sx={{ minWidth: 120 }}
-                                    />
-                                    <TextField
-                                        type="datetime-local"
-                                        value={editDueDate}
-                                        onChange={e => setEditDueDate(e.target.value)}
-                                        label="Due"
-                                        slotProps={{ inputLabel: { shrink: true } }}
-                                        sx={{ minWidth: 160 }}
-                                    />
-                                    <Stack direction="row" spacing={1}>
-                                        <Button onClick={() => handleEditSave(task)} variant="contained" color="primary">
-                                            Save
-                                        </Button>
-                                        <Button onClick={handleEditCancel} variant="contained" color="error">
-                                            Cancel
-                                        </Button>
-                                    </Stack>
-                                </>
-                            ) : (
-                                <>
-                                    <Checkbox
-                                        checked={task.isCompleted}
-                                        onChange={() => handleToggleCompleted(task)}
-                                        color="secondary"
-                                        sx={{ mr: 1 }}
-                                    />
-                                    <Typography variant="subtitle1" sx={{ textDecoration: task.isCompleted ? 'line-through' : 'none', flex: 1 }}>
-                                        {task.title}
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                        sx={{
-                                            flex: 2,
-                                            maxWidth: 260,
-                                            whiteSpace: 'pre-line',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 2,
-                                            WebkitBoxOrient: 'vertical',
-                                        }}
-                                        title={task.description}
-                                    >
-                                        {task.description}
-                                    </Typography>
-                                    <Box sx={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                        {task.dueDate && (
-                                            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                                (Due: {new Date(task.dueDate).toLocaleString()})
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    {task.isCompleted && <Typography color="primary.main" sx={{ ml: 1 }}>✔️</Typography>}
-                                    <Stack direction="row" spacing={1}>
-                                        <Button onClick={() => handleEdit(task)} variant="contained" color="primary">
-                                            Edit
-                                        </Button>
-                                        <Button onClick={() => handleDelete(task.id)} variant="contained" color="error">
-                                            Delete
-                                        </Button>
-                                    </Stack>
-                                </>
-                            )}
-                        </Paper>
-                    ))}
+                    {filteredTasks.map((task) => {
+                        let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
+                        if (!task.isCompleted && task.dueDate) {
+                            const now = new Date();
+                            const due = new Date(task.dueDate);
+                            const diffMs = due.getTime() - now.getTime();
+                            const diffHrs = diffMs / (1000 * 60 * 60);
+                            if (diffHrs < 3) {
+                                bgColor = (theme) => alpha(theme.palette.error.main, 0.45); // rojo fuerte
+                            } else if (diffHrs < 24) {
+                                bgColor = (theme) => alpha(theme.palette.error.light, 0.25); // rojo suave
+                            } else if (diffHrs < 72) {
+                                bgColor = (theme) => alpha(theme.palette.warning.light, 0.25); // amarillo suave
+                            }
+                        }
+                        return (
+                            <Paper key={task.id} elevation={2} sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, backgroundColor: bgColor }}>
+                                {editingId === task.id ? (
+                                    <>
+                                        <TextField
+                                            value={editTitle}
+                                            onChange={e => setEditTitle(e.target.value)}
+                                            slotProps={{ htmlInput: { maxLength: 100 } }}
+                                            label="Title"
+                                            sx={{ minWidth: 120 }}
+                                        />
+                                        <TextField
+                                            value={editDescription}
+                                            onChange={e => setEditDescription(e.target.value)}
+                                            slotProps={{ htmlInput: { maxLength: 500 } }}
+                                            label="Description"
+                                            sx={{ minWidth: 160 }}
+                                        />
+                                        <TextField
+                                            type="date"
+                                            value={editDate}
+                                            onChange={e => setEditDate(e.target.value)}
+                                            label="Created"
+                                            slotProps={{ inputLabel: { shrink: true } }}
+                                            sx={{ minWidth: 120 }}
+                                        />
+                                        <TextField
+                                            type="datetime-local"
+                                            value={editDueDate}
+                                            onChange={e => setEditDueDate(e.target.value)}
+                                            label="Due"
+                                            slotProps={{ inputLabel: { shrink: true } }}
+                                            sx={{ minWidth: 160 }}
+                                        />
+                                        <Stack direction="row" spacing={1}>
+                                            <Button onClick={() => handleEditSave(task)} variant="contained" color="primary">
+                                                Save
+                                            </Button>
+                                            <Button onClick={handleEditCancel} variant="contained" color="error">
+                                                Cancel
+                                            </Button>
+                                        </Stack>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Checkbox
+                                            checked={task.isCompleted}
+                                            onChange={() => handleToggleCompleted(task)}
+                                            color="secondary"
+                                            sx={{ mr: 1 }}
+                                        />
+                                        <Typography variant="subtitle1" sx={{ textDecoration: task.isCompleted ? 'line-through' : 'none', flex: 1 }}>
+                                            {task.title}
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{
+                                                flex: 2,
+                                                maxWidth: 260,
+                                                whiteSpace: 'pre-line',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical',
+                                            }}
+                                            title={task.description}
+                                        >
+                                            {task.description}
+                                        </Typography>
+                                        <Box sx={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                            {task.dueDate && (
+                                                <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                                    (Due: {new Date(task.dueDate).toLocaleString(undefined, {
+                                                        year: 'numeric',
+                                                        month: '2-digit',
+                                                        day: '2-digit',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })})
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                        {task.isCompleted && <Typography color="primary.main" sx={{ ml: 1 }}>✔️</Typography>}
+                                        <Stack direction="row" spacing={1}>
+                                            <Button onClick={() => handleEdit(task)} variant="contained" color="primary">
+                                                Edit
+                                            </Button>
+                                            <Button onClick={() => handleDelete(task.id)} variant="contained" color="error">
+                                                Delete
+                                            </Button>
+                                        </Stack>
+                                    </>
+                                )}
+                            </Paper>
+                        );
+                    })}
                 </Stack>
             )}
             <Snackbar

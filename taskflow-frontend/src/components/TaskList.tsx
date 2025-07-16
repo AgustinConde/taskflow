@@ -92,12 +92,24 @@ const TaskList: React.FC = () => {
         }
     };
 
+    const toLocalInputDateTime = (utcString: string) => {
+        if (!utcString) return "";
+        const date = new Date(utcString);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const yyyy = date.getFullYear();
+        const mm = pad(date.getMonth() + 1);
+        const dd = pad(date.getDate());
+        const hh = pad(date.getHours());
+        const min = pad(date.getMinutes());
+        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+    };
+
     const handleEdit = (task: Task) => {
         setEditingId(task.id);
         setEditTitle(task.title);
         setEditDescription(task.description || "");
         setEditDate(task.createdAt.slice(0, 10)); // YYYY-MM-DD
-        setEditDueDate(task.dueDate ? task.dueDate.slice(0, 16) : ""); // YYYY-MM-DDTHH:mm
+        setEditDueDate(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
     };
 
     const handleEditCancel = () => {
@@ -108,6 +120,16 @@ const TaskList: React.FC = () => {
         setEditDueDate("");
     };
 
+
+    const localDateTimeToUTCISOString = (local: string) => {
+        if (!local) return null;
+        const [datePart, timePart] = local.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute] = timePart.split(':').map(Number);
+        const dt = new Date(year, month - 1, day, hour, minute);
+        return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString();
+    };
+
     const handleEditSave = async (task: Task) => {
         setError(null);
         try {
@@ -116,7 +138,7 @@ const TaskList: React.FC = () => {
                 title: editTitle,
                 description: editDescription,
                 createdAt: editDate ? new Date(editDate).toISOString() : task.createdAt,
-                dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
+                dueDate: editDueDate ? localDateTimeToUTCISOString(editDueDate) : null,
             };
             const res = await fetch(`${API_URL}/${task.id}`, {
                 method: "PUT",

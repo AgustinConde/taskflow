@@ -10,7 +10,7 @@ function App() {
     palette: {
       mode,
       primary: {
-        main: '#7C3AED', // Violeta principal (Purple 600)
+        main: '#7C3AED', // Main Violet (Purple 600)
         light: '#A78BFA', // Purple 300
         dark: '#4C1D95', // Purple 900
         contrastText: '#fff',
@@ -29,13 +29,15 @@ function App() {
         main: '#EF4444', // Red 500
       },
       warning: {
-        main: '#F59E42', // Orange 400
+        main: mode === 'dark' ? '#FFE066' : '#F59E42', // Lighter orange
+        light: mode === 'dark' ? '#FFF9C4' : '#FFE29A', // Lighter pastel yellow
       },
       info: {
         main: '#38BDF8', // Sky 400
       },
       success: {
         main: '#22C55E', // Green 500
+        light: '#BBF7D0', // Green 200 pastel
       },
     },
     typography: {

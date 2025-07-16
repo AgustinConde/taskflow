@@ -48,7 +48,9 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         }
     }, [editing, task]);
     let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
-    if (!task.isCompleted && task.dueDate) {
+    if (task.isCompleted) {
+        bgColor = (theme) => alpha(theme.palette.success.light || '#BBF7D0', 0.55);
+    } else if (task.dueDate) {
         const now = new Date();
         const due = new Date(task.dueDate);
         const diffMs = due.getTime() - now.getTime();

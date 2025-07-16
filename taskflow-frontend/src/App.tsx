@@ -53,7 +53,7 @@ function App() {
           {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", width: "100vw" }}>
+      <Box sx={{ minHeight: '100vh', width: '100vw', display: 'block', backgroundColor: theme.palette.background.default }}>
         <TaskList />
       </Box>
     </ThemeProvider>

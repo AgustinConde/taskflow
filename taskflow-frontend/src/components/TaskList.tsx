@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { Task } from "../types/Task";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, Checkbox, AppBar, Toolbar } from "@mui/material";
-import { alpha } from '@mui/material/styles';
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar } from "@mui/material";
+import TaskItem from "./TaskItem";
 import ChecklistIcon from '@mui/icons-material/Checklist';
 
 const API_URL = "http://localhost:5149/api/tasks";
@@ -11,16 +11,12 @@ const TaskList: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [dueDate, setDueDate] = useState("");
+    const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
+    const [sortBy, setSortBy] = useState<'dueDate' | 'createdAt'>('dueDate');
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [editTitle, setEditTitle] = useState("");
-    const [editDescription, setEditDescription] = useState("");
-    const [editDate, setEditDate] = useState("");
-    const [dueDate, setDueDate] = useState("");
-    const [editDueDate, setEditDueDate] = useState("");
-    const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
-    const [sortBy, setSortBy] = useState<'dueDate' | 'createdAt'>('dueDate');
     const [search, setSearch] = useState("");
     const [toast, setToast] = useState<string | null>(null);
 
@@ -92,65 +88,27 @@ const TaskList: React.FC = () => {
         }
     };
 
-    const toLocalInputDateTime = (utcString: string) => {
-        if (!utcString) return "";
-        const date = new Date(utcString);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const yyyy = date.getFullYear();
-        const mm = pad(date.getMonth() + 1);
-        const dd = pad(date.getDate());
-        const hh = pad(date.getHours());
-        const min = pad(date.getMinutes());
-        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-    };
 
     const handleEdit = (task: Task) => {
         setEditingId(task.id);
-        setEditTitle(task.title);
-        setEditDescription(task.description || "");
-        setEditDate(task.createdAt.slice(0, 10)); // YYYY-MM-DD
-        setEditDueDate(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
     };
 
     const handleEditCancel = () => {
         setEditingId(null);
-        setEditTitle("");
-        setEditDescription("");
-        setEditDate("");
-        setEditDueDate("");
     };
 
 
-    const localDateTimeToUTCISOString = (local: string) => {
-        if (!local) return null;
-        const [datePart, timePart] = local.split('T');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
-        const dt = new Date(year, month - 1, day, hour, minute);
-        return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString();
-    };
 
     const handleEditSave = async (task: Task) => {
         setError(null);
         try {
-            const updatedTask = {
-                ...task,
-                title: editTitle,
-                description: editDescription,
-                createdAt: editDate ? new Date(editDate).toISOString() : task.createdAt,
-                dueDate: editDueDate ? localDateTimeToUTCISOString(editDueDate) : null,
-            };
             const res = await fetch(`${API_URL}/${task.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedTask),
+                body: JSON.stringify(task),
             });
             if (!res.ok) throw new Error("Error updating task");
             setEditingId(null);
-            setEditTitle("");
-            setEditDescription("");
-            setEditDate("");
-            setEditDueDate("");
             fetchTasks();
             showToast("Task updated successfully!");
         } catch (err: any) {
@@ -311,119 +269,18 @@ const TaskList: React.FC = () => {
                 <Typography align="center" color="text.secondary">No tasks found.</Typography>
             ) : (
                 <Stack spacing={2}>
-                    {filteredTasks.map((task) => {
-                        let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
-                        if (!task.isCompleted && task.dueDate) {
-                            const now = new Date();
-                            const due = new Date(task.dueDate);
-                            const diffMs = due.getTime() - now.getTime();
-                            const diffHrs = diffMs / (1000 * 60 * 60);
-                            if (diffHrs < 3) {
-                                bgColor = (theme) => alpha(theme.palette.error.main, 0.45); // rojo fuerte
-                            } else if (diffHrs < 24) {
-                                bgColor = (theme) => alpha(theme.palette.error.light, 0.25); // rojo suave
-                            } else if (diffHrs < 72) {
-                                bgColor = (theme) => alpha(theme.palette.warning.light, 0.25); // amarillo suave
-                            }
-                        }
-                        return (
-                            <Paper key={task.id} elevation={2} sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, backgroundColor: bgColor }}>
-                                {editingId === task.id ? (
-                                    <>
-                                        <TextField
-                                            value={editTitle}
-                                            onChange={e => setEditTitle(e.target.value)}
-                                            slotProps={{ htmlInput: { maxLength: 100 } }}
-                                            label="Title"
-                                            sx={{ minWidth: 120 }}
-                                        />
-                                        <TextField
-                                            value={editDescription}
-                                            onChange={e => setEditDescription(e.target.value)}
-                                            slotProps={{ htmlInput: { maxLength: 500 } }}
-                                            label="Description"
-                                            sx={{ minWidth: 160 }}
-                                        />
-                                        <TextField
-                                            type="date"
-                                            value={editDate}
-                                            onChange={e => setEditDate(e.target.value)}
-                                            label="Created"
-                                            slotProps={{ inputLabel: { shrink: true } }}
-                                            sx={{ minWidth: 120 }}
-                                        />
-                                        <TextField
-                                            type="datetime-local"
-                                            value={editDueDate}
-                                            onChange={e => setEditDueDate(e.target.value)}
-                                            label="Due"
-                                            slotProps={{ inputLabel: { shrink: true } }}
-                                            sx={{ minWidth: 160 }}
-                                        />
-                                        <Stack direction="row" spacing={1}>
-                                            <Button onClick={() => handleEditSave(task)} variant="contained" color="primary">
-                                                Save
-                                            </Button>
-                                            <Button onClick={handleEditCancel} variant="contained" color="error">
-                                                Cancel
-                                            </Button>
-                                        </Stack>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Checkbox
-                                            checked={task.isCompleted}
-                                            onChange={() => handleToggleCompleted(task)}
-                                            color="secondary"
-                                            sx={{ mr: 1 }}
-                                        />
-                                        <Typography variant="subtitle1" sx={{ textDecoration: task.isCompleted ? 'line-through' : 'none', flex: 1 }}>
-                                            {task.title}
-                                        </Typography>
-                                        <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                            sx={{
-                                                flex: 2,
-                                                maxWidth: 260,
-                                                whiteSpace: 'pre-line',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                display: '-webkit-box',
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: 'vertical',
-                                            }}
-                                            title={task.description}
-                                        >
-                                            {task.description}
-                                        </Typography>
-                                        <Box sx={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                            {task.dueDate && (
-                                                <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                                    (Due: {new Date(task.dueDate).toLocaleString(undefined, {
-                                                        year: 'numeric',
-                                                        month: '2-digit',
-                                                        day: '2-digit',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })})
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        {task.isCompleted && <Typography color="primary.main" sx={{ ml: 1 }}>✔️</Typography>}
-                                        <Stack direction="row" spacing={1}>
-                                            <Button onClick={() => handleEdit(task)} variant="contained" color="primary">
-                                                Edit
-                                            </Button>
-                                            <Button onClick={() => handleDelete(task.id)} variant="contained" color="error">
-                                                Delete
-                                            </Button>
-                                        </Stack>
-                                    </>
-                                )}
-                            </Paper>
-                        );
-                    })}
+                    {filteredTasks.map((task) => (
+                        <TaskItem
+                            key={task.id}
+                            task={task}
+                            editing={editingId === task.id}
+                            onEdit={() => handleEdit(task)}
+                            onEditSave={handleEditSave}
+                            onEditCancel={handleEditCancel}
+                            onDelete={() => handleDelete(task.id)}
+                            onToggleCompleted={() => handleToggleCompleted(task)}
+                        />
+                    ))}
                 </Stack>
             )}
             <Snackbar

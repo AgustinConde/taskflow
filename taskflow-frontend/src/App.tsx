@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import CountryFlag from "react-country-flag";
 import TaskList from "./components/TaskList";
-import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography } from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ import "./i18n";
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const theme = useMemo(() => createTheme({
     palette: {
       mode,

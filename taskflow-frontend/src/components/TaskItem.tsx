@@ -132,7 +132,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                         color="secondary"
                         sx={{ mr: 1 }}
                     />
-                    <Typography variant="subtitle1" sx={{ textDecoration: task.isCompleted ? 'line-through' : 'none', flex: 1 }}>
+                    <Typography variant="subtitle1" sx={{ flex: 1 }}>
                         {task.title}
                     </Typography>
                     <Typography

@@ -51,18 +51,18 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
     }, [editing, task]);
     let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
     if (task.isCompleted) {
-        bgColor = (theme) => alpha(theme.palette.success.light || '#BBF7D0', 0.55);
+        bgColor = (theme) => alpha(theme.palette.primary.light, 0.75);
     } else if (task.dueDate) {
         const now = new Date();
         const due = new Date(task.dueDate);
         const diffMs = due.getTime() - now.getTime();
         const diffHrs = diffMs / (1000 * 60 * 60);
-        if (diffHrs < 3) {
-            bgColor = (theme) => alpha(theme.palette.error.main, 0.45);
+        if (diffMs < 0) {
+            bgColor = (theme) => alpha(theme.palette.error.main, 0.7);
+        } else if (diffHrs < 3) {
+            bgColor = (theme) => alpha(theme.palette.error.light, 0.4);
         } else if (diffHrs < 24) {
-            bgColor = (theme) => alpha(theme.palette.error.light, 0.25);
-        } else if (diffHrs < 72) {
-            bgColor = (theme) => alpha(theme.palette.warning.light, 0.25);
+            bgColor = (theme) => alpha(theme.palette.warning.main, 0.3);
         }
     }
 

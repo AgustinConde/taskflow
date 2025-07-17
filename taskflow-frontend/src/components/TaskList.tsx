@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import type { Task } from "../types/Task";
 import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme } from "@mui/material";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -15,7 +17,8 @@ const TaskList: React.FC = () => {
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
-    const [sortBy, setSortBy] = useState<'dueDate' | 'createdAt'>('dueDate');
+    const [sortBy, setSortBy] = useState<'custom' | 'dueDate' | 'createdAt'>('custom');
+    const [customOrder, setCustomOrder] = useState<number[]>([]);
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -30,6 +33,15 @@ const TaskList: React.FC = () => {
             .then((res) => res.json())
             .then((data) => {
                 setTasks(data);
+                if (customOrder.length === 0) {
+                    setCustomOrder(data.map((t: Task) => t.id));
+                } else {
+                    const ids = data.map((t: Task) => t.id);
+                    setCustomOrder(prev => [
+                        ...prev.filter((id: number) => ids.includes(id)),
+                        ...ids.filter((id: number) => !prev.includes(id))
+                    ]);
+                }
                 setLoading(false);
             })
             .catch((err) => {
@@ -153,7 +165,7 @@ const TaskList: React.FC = () => {
             });
     };
 
-    const filteredTasks = tasks
+    let filteredTasks = tasks
         .filter(task => {
             if (search.trim() !== "") {
                 const text = (task.title + " " + (task.description || "")).toLowerCase();
@@ -162,19 +174,38 @@ const TaskList: React.FC = () => {
             if (filter === 'completed') return task.isCompleted;
             if (filter === 'pending') return !task.isCompleted;
             return true;
-        })
-        .sort((a, b) => {
-            if (sortBy === 'dueDate') {
-                if (!a.dueDate && !b.dueDate) return 0;
-                if (!a.dueDate) return 1;
-                if (!b.dueDate) return -1;
-                return a.dueDate.localeCompare(b.dueDate);
-            } else {
-                return a.createdAt.localeCompare(b.createdAt);
-            }
         });
+    if (sortBy === 'dueDate') {
+        filteredTasks = [...filteredTasks].sort((a, b) => {
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        });
+    } else if (sortBy === 'createdAt') {
+        filteredTasks = [...filteredTasks].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } else if (sortBy === 'custom') {
+        filteredTasks = [...filteredTasks].sort((a, b) => customOrder.indexOf(a.id) - customOrder.indexOf(b.id));
+    }
 
     if (loading) return <Typography align="center" variant="h6" sx={{ mt: 8 }}>Loading...</Typography>;
+
+    const onDragEnd = (result: DropResult) => {
+        if (sortBy !== 'custom') return;
+        if (!result.destination) return;
+        const from = result.source.index;
+        const to = result.destination.index;
+        if (from === to) return;
+        const filteredIds = filteredTasks.map(t => t.id);
+        const newOrder = [...customOrder];
+        const idToMove = filteredIds[from];
+        const oldIndex = newOrder.indexOf(idToMove);
+        newOrder.splice(oldIndex, 1);
+        let insertAt = newOrder.indexOf(filteredIds[to]);
+        if (to > from) insertAt++;
+        newOrder.splice(insertAt, 0, idToMove);
+        setCustomOrder(newOrder);
+    };
 
     return (
         <Box sx={{ maxWidth: 900, margin: "0 auto", padding: 2 }}>
@@ -277,6 +308,7 @@ const TaskList: React.FC = () => {
                             size="small"
                             sx={{ minWidth: 120 }}
                         >
+                            <MenuItem value="custom">Custom</MenuItem>
                             <MenuItem value="dueDate">Due date</MenuItem>
                             <MenuItem value="createdAt">Created at</MenuItem>
                         </Select>
@@ -285,6 +317,41 @@ const TaskList: React.FC = () => {
             </Paper>
             {filteredTasks.length === 0 ? (
                 <Typography align="center" color="text.secondary">No tasks found.</Typography>
+            ) : sortBy === 'custom' ? (
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="tasklist-droppable">
+                        {(provided) => (
+                            <Stack spacing={2} ref={provided.innerRef} {...provided.droppableProps}>
+                                {filteredTasks.map((task, idx) => (
+                                    <Draggable key={task.id} draggableId={task.id.toString()} index={idx}>
+                                        {(provided, snapshot) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                style={{
+                                                    ...provided.draggableProps.style,
+                                                    opacity: snapshot.isDragging ? 0.7 : 1,
+                                                }}
+                                            >
+                                                <TaskItem
+                                                    task={task}
+                                                    editing={editingId === task.id}
+                                                    onEdit={() => handleEdit(task)}
+                                                    onEditSave={handleEditSave}
+                                                    onEditCancel={handleEditCancel}
+                                                    onDelete={() => handleDeleteRequest(task.id)}
+                                                    onToggleCompleted={() => handleToggleCompleted(task)}
+                                                />
+                                            </div>
+                                        )}
+                                    </Draggable>
+                                ))}
+                                {provided.placeholder}
+                            </Stack>
+                        )}
+                    </Droppable>
+                </DragDropContext>
             ) : (
                 <Stack spacing={2}>
                     {filteredTasks.map((task) => (
@@ -319,10 +386,10 @@ const TaskList: React.FC = () => {
                 aria-describedby="delete-dialog-description"
                 PaperProps={{
                     sx: {
-                        background: theme => theme.palette.mode === 'dark'
+                        background: (theme) => theme.palette.mode === 'dark'
                             ? theme.palette.error.dark + 'ee'
                             : theme.palette.error.light + 'ee',
-                        color: theme => theme.palette.getContrastText(theme.palette.error.main),
+                        color: (theme) => theme.palette.getContrastText(theme.palette.error.main),
                         borderRadius: 3,
                         minWidth: 360,
                         boxShadow: 8,

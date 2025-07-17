@@ -62,9 +62,9 @@ function App() {
         </IconButton>
         <Button onClick={handleLangChange} variant="outlined" color="inherit" size="small" sx={{ fontSize: 22, px: 1.5, minWidth: 44, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {i18n.language === 'en' ? (
-            <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
-          ) : (
             <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
+          ) : (
+            <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
           )}
         </Button>
       </Box>

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import type { Task } from "../types/Task";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme } from "@mui/material";
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TaskItem from "./TaskItem";
 import ChecklistIcon from '@mui/icons-material/Checklist';
 
 const API_URL = "http://localhost:5149/api/tasks";
 
 const TaskList: React.FC = () => {
+    const theme = useTheme();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [title, setTitle] = useState("");
@@ -17,6 +19,8 @@ const TaskList: React.FC = () => {
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [search, setSearch] = useState("");
     const [toast, setToast] = useState<string | null>(null);
 
@@ -33,10 +37,6 @@ const TaskList: React.FC = () => {
                 setLoading(false);
             });
     };
-
-    useEffect(() => {
-        fetchTasks();
-    }, []);
 
     const showToast = (msg: string) => {
         setToast(msg);
@@ -76,28 +76,9 @@ const TaskList: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this task?")) return;
-        try {
-            const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Error deleting task");
-            fetchTasks();
-            showToast("Task deleted successfully!");
-        } catch (err: any) {
-            setError(err.message || "Error deleting task");
-        }
-    };
-
-
     const handleEdit = (task: Task) => {
         setEditingId(task.id);
     };
-
-    const handleEditCancel = () => {
-        setEditingId(null);
-    };
-
-
 
     const handleEditSave = async (task: Task) => {
         setError(null);
@@ -113,6 +94,40 @@ const TaskList: React.FC = () => {
             showToast("Task updated successfully!");
         } catch (err: any) {
             setError(err.message || "Error updating task");
+        }
+    };
+
+    const handleEditCancel = () => {
+        setEditingId(null);
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteId(null);
+    };
+
+    useEffect(() => {
+        fetchTasks();
+    }, []);
+
+
+    const handleDeleteRequest = (id: number) => {
+        setDeleteId(id);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (deleteId == null) return;
+        setDeleteLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(`${API_URL}/${deleteId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Error deleting task");
+            setDeleteId(null);
+            fetchTasks();
+            showToast("Task deleted successfully!");
+        } catch (err: any) {
+            setError(err.message || "Error deleting task");
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -280,7 +295,7 @@ const TaskList: React.FC = () => {
                             onEdit={() => handleEdit(task)}
                             onEditSave={handleEditSave}
                             onEditCancel={handleEditCancel}
-                            onDelete={() => handleDelete(task.id)}
+                            onDelete={() => handleDeleteRequest(task.id)}
                             onToggleCompleted={() => handleToggleCompleted(task)}
                         />
                     ))}
@@ -296,6 +311,44 @@ const TaskList: React.FC = () => {
                     {toast}
                 </Alert>
             </Snackbar>
+
+            <Dialog
+                open={deleteId !== null}
+                onClose={handleDeleteCancel}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+                PaperProps={{
+                    sx: {
+                        background: theme => theme.palette.mode === 'dark'
+                            ? theme.palette.error.dark + 'ee'
+                            : theme.palette.error.light + 'ee',
+                        color: theme => theme.palette.getContrastText(theme.palette.error.main),
+                        borderRadius: 3,
+                        minWidth: 360,
+                        boxShadow: 8,
+                    }
+                }}
+            >
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 3 }}>
+                    <WarningAmberIcon sx={{ fontSize: 56, color: theme.palette.error.main, mb: 1, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.18))' }} />
+                </Box>
+                <DialogTitle id="delete-dialog-title" sx={{ textAlign: 'center', color: theme.palette.error.main, fontWeight: 800, fontSize: 24, pb: 0 }}>
+                    Confirm Delete
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="delete-dialog-description" sx={{ textAlign: 'center', color: theme.palette.text.primary, fontWeight: 500, fontSize: 17, mb: 1 }}>
+                        Are you sure you want to delete this task?<br />This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+                    <Button onClick={handleDeleteCancel} disabled={deleteLoading} color="inherit" variant="outlined" sx={{ minWidth: 100, fontWeight: 600, borderColor: theme.palette.error.main, color: theme.palette.error.main, '&:hover': { borderColor: theme.palette.error.dark, background: theme.palette.error.light + '33' } }}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={deleteLoading} autoFocus sx={{ minWidth: 120, fontWeight: 700, boxShadow: 2 }}>
+                        {deleteLoading ? "Deleting..." : "Delete"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

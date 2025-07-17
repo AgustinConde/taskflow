@@ -26,6 +26,9 @@
     "taskCreated": "Task created successfully!",
     "taskUpdated": "Task updated successfully!",
     "taskDeleted": "Task deleted successfully!",
+    "errorCreatingTask": "Error creating task.",
+    "errorUpdatingTask": "Error updating task.",
+    "errorDeletingTask": "Error deleting task.",
     "due": "Due",
     "created": "Created"
 }

@@ -76,7 +76,7 @@ const TaskList: React.FC = () => {
             });
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData?.title || "Error creating task");
+                throw new Error(errData?.title || t('errorCreatingTask'));
             }
             setTitle("");
             setDescription("");
@@ -84,7 +84,7 @@ const TaskList: React.FC = () => {
             fetchTasks();
             showToast(t('taskCreated'));
         } catch (err: any) {
-            setError(err.message || "Error creating task");
+            setError(err.message || t('errorCreatingTask'));
         } finally {
             setCreating(false);
         }
@@ -102,12 +102,12 @@ const TaskList: React.FC = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(task),
             });
-            if (!res.ok) throw new Error("Error updating task");
+            if (!res.ok) throw new Error(t('errorUpdatingTask'));
             setEditingId(null);
             fetchTasks();
             showToast(t('taskUpdated'));
         } catch (err: any) {
-            setError(err.message || "Error updating task");
+            setError(err.message || t('errorUpdatingTask'));
         }
     };
 
@@ -134,12 +134,12 @@ const TaskList: React.FC = () => {
         setError(null);
         try {
             const res = await fetch(`${API_URL}/${deleteId}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Error deleting task");
+            if (!res.ok) throw new Error(t('errorDeletingTask'));
             setDeleteId(null);
             fetchTasks();
-            showToast("Task deleted successfully!");
+            showToast(t('taskDeleted'));
         } catch (err: any) {
-            setError(err.message || "Error deleting task");
+            setError(err.message || t('errorDeletingTask'));
         } finally {
             setDeleteLoading(false);
         }
@@ -157,10 +157,10 @@ const TaskList: React.FC = () => {
             body: JSON.stringify(updatedTask),
         })
             .then(res => {
-                if (!res.ok) throw new Error("Error updating task");
+                if (!res.ok) throw new Error(t('errorUpdatingTask'));
             })
             .catch((err) => {
-                setError(err.message || "Error updating task");
+                setError(err.message || t('errorUpdatingTask'));
                 setTasks(prevTasks => prevTasks.map(t =>
                     t.id === task.id ? { ...t, isCompleted: task.isCompleted } : t
                 ));

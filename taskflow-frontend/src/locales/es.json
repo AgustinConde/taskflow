@@ -26,6 +26,9 @@
     "taskCreated": "¡Tarea creada exitosamente!",
     "taskUpdated": "¡Tarea actualizada exitosamente!",
     "taskDeleted": "¡Tarea eliminada exitosamente!",
+    "errorCreatingTask": "Error al crear la tarea.",
+    "errorUpdatingTask": "Error al actualizar la tarea.",
+    "errorDeletingTask": "Error al eliminar la tarea.",
     "due": "Vence",
     "created": "Creada"
 }

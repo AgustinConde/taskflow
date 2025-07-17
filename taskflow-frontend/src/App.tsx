@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import CountryFlag from "react-country-flag";
 import TaskList from "./components/TaskList";
 import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -59,8 +60,12 @@ function App() {
         <IconButton onClick={() => setMode(m => m === 'light' ? 'dark' : 'light')} color="inherit">
           {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
-        <Button onClick={handleLangChange} variant="outlined" color="inherit" size="small" sx={{ fontSize: 22, px: 1.5 }}>
-          {i18n.language === 'en' ? '🇺🇸' : '🇦🇷'}
+        <Button onClick={handleLangChange} variant="outlined" color="inherit" size="small" sx={{ fontSize: 22, px: 1.5, minWidth: 44, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {i18n.language === 'en' ? (
+            <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
+          ) : (
+            <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
+          )}
         </Button>
       </Box>
       <Box sx={{ minHeight: '100vh', width: '100vw', display: 'block', backgroundColor: theme.palette.background.default }}>

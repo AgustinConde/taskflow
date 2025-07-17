@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Paper, Checkbox, Typography, Box, Stack, Button, TextField } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { Task } from "../types/Task";
@@ -23,6 +24,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
     onDelete,
     onToggleCompleted,
 }) => {
+    const { t } = useTranslation();
     const [localTitle, setLocalTitle] = React.useState(task.title);
     const [localDescription, setLocalDescription] = React.useState(task.description || "");
     const [localDate, setLocalDate] = React.useState(task.createdAt.slice(0, 10));
@@ -81,19 +83,19 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                         value={localTitle}
                         onChange={e => setLocalTitle(e.target.value)}
                         slotProps={{ htmlInput: { maxLength: 100 } }}
-                        label="Title"
+                        label={t('title')}
                         sx={{ minWidth: 120 }}
                     />
                     <TextField
                         value={localDescription}
                         onChange={e => setLocalDescription(e.target.value)}
                         slotProps={{ htmlInput: { maxLength: 500 } }}
-                        label="Description"
+                        label={t('description')}
                         sx={{ minWidth: 160 }}
                     />
                     <Box sx={{ minWidth: 120, display: 'flex', alignItems: 'center', pl: 1 }}>
                         <Typography variant="caption" color="text.secondary">
-                            Created: {new Date(task.createdAt).toLocaleDateString(undefined, {
+                            {t('created')}: {new Date(task.createdAt).toLocaleDateString(undefined, {
                                 year: 'numeric',
                                 month: '2-digit',
                                 day: '2-digit',
@@ -104,7 +106,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                         type="datetime-local"
                         value={localDueDate}
                         onChange={e => setLocalDueDate(e.target.value)}
-                        label="Due"
+                        label={t('due')}
                         slotProps={{ inputLabel: { shrink: true } }}
                         sx={{ minWidth: 160 }}
                     />
@@ -115,10 +117,10 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                             description: localDescription,
                             dueDate: localDueDate ? localDateTimeToUTCISOString(localDueDate) : null,
                         })} variant="contained" color="primary">
-                            Save
+                            {t('save')}
                         </Button>
                         <Button onClick={onEditCancel} variant="contained" color="error">
-                            Cancel
+                            {t('cancel')}
                         </Button>
                     </Stack>
                 </>
@@ -153,7 +155,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     <Box sx={{ minWidth: 180, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                         {task.dueDate ? (
                             <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                (Due: {new Date(task.dueDate).toLocaleString(undefined, {
+                                ({t('due')}: {new Date(task.dueDate).toLocaleString(undefined, {
                                     year: 'numeric',
                                     month: '2-digit',
                                     day: '2-digit',
@@ -174,10 +176,10 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     </Box>
                     <Stack direction="row" spacing={1}>
                         <Button onClick={onEdit} variant="contained" color="primary">
-                            Edit
+                            {t('edit')}
                         </Button>
                         <Button onClick={onDelete} variant="contained" color="error">
-                            Delete
+                            {t('delete')}
                         </Button>
                     </Stack>
                 </>

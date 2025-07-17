@@ -6,6 +6,7 @@ import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Sna
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TaskItem from "./TaskItem";
 import ChecklistIcon from '@mui/icons-material/Checklist';
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:5149/api/tasks";
 
@@ -26,6 +27,7 @@ const TaskList: React.FC = () => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [search, setSearch] = useState("");
     const [toast, setToast] = useState<string | null>(null);
+    const { t } = useTranslation();
 
     const fetchTasks = () => {
         setLoading(true);
@@ -188,7 +190,7 @@ const TaskList: React.FC = () => {
         filteredTasks = [...filteredTasks].sort((a, b) => customOrder.indexOf(a.id) - customOrder.indexOf(b.id));
     }
 
-    if (loading) return <Typography align="center" variant="h6" sx={{ mt: 8 }}>Loading...</Typography>;
+    if (loading) return <Typography align="center" variant="h6" sx={{ mt: 8 }}>{t('loading')}</Typography>;
 
     const onDragEnd = (result: DropResult) => {
         if (sortBy !== 'custom') return;
@@ -219,7 +221,7 @@ const TaskList: React.FC = () => {
                     boxShadow: 4,
                 }}
             >
-                <Toolbar sx={{ justifyContent: 'center', minHeight: 72, pt: 1 }}>
+                <Toolbar sx={{ justifyContent: 'center', minHeight: 72 }}>
                     <ChecklistIcon sx={{ fontSize: 38, mr: 2, color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.18))' }} />
                     <Typography
                         variant="h4"
@@ -248,75 +250,75 @@ const TaskList: React.FC = () => {
                         mb: 3,
                     })}
                 >
-                    Gestión de tareas
+                    {t('taskManagement')}
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
                     <TextField
-                        label="Title"
+                        label={t('title')}
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         required
                         slotProps={{ htmlInput: { maxLength: 100 } }}
-                        sx={{ minWidth: 200, maxWidth: 220 }}
+                        sx={{ minWidth: 220, maxWidth: 260, flex: '0 1 220px' }}
                     />
                     <TextField
-                        label="Description"
+                        label={t('description')}
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                         slotProps={{ htmlInput: { maxLength: 500 } }}
-                        sx={{ minWidth: 200, maxWidth: 220 }}
+                        sx={{ minWidth: 220, maxWidth: 260, flex: '0 1 220px' }}
                     />
                     <TextField
-                        label="Due Date"
+                        label={t('dueDate')}
                         type="datetime-local"
                         value={dueDate}
                         onChange={e => setDueDate(e.target.value)}
                         slotProps={{ inputLabel: { shrink: true } }}
-                        sx={{ minWidth: 200, maxWidth: 220 }}
+                        sx={{ minWidth: 220, maxWidth: 260, flex: '0 1 220px' }}
                     />
-                    <Button type="submit" variant="contained" color="primary" disabled={creating || !title} sx={{ minWidth: 120 }}>
-                        {creating ? "Creating..." : "Add Task"}
+                    <Button type="submit" variant="contained" color="primary" disabled={creating || !title} sx={{ minWidth: 150, maxWidth: 180, flex: '0 1 150px', whiteSpace: 'nowrap' }}>
+                        {creating ? t('creating') : t('addTask')}
                     </Button>
                 </Box>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2, justifyContent: 'center' }}>
                     <TextField
-                        label="Search tasks..."
+                        label={t('searchTasks')}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         size="small"
                         sx={{ minWidth: 200, maxWidth: 220, height: 40, '.MuiInputBase-root': { height: 40 } }}
                     />
                     <Box>
-                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>Filter:</Typography>
+                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>{t('filter')}</Typography>
                         <Select
                             value={filter}
                             onChange={e => setFilter(e.target.value as any)}
                             size="small"
                             sx={{ minWidth: 120 }}
                         >
-                            <MenuItem value="all">All</MenuItem>
-                            <MenuItem value="completed">Completed</MenuItem>
-                            <MenuItem value="pending">Pending</MenuItem>
+                            <MenuItem value="all">{t('all')}</MenuItem>
+                            <MenuItem value="completed">{t('completed')}</MenuItem>
+                            <MenuItem value="pending">{t('pending')}</MenuItem>
                         </Select>
                     </Box>
                     <Box>
-                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>Sort by:</Typography>
+                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>{t('sortBy')}</Typography>
                         <Select
                             value={sortBy}
                             onChange={e => setSortBy(e.target.value as any)}
                             size="small"
                             sx={{ minWidth: 120 }}
                         >
-                            <MenuItem value="custom">Custom</MenuItem>
-                            <MenuItem value="dueDate">Due date</MenuItem>
-                            <MenuItem value="createdAt">Created at</MenuItem>
+                            <MenuItem value="custom">{t('custom')}</MenuItem>
+                            <MenuItem value="dueDate">{t('dueDateSort')}</MenuItem>
+                            <MenuItem value="createdAt">{t('createdAt')}</MenuItem>
                         </Select>
                     </Box>
                 </Stack>
             </Paper>
             {filteredTasks.length === 0 ? (
-                <Typography align="center" color="text.secondary">No tasks found.</Typography>
+                <Typography align="center" color="text.secondary">{t('noTasks')}</Typography>
             ) : sortBy === 'custom' ? (
                 <DragDropContext onDragEnd={onDragEnd}>
                     <Droppable droppableId="tasklist-droppable">
@@ -400,19 +402,19 @@ const TaskList: React.FC = () => {
                     <WarningAmberIcon sx={{ fontSize: 56, color: theme.palette.error.main, mb: 1, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.18))' }} />
                 </Box>
                 <DialogTitle id="delete-dialog-title" sx={{ textAlign: 'center', color: theme.palette.error.main, fontWeight: 800, fontSize: 24, pb: 0 }}>
-                    Confirm Delete
+                    {t('confirmDelete')}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="delete-dialog-description" sx={{ textAlign: 'center', color: theme.palette.text.primary, fontWeight: 500, fontSize: 17, mb: 1 }}>
-                        Are you sure you want to delete this task?<br />This action cannot be undone.
+                        {t('deleteMsg')}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
                     <Button onClick={handleDeleteCancel} disabled={deleteLoading} color="inherit" variant="outlined" sx={{ minWidth: 100, fontWeight: 600, borderColor: theme.palette.error.main, color: theme.palette.error.main, '&:hover': { borderColor: theme.palette.error.dark, background: theme.palette.error.light + '33' } }}>
-                        Cancel
+                        {t('cancel')}
                     </Button>
                     <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={deleteLoading} autoFocus sx={{ minWidth: 120, fontWeight: 700, boxShadow: 2 }}>
-                        {deleteLoading ? "Deleting..." : "Delete"}
+                        {deleteLoading ? t('deleting') : t('delete')}
                     </Button>
                 </DialogActions>
             </Dialog>

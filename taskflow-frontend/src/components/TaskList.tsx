@@ -82,7 +82,7 @@ const TaskList: React.FC = () => {
             setDescription("");
             setDueDate("");
             fetchTasks();
-            showToast("Task created successfully!");
+            showToast(t('taskCreated'));
         } catch (err: any) {
             setError(err.message || "Error creating task");
         } finally {
@@ -105,7 +105,7 @@ const TaskList: React.FC = () => {
             if (!res.ok) throw new Error("Error updating task");
             setEditingId(null);
             fetchTasks();
-            showToast("Task updated successfully!");
+            showToast(t('taskUpdated'));
         } catch (err: any) {
             setError(err.message || "Error updating task");
         }

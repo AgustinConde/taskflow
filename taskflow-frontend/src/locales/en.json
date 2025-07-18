@@ -30,5 +30,9 @@
     "errorUpdatingTask": "Error updating task.",
     "errorDeletingTask": "Error deleting task.",
     "due": "Due",
-    "created": "Created"
+    "created": "Created",
+    "info": "Info",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close"
 }

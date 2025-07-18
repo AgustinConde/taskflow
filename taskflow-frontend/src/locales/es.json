@@ -9,7 +9,7 @@
     "searchTasks": "Buscar tareas...",
     "filter": "Filtrar:",
     "all": "Todas",
-    "completed": "Completadas",
+    "completed": "Completada",
     "pending": "Pendientes",
     "sortBy": "Ordenar por:",
     "custom": "Personalizado",
@@ -30,5 +30,9 @@
     "errorUpdatingTask": "Error al actualizar la tarea.",
     "errorDeletingTask": "Error al eliminar la tarea.",
     "due": "Vence",
-    "created": "Creada"
+    "created": "Creada",
+    "info": "Info",
+    "yes": "Sí",
+    "no": "No",
+    "close": "Cerrar"
 }

@@ -1,6 +1,10 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Paper, Checkbox, Typography, Box, Stack, Button, TextField } from "@mui/material";
+import { Paper, Checkbox, Typography, Box, Stack, Button, TextField, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { alpha } from "@mui/material/styles";
 import type { Task } from "../types/Task";
 
@@ -41,6 +45,10 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
     const [localDueDate, setLocalDueDate] = React.useState(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
     const [localCreatedAt, setLocalCreatedAt] = React.useState(task.createdAt ? toLocalInputDateTime(task.createdAt) : "");
 
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [infoOpen, setInfoOpen] = React.useState(false);
+    const menuOpen = Boolean(anchorEl);
+
     React.useEffect(() => {
         if (editing) {
             setLocalTitle(task.title);
@@ -73,6 +81,20 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         const [hour, minute] = timePart.split(':').map(Number);
         const dt = new Date(year, month - 1, day, hour, minute);
         return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString();
+    };
+
+    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+    const handleInfoOpen = () => {
+        setInfoOpen(true);
+        handleMenuClose();
+    };
+    const handleInfoClose = () => {
+        setInfoOpen(false);
     };
 
     return (
@@ -127,15 +149,16 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                         color="secondary"
                         sx={{ mr: 1 }}
                     />
-                    <Typography variant="subtitle1" sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" sx={{ flex: 1, minWidth: 80, maxWidth: 180 }}>
                         {task.title}
                     </Typography>
                     <Typography
                         variant="body2"
                         color="text.secondary"
                         sx={{
-                            flex: 2,
-                            maxWidth: 260,
+                            flex: 3,
+                            minWidth: 120,
+                            maxWidth: 340,
                             whiteSpace: 'pre-line',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -147,44 +170,58 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     >
                         {task.description}
                     </Typography>
-                    <Box sx={{ minWidth: 320, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 2 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ minWidth: 160, ml: 1 }}>
-                            {t('created')}: {task.createdAt ? new Date(task.createdAt).toLocaleString(undefined, {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                            }) : ''}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ minWidth: 140, ml: 2 }}>
-                            {task.dueDate
-                                ? `(${t('due')}: ${new Date(task.dueDate).toLocaleString(undefined, {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })})`
-                                : '\u00A0'}
-                        </Typography>
-                    </Box>
-                    <Box sx={{ minWidth: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', ml: 1 }}>
-                        {task.isCompleted ? (
-                            <Typography color="primary.main">✔️</Typography>
-                        ) : (
-                            <Box sx={{ width: 20, height: 20 }} />
-                        )}
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
-                        <Stack direction="row" spacing={1} sx={{ minWidth: 120, maxWidth: 160 }}>
-                            <Button onClick={onEdit} variant="contained" color="primary" sx={{ minWidth: 70, maxWidth: 90, px: 1, fontSize: 14 }}>
-                                {t('edit')}
-                            </Button>
-                            <Button onClick={onDelete} variant="contained" color="error" sx={{ minWidth: 70, maxWidth: 90, px: 1, fontSize: 14 }}>
-                                {t('delete')}
-                            </Button>
-                        </Stack>
+                    <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={handleMenuOpen} aria-label="more" size="small">
+                            <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={menuOpen}
+                            onClose={handleMenuClose}
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        >
+                            <MenuItem onClick={handleInfoOpen}>
+                                <InfoOutlinedIcon fontSize="small" sx={{ mr: 1 }} /> {t('info')}
+                            </MenuItem>
+                            <MenuItem onClick={() => { handleMenuClose(); onEdit(); }}>
+                                <EditOutlinedIcon fontSize="small" sx={{ mr: 1 }} /> {t('edit')}
+                            </MenuItem>
+                            <MenuItem onClick={() => { handleMenuClose(); onDelete(); }}>
+                                <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} /> {t('delete')}
+                            </MenuItem>
+                        </Menu>
+                        <Dialog open={infoOpen} onClose={handleInfoClose} maxWidth="xs" fullWidth>
+                            <DialogTitle>{t('info')}</DialogTitle>
+                            <DialogContent>
+                                <DialogContentText>
+                                    <strong>{t('title')}:</strong> {task.title}<br />
+                                    <strong>{t('description')}:</strong>
+                                    <Box component="span" sx={{ display: 'block', whiteSpace: 'pre-line', textAlign: 'justify', mt: 0.5, mb: 1, wordBreak: 'break-word' }}>
+                                        {task.description || '-'}
+                                    </Box>
+                                    <strong>{t('created')}:</strong> {task.createdAt ? new Date(task.createdAt).toLocaleString(undefined, {
+                                        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                                    }) : '-'}<br />
+                                    <strong>{t('due')}:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleString(undefined, {
+                                        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                                    }) : '-'}<br />
+                                    <strong>{t('completed')}:</strong> {task.isCompleted ? t('yes') : t('no')}
+                                </DialogContentText>
+                            </DialogContent>
+                            <DialogActions>
+                                <Button
+                                    onClick={handleInfoClose}
+                                    autoFocus
+                                    sx={theme => ({
+                                        color: theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main,
+                                        fontWeight: 600
+                                    })}
+                                >
+                                    {t('close')}
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
                     </Box>
                 </>
             )}

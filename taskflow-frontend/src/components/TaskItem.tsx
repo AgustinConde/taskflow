@@ -104,18 +104,16 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     <TextField
                         value={localTitle}
                         onChange={e => setLocalTitle(e.target.value)}
-                        slotProps={{ htmlInput: { maxLength: 100 } }}
+                        slotProps={{ htmlInput: { maxLength: 100, style: { textOverflow: 'ellipsis' } } }}
                         label={t('title')}
                         sx={{ minWidth: 100, maxWidth: 180, flex: '1 1 100px' }}
-                        inputProps={{ style: { textOverflow: 'ellipsis' } }}
                     />
                     <TextField
                         value={localDescription}
                         onChange={e => setLocalDescription(e.target.value)}
-                        slotProps={{ htmlInput: { maxLength: 500 } }}
+                        slotProps={{ htmlInput: { maxLength: 500, style: { textOverflow: 'ellipsis' } } }}
                         label={t('description')}
                         sx={{ minWidth: 120, maxWidth: 220, flex: '2 1 120px' }}
-                        inputProps={{ style: { textOverflow: 'ellipsis' } }}
                     />
                     <TextField
                         type="datetime-local"

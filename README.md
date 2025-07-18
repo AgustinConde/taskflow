@@ -2,7 +2,7 @@
 # TaskFlow
 
 <details>
-<summary>English version below</summary>
+<summary>English version</summary>
 
 ---
 

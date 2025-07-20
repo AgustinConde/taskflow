@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import type { Task } from "../types/Task";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress } from "@mui/material";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TaskItem from "./TaskItem";
 import ChecklistIcon from '@mui/icons-material/Checklist';
@@ -123,7 +123,6 @@ const TaskList: React.FC = () => {
         fetchTasks();
     }, []);
 
-
     const handleDeleteRequest = (id: number) => {
         setDeleteId(id);
     };
@@ -189,8 +188,6 @@ const TaskList: React.FC = () => {
     } else if (sortBy === 'custom') {
         filteredTasks = [...filteredTasks].sort((a, b) => customOrder.indexOf(a.id) - customOrder.indexOf(b.id));
     }
-
-    if (loading) return <Typography align="center" variant="h6" sx={{ mt: 8 }}>{t('loading')}</Typography>;
 
     const onDragEnd = (result: DropResult) => {
         if (sortBy !== 'custom') return;
@@ -317,7 +314,7 @@ const TaskList: React.FC = () => {
                     </Box>
                 </Stack>
             </Paper>
-            {filteredTasks.length === 0 ? (
+            {loading ? <Box width="100%" display="flex" justifyContent="center" alignItems="center"> <CircularProgress size="3rem" /></Box> : filteredTasks.length === 0 ? (
                 <Typography align="center" color="text.secondary">{t('noTasks')}</Typography>
             ) : sortBy === 'custom' ? (
                 <DragDropContext onDragEnd={onDragEnd}>

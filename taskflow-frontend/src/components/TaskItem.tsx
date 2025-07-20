@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Paper, Checkbox, Typography, Box, Stack, Button, TextField, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import { Paper, Checkbox, Typography, Box, Stack, Button, TextField, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Chip, AlertTitle } from "@mui/material";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -190,21 +190,42 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                             </MenuItem>
                         </Menu>
                         <Dialog open={infoOpen} onClose={handleInfoClose} maxWidth="xs" fullWidth>
-                            <DialogTitle>{t('info')}</DialogTitle>
+                            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                {task.title}
+                                <Chip
+                                    label={task.isCompleted ? t('completed') : t('pending')}
+                                    variant="filled"
+                                    color={task.isCompleted ? "primary" : "default"}
+                                    sx={{ borderRadius: '4px', height: '24px', fontSize: '0.7rem', opacity: 0.8, fontWeight: 600 }}
+                                />
+                            </DialogTitle>
                             <DialogContent>
                                 <DialogContentText>
-                                    <strong>{t('title')}:</strong> {task.title}<br />
-                                    <strong>{t('description')}:</strong>
+
+                                    <Stack direction="row" spacing={1} justifyContent={'space-between'}>
+                                        <Stack >
+                                            <Typography fontSize='0.7rem' fontWeight={600}>{t('created')}</Typography>
+                                            <Typography fontSize='0.79rem'>
+                                                {task.createdAt ? new Date(task.createdAt).toLocaleString(undefined, {
+                                                    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                                                }) : '-'}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack >
+                                            <Typography fontSize='0.7rem' fontWeight={600} textAlign='right'>{t('due')}</Typography>
+                                            <Typography fontSize='0.79rem'>
+                                                {task.dueDate ? new Date(task.dueDate).toLocaleString(undefined, {
+                                                    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                                                }) : '-'}
+                                            </Typography>
+                                        </Stack>
+                                    </Stack>
                                     <Box component="span" sx={{ display: 'block', whiteSpace: 'pre-line', textAlign: 'justify', mt: 0.5, mb: 1, wordBreak: 'break-word' }}>
-                                        {task.description || '-'}
+                                        <Alert icon={false} sx={{ bgcolor: '#dacffcff', color: 'text.primary' }}>
+                                            <AlertTitle sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{t('description')}</AlertTitle>
+                                            {task.description || '-'}
+                                        </Alert>
                                     </Box>
-                                    <strong>{t('created')}:</strong> {task.createdAt ? new Date(task.createdAt).toLocaleString(undefined, {
-                                        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                                    }) : '-'}<br />
-                                    <strong>{t('due')}:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleString(undefined, {
-                                        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                                    }) : '-'}<br />
-                                    <strong>{t('completed')}:</strong> {task.isCompleted ? t('yes') : t('no')}
                                 </DialogContentText>
                             </DialogContent>
                             <DialogActions>

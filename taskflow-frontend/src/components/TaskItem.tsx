@@ -40,7 +40,8 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         const dd = pad(date.getDate());
         const hh = pad(date.getHours());
         const min = pad(date.getMinutes());
-        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        const result = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        return result;
     };
     const [localDueDate, setLocalDueDate] = React.useState(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
     const [localCreatedAt, setLocalCreatedAt] = React.useState(task.createdAt ? toLocalInputDateTime(task.createdAt) : "");
@@ -76,11 +77,8 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
 
     const localDateTimeToUTCISOString = (local: string) => {
         if (!local) return null;
-        const [datePart, timePart] = local.split('T');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
-        const dt = new Date(year, month - 1, day, hour, minute);
-        return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString();
+        const utcDate = new Date(local).toISOString();
+        return utcDate;
     };
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {

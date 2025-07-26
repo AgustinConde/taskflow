@@ -15,7 +15,6 @@ namespace TaskFlow.Api.DTOs
 
         public bool IsCompleted { get; set; }
 
-        [Required(ErrorMessage = "CreatedAt is required")]
         public DateTime CreatedAt { get; set; }
         public DateTime? DueDate { get; set; }
     }

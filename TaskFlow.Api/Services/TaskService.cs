@@ -32,9 +32,12 @@ namespace TaskFlow.Api.Services
         public TaskDto Create(TaskDto dto)
         {
             var task = TaskMapper.ToEntity(dto);
+            task.CreatedAt = DateTime.UtcNow;
+
             _context.Tasks.Add(task);
             _context.SaveChanges();
             dto.Id = task.Id;
+            dto.CreatedAt = task.CreatedAt;
             return dto;
         }
 
@@ -45,7 +48,6 @@ namespace TaskFlow.Api.Services
             task.Title = dto.Title;
             task.Description = dto.Description;
             task.IsCompleted = dto.IsCompleted;
-            task.CreatedAt = dto.CreatedAt;
             task.DueDate = dto.DueDate;
             _context.SaveChanges();
             return true;

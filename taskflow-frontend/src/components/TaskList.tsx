@@ -61,12 +61,18 @@ const TaskList: React.FC = () => {
         e.preventDefault();
         setCreating(true);
         setError(null);
+
+        const localDateTimeToUTCISOString = (local: string) => {
+            if (!local) return null;
+            const utcDate = new Date(local).toISOString();
+            return utcDate;
+        };
+
         const newTask = {
             title,
             description,
             isCompleted: false,
-            createdAt: new Date().toISOString(),
-            dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+            dueDate: dueDate ? localDateTimeToUTCISOString(dueDate) : null,
         };
         try {
             const res = await fetch(API_URL, {
@@ -322,29 +328,31 @@ const TaskList: React.FC = () => {
                         {(provided) => (
                             <Stack spacing={2} ref={provided.innerRef} {...provided.droppableProps}>
                                 {filteredTasks.map((task, idx) => (
-                                    <Draggable key={task.id} draggableId={task.id.toString()} index={idx}>
-                                        {(provided, snapshot) => (
-                                            <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                style={{
-                                                    ...provided.draggableProps.style,
-                                                    opacity: snapshot.isDragging ? 0.7 : 1,
-                                                }}
-                                            >
-                                                <TaskItem
-                                                    task={task}
-                                                    editing={editingId === task.id}
-                                                    onEdit={() => handleEdit(task)}
-                                                    onEditSave={handleEditSave}
-                                                    onEditCancel={handleEditCancel}
-                                                    onDelete={() => handleDeleteRequest(task.id)}
-                                                    onToggleCompleted={() => handleToggleCompleted(task)}
-                                                />
-                                            </div>
-                                        )}
-                                    </Draggable>
+                                    task.id ? (
+                                        <Draggable key={task.id} draggableId={task.id.toString()} index={idx}>
+                                            {(provided, snapshot) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    style={{
+                                                        ...provided.draggableProps.style,
+                                                        opacity: snapshot.isDragging ? 0.7 : 1,
+                                                    }}
+                                                >
+                                                    <TaskItem
+                                                        task={task}
+                                                        editing={editingId === task.id}
+                                                        onEdit={() => handleEdit(task)}
+                                                        onEditSave={handleEditSave}
+                                                        onEditCancel={handleEditCancel}
+                                                        onDelete={() => handleDeleteRequest(task.id)}
+                                                        onToggleCompleted={() => handleToggleCompleted(task)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ) : null
                                 ))}
                                 {provided.placeholder}
                             </Stack>
@@ -354,16 +362,18 @@ const TaskList: React.FC = () => {
             ) : (
                 <Stack spacing={2}>
                     {filteredTasks.map((task) => (
-                        <TaskItem
-                            key={task.id}
-                            task={task}
-                            editing={editingId === task.id}
-                            onEdit={() => handleEdit(task)}
-                            onEditSave={handleEditSave}
-                            onEditCancel={handleEditCancel}
-                            onDelete={() => handleDeleteRequest(task.id)}
-                            onToggleCompleted={() => handleToggleCompleted(task)}
-                        />
+                        task.id ? (
+                            <TaskItem
+                                key={task.id}
+                                task={task}
+                                editing={editingId === task.id}
+                                onEdit={() => handleEdit(task)}
+                                onEditSave={handleEditSave}
+                                onEditCancel={handleEditCancel}
+                                onDelete={() => handleDeleteRequest(task.id)}
+                                onToggleCompleted={() => handleToggleCompleted(task)}
+                            />
+                        ) : null
                     ))}
                 </Stack>
             )}

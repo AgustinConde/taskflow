@@ -7,8 +7,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TaskItem from "./TaskItem";
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useTranslation } from "react-i18next";
-
-const API_URL = "http://localhost:5149/api/tasks";
+import { taskService } from "../services/taskService";
 
 const TaskList: React.FC = () => {
     const theme = useTheme();
@@ -29,27 +28,26 @@ const TaskList: React.FC = () => {
     const [toast, setToast] = useState<string | null>(null);
     const { t } = useTranslation();
 
-    const fetchTasks = () => {
+    const fetchTasks = async () => {
         setLoading(true);
-        fetch(API_URL)
-            .then((res) => res.json())
-            .then((data) => {
-                setTasks(data);
-                if (customOrder.length === 0) {
-                    setCustomOrder(data.map((t: Task) => t.id));
-                } else {
-                    const ids = data.map((t: Task) => t.id);
-                    setCustomOrder(prev => [
-                        ...prev.filter((id: number) => ids.includes(id)),
-                        ...ids.filter((id: number) => !prev.includes(id))
-                    ]);
-                }
-                setLoading(false);
-            })
-            .catch((err) => {
-                console.error("Error fetching tasks:", err);
-                setLoading(false);
-            });
+        try {
+            const data = await taskService.getTasks();
+            setTasks(data);
+            if (customOrder.length === 0) {
+                setCustomOrder(data.map((t: Task) => t.id));
+            } else {
+                const ids = data.map((t: Task) => t.id);
+                setCustomOrder(prev => [
+                    ...prev.filter((id: number) => ids.includes(id)),
+                    ...ids.filter((id: number) => !prev.includes(id))
+                ]);
+            }
+        } catch (err: any) {
+            console.error("Error fetching tasks:", err);
+            setError(err.message || 'Failed to fetch tasks');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const showToast = (msg: string) => {
@@ -74,20 +72,13 @@ const TaskList: React.FC = () => {
             isCompleted: false,
             dueDate: dueDate ? localDateTimeToUTCISOString(dueDate) : null,
         };
+
         try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newTask),
-            });
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData?.title || t('errorCreatingTask'));
-            }
+            await taskService.createTask(newTask);
             setTitle("");
             setDescription("");
             setDueDate("");
-            fetchTasks();
+            await fetchTasks();
             showToast(t('taskCreated'));
         } catch (err: any) {
             setError(err.message || t('errorCreatingTask'));
@@ -103,14 +94,9 @@ const TaskList: React.FC = () => {
     const handleEditSave = async (task: Task) => {
         setError(null);
         try {
-            const res = await fetch(`${API_URL}/${task.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(task),
-            });
-            if (!res.ok) throw new Error(t('errorUpdatingTask'));
+            await taskService.updateTask(task.id, task);
             setEditingId(null);
-            fetchTasks();
+            await fetchTasks();
             showToast(t('taskUpdated'));
         } catch (err: any) {
             setError(err.message || t('errorUpdatingTask'));
@@ -138,10 +124,9 @@ const TaskList: React.FC = () => {
         setDeleteLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_URL}/${deleteId}`, { method: "DELETE" });
-            if (!res.ok) throw new Error(t('errorDeletingTask'));
+            await taskService.deleteTask(deleteId);
             setDeleteId(null);
-            fetchTasks();
+            await fetchTasks();
             showToast(t('taskDeleted'));
         } catch (err: any) {
             setError(err.message || t('errorDeletingTask'));
@@ -156,20 +141,15 @@ const TaskList: React.FC = () => {
             t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
         ));
         const updatedTask = { ...task, isCompleted: !task.isCompleted };
-        fetch(`${API_URL}/${task.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedTask),
-        })
-            .then(res => {
-                if (!res.ok) throw new Error(t('errorUpdatingTask'));
-            })
-            .catch((err) => {
-                setError(err.message || t('errorUpdatingTask'));
-                setTasks(prevTasks => prevTasks.map(t =>
-                    t.id === task.id ? { ...t, isCompleted: task.isCompleted } : t
-                ));
-            });
+
+        try {
+            await taskService.updateTask(task.id, updatedTask);
+        } catch (err: any) {
+            setError(err.message || t('errorUpdatingTask'));
+            setTasks(prevTasks => prevTasks.map(t =>
+                t.id === task.id ? { ...t, isCompleted: task.isCompleted } : t
+            ));
+        }
     };
 
     let filteredTasks = tasks

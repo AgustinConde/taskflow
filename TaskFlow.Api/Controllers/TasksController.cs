@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Api.Services;
 using TaskFlow.Api.DTOs;
@@ -6,34 +7,51 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly TaskService _taskService;
+        private readonly JwtService _jwtService;
 
-        public TasksController(TaskService taskService)
+        public TasksController(TaskService taskService, JwtService jwtService)
         {
             _taskService = taskService;
+            _jwtService = jwtService;
         }
 
         // GET: api/tasks
         [HttpGet]
         public IActionResult GetTasks()
         {
-            var tasks = _taskService.GetAll();
-            return Ok(tasks);
+            try
+            {
+                var userId = _jwtService.GetUserIdFromToken(User);
+                if (userId == null) return Unauthorized();
+
+                var tasks = _taskService.GetAllByUser(userId.Value);
+                return Ok(tasks);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetTasks: {ex.Message}");
+                return StatusCode(500, new { message = "Error retrieving tasks" });
+            }
         }
 
         // GET: api/tasks/{id}
         [HttpGet("{id}")]
         public ActionResult<TaskDto> GetTask(int id)
         {
-            var task = _taskService.GetById(id);
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null) return Unauthorized();
+
+            var task = _taskService.GetByIdAndUser(id, userId.Value);
             if (task == null)
                 return NotFound();
             return Ok(task);
         }
 
-        // GET: api/tasks/sp
+        // GET: api/tasks/sp - Legacy endpoint
         [HttpGet("sp")]
         public IActionResult GetTasksWithStoredProcedure()
         {
@@ -48,7 +66,10 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var created = _taskService.Create(dto);
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null) return Unauthorized();
+
+            var created = _taskService.Create(dto, userId.Value);
             return CreatedAtAction(nameof(GetTask), new { id = created.Id }, created);
         }
 
@@ -59,7 +80,10 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var updated = _taskService.Update(id, dto);
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null) return Unauthorized();
+
+            var updated = _taskService.Update(id, dto, userId.Value);
             if (!updated)
                 return NotFound();
             return NoContent();
@@ -69,7 +93,10 @@ namespace TaskFlow.Api.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteTask(int id)
         {
-            var deleted = _taskService.Delete(id);
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null) return Unauthorized();
+
+            var deleted = _taskService.Delete(id, userId.Value);
             if (!deleted)
                 return NotFound();
             return NoContent();

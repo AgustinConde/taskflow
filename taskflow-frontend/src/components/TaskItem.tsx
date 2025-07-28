@@ -75,6 +75,10 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         }
     }
 
+    if (!bgColor) {
+        bgColor = (theme) => theme.palette.background.paper;
+    }
+
     const localDateTimeToUTCISOString = (local: string) => {
         if (!local) return null;
         const utcDate = new Date(local).toISOString();
@@ -219,7 +223,10 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                         </Stack>
                                     </Stack>
                                     <Box component="span" sx={{ display: 'block', whiteSpace: 'pre-line', textAlign: 'justify', mt: 0.5, mb: 1, wordBreak: 'break-word' }}>
-                                        <Alert icon={false} sx={{ bgcolor: '#dacffcff', color: 'text.primary' }}>
+                                        <Alert icon={false} sx={{
+                                            bgcolor: theme => theme.palette.mode === 'light' ? '#dacffc' : 'rgba(124, 58, 237, 0.15)',
+                                            color: 'text.primary'
+                                        }}>
                                             <AlertTitle sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{t('description')}</AlertTitle>
                                             {task.description || '-'}
                                         </Alert>

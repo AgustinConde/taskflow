@@ -226,7 +226,7 @@ const TaskList: React.FC = () => {
                     align="center"
                     gutterBottom
                     sx={theme => ({
-                        color: theme.palette.mode === 'dark' ? theme.palette.primary.contrastText : theme.palette.primary.main,
+                        color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.primary.main,
                         textShadow: theme.palette.mode === 'dark' ? '0 1px 6px rgba(0,0,0,0.25)' : 'none',
                         fontWeight: 700,
                         letterSpacing: 1,

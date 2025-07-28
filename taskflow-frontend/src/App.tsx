@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import CountryFlag from "react-country-flag";
 import TaskList from "./components/TaskList";
 import AuthDialog from "./components/AuthDialog";
-import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress } from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress, useMediaQuery, useTheme } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -17,6 +17,10 @@ const AppContent = () => {
   const { i18n } = useTranslation();
   const { isAuthenticated, user, logout, loading } = useAuth();
   const { t } = useTranslation();
+
+  const currentTheme = useTheme();
+  const isSmallScreen = useMediaQuery(currentTheme.breakpoints.down('sm'));
+  const isMediumScreen = useMediaQuery(currentTheme.breakpoints.down('md'));
 
   const theme = useMemo(() => createTheme({
     palette: {
@@ -150,25 +154,58 @@ const AppContent = () => {
 
   return (
     <>
-      <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 1000 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {t('welcome')}, {user?.username}
-          </Typography>
+      <Box sx={{
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        display: 'flex',
+        gap: 1,
+        zIndex: 1000,
+        maxWidth: { xs: 'calc(100vw - 160px)', sm: 'calc(100vw - 140px)', md: 'calc(100vw - 120px)' }
+      }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          mr: 2,
+          minWidth: 0,
+          overflow: 'hidden',
+          maxWidth: { xs: 140, sm: 180, md: 220, lg: 260 }
+        }}>
+          {!isSmallScreen && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: { xs: 60, sm: 80, md: 120, lg: 140 }
+              }}
+            >
+              {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}`}
+            </Typography>
+          )}
           <Button
             onClick={logout}
             variant="outlined"
             size="small"
-            startIcon={<LogoutIcon />}
-            sx={{ minHeight: 36 }}
+            startIcon={!isSmallScreen ? <LogoutIcon /> : undefined}
+            sx={{
+              minHeight: 36,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              minWidth: isSmallScreen ? 36 : 'auto',
+              px: isSmallScreen ? 0 : undefined
+            }}
           >
-            {t('logout')}
+            {isSmallScreen ? <LogoutIcon /> : t('logout')}
           </Button>
         </Box>
         <IconButton onClick={() => setMode(m => m === 'light' ? 'dark' : 'light')} color="inherit">
           {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
-        <Button onClick={handleLangChange} variant="outlined" color="inherit" size="small" sx={{ fontSize: 22, px: 1.5, minWidth: 44, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Button onClick={handleLangChange} variant="outlined" color="inherit" size="small" sx={{ fontSize: 22, px: 1.5, minWidth: 44, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {i18n.language === 'en' ? (
             <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
           ) : (

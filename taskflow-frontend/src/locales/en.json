@@ -34,5 +34,19 @@
     "info": "Info",
     "yes": "Yes",
     "no": "No",
-    "close": "Close"
+    "close": "Close",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "loginError": "Invalid username or password",
+    "registerError": "Registration failed. Username or email might already exist.",
+    "passwordTooShort": "Password must be at least 6 characters long",
+    "passwordMinLength": "Minimum 6 characters",
+    "loading": "Loading...",
+    "welcome": "Welcome",
+    "authenticationRequired": "Authentication Required",
+    "pleaseLoginToContinue": "Please login to access your tasks"
 }

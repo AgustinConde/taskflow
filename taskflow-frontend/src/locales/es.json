@@ -34,5 +34,19 @@
     "info": "Info",
     "yes": "Sí",
     "no": "No",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "username": "Usuario",
+    "email": "Email",
+    "password": "Contraseña",
+    "loginError": "Usuario o contraseña incorrectos",
+    "registerError": "Error en el registro. El usuario o email ya podrían existir.",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "passwordMinLength": "Mínimo 6 caracteres",
+    "loading": "Cargando...",
+    "welcome": "Bienvenido",
+    "authenticationRequired": "Autenticación Requerida",
+    "pleaseLoginToContinue": "Por favor inicia sesión para acceder a tus tareas"
 }

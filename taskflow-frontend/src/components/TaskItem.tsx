@@ -198,7 +198,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                 />
                             </DialogTitle>
                             <DialogContent>
-                                <DialogContentText>
+                                <DialogContentText component="div">
 
                                     <Stack direction="row" spacing={1} justifyContent={'space-between'}>
                                         <Stack >

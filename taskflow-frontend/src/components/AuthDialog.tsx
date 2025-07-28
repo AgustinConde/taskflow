@@ -102,10 +102,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 3,
-                    minHeight: 500
+            slotProps={{
+                paper: {
+                    sx: {
+                        borderRadius: 3,
+                        minHeight: 500
+                    }
                 }
             }}
         >
@@ -157,17 +159,19 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                             required
                             fullWidth
                             autoComplete="current-password"
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
+                            slotProps={{
+                                input: {
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                edge="end"
+                                            >
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }
                             }}
                         />
                     </Box>
@@ -201,17 +205,19 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                             inputProps={{ minLength: 6, maxLength: 100 }}
                             autoComplete="new-password"
                             helperText={t('passwordMinLength')}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
+                            slotProps={{
+                                input: {
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                edge="end"
+                                            >
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }
                             }}
                         />
                     </Box>

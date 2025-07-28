@@ -373,15 +373,17 @@ const TaskList: React.FC = () => {
                 onClose={handleDeleteCancel}
                 aria-labelledby="delete-dialog-title"
                 aria-describedby="delete-dialog-description"
-                PaperProps={{
-                    sx: {
-                        background: (theme) => theme.palette.mode === 'dark'
-                            ? theme.palette.error.dark + 'ee'
-                            : theme.palette.error.light + 'ee',
-                        color: (theme) => theme.palette.getContrastText(theme.palette.error.main),
-                        borderRadius: 3,
-                        minWidth: 360,
-                        boxShadow: 8,
+                slotProps={{
+                    paper: {
+                        sx: {
+                            background: (theme) => theme.palette.mode === 'dark'
+                                ? theme.palette.error.dark + 'ee'
+                                : theme.palette.error.light + 'ee',
+                            color: (theme) => theme.palette.getContrastText(theme.palette.error.main),
+                            borderRadius: 3,
+                            minWidth: 360,
+                            boxShadow: 8,
+                        }
                     }
                 }}
             >

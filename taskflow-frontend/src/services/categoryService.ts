@@ -1,14 +1,15 @@
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../types/Category';
 import { authService } from './authService';
 
-const API_URL = "http://localhost:5149/api/categories";
+const API_BASE_URL = 'http://localhost:5149/api';
+const API_URL = `${API_BASE_URL}/categories`;
 
 class CategoryService {
-    private getAuthHeaders(): HeadersInit {
+    private getAuthHeaders(): Record<string, string> {
         const token = authService.getToken();
         return {
             'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            ...(token && { Authorization: `Bearer ${token}` }),
         };
     }
 
@@ -50,7 +51,7 @@ class CategoryService {
             throw new Error(`Failed to update category: ${response.statusText}`);
         }
 
-        return response.json();
+        return this.getCategoryById(id);
     }
 
     async deleteCategory(id: number): Promise<void> {

@@ -28,7 +28,6 @@ const TaskList: React.FC = () => {
     const [sortBy, setSortBy] = useState<'custom' | 'dueDate' | 'createdAt'>('custom');
     const [customOrder, setCustomOrder] = useState<number[]>([]);
     const [creating, setCreating] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -103,23 +102,14 @@ const TaskList: React.FC = () => {
         }
     };
 
-    const handleEdit = (task: Task) => {
-        setEditingId(task.id);
-    };
-
     const handleEditSave = async (task: Task) => {
         try {
             await taskService.updateTask(task.id, task);
-            setEditingId(null);
             await fetchTasks();
             showToast(t('taskUpdated'));
         } catch (err: any) {
             showError(err.message || t('errorUpdatingTask'));
         }
-    };
-
-    const handleEditCancel = () => {
-        setEditingId(null);
     };
 
     const handleDeleteCancel = () => {
@@ -371,10 +361,7 @@ const TaskList: React.FC = () => {
                                                 >
                                                     <TaskItem
                                                         task={task}
-                                                        editing={editingId === task.id}
-                                                        onEdit={() => handleEdit(task)}
                                                         onEditSave={handleEditSave}
-                                                        onEditCancel={handleEditCancel}
                                                         onDelete={() => handleDeleteRequest(task.id)}
                                                         onToggleCompleted={() => handleToggleCompleted(task)}
                                                         categories={categories}
@@ -396,10 +383,7 @@ const TaskList: React.FC = () => {
                             <TaskItem
                                 key={task.id}
                                 task={task}
-                                editing={editingId === task.id}
-                                onEdit={() => handleEdit(task)}
                                 onEditSave={handleEditSave}
-                                onEditCancel={handleEditCancel}
                                 onDelete={() => handleDeleteRequest(task.id)}
                                 onToggleCompleted={() => handleToggleCompleted(task)}
                                 categories={categories}

@@ -31,7 +31,7 @@ const AppContent = () => {
     palette: {
       mode,
       primary: {
-        main: mode === 'light' ? '#7C3AED' : '#A78BFA',
+        main: mode === 'light' ? '#7C3AED' : '#886be1ff',
         light: mode === 'light' ? '#A78BFA' : '#C4B5FD',
         dark: mode === 'light' ? '#4C1D95' : '#6D28D9',
         contrastText: '#fff',

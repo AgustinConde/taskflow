@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Paper, Checkbox, Typography, Box, Stack, Button, TextField, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Chip, AlertTitle } from "@mui/material";
+import { Paper, Checkbox, Typography, Box, Stack, Button, TextField, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Chip, AlertTitle, useTheme } from "@mui/material";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -29,6 +29,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
     onToggleCompleted,
 }) => {
     const { t } = useTranslation();
+    const theme = useTheme();
     const [localTitle, setLocalTitle] = React.useState(task.title);
     const [localDescription, setLocalDescription] = React.useState(task.description || "");
     const toLocalInputDateTime = (utcString: string) => {
@@ -60,7 +61,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
     }, [editing, task]);
     let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
     if (task.isCompleted) {
-        bgColor = (theme) => alpha(theme.palette.primary.light, 0.75);
+        bgColor = (theme) => alpha(theme.palette.primary.main, 0.75);
     } else if (task.dueDate) {
         const now = new Date();
         const due = new Date(task.dueDate);
@@ -191,7 +192,19 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                 <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} /> {t('delete')}
                             </MenuItem>
                         </Menu>
-                        <Dialog open={infoOpen} onClose={handleInfoClose} maxWidth="xs" fullWidth>
+                        <Dialog 
+                            open={infoOpen} 
+                            onClose={handleInfoClose} 
+                            maxWidth="xs" 
+                            fullWidth
+                            slotProps={{
+                                paper: {
+                                    sx: theme.palette.mode === 'dark' ? {
+                                        '--Paper-overlay': 'none'
+                                    } : {}
+                                }
+                            }}
+                        >
                             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 {task.title}
                                 <Chip
@@ -224,7 +237,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                     </Stack>
                                     <Box component="span" sx={{ display: 'block', whiteSpace: 'pre-line', textAlign: 'justify', mt: 0.5, mb: 1, wordBreak: 'break-word' }}>
                                         <Alert icon={false} sx={{
-                                            bgcolor: theme => theme.palette.mode === 'light' ? '#dacffc' : 'rgba(124, 58, 237, 0.15)',
+                                            bgcolor: theme => theme.palette.mode === 'light' ? '#dacffc' : theme.palette.primary.main,
                                             color: 'text.primary'
                                         }}>
                                             <AlertTitle sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{t('description')}</AlertTitle>

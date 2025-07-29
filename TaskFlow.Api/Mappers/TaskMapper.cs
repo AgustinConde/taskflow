@@ -15,7 +15,8 @@ namespace TaskFlow.Api.Mappers
                 IsCompleted = task.IsCompleted,
                 CreatedAt = task.CreatedAt,
                 DueDate = task.DueDate,
-                UserId = task.UserId
+                UserId = task.UserId,
+                CategoryId = task.CategoryId
             };
         }
 
@@ -29,7 +30,8 @@ namespace TaskFlow.Api.Mappers
                 IsCompleted = dto.IsCompleted,
                 CreatedAt = dto.CreatedAt,
                 DueDate = dto.DueDate,
-                UserId = dto.UserId
+                UserId = dto.UserId,
+                CategoryId = dto.CategoryId
             };
         }
 

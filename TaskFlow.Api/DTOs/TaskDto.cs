@@ -19,6 +19,7 @@ namespace TaskFlow.Api.DTOs
         public DateTime? DueDate { get; set; }
 
         public int UserId { get; set; }
+        public int? CategoryId { get; set; }
     }
 }
 

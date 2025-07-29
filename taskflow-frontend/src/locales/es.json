@@ -71,8 +71,12 @@
     "errorCreatingCategory": "Error al crear la categoría.",
     "errorUpdatingCategory": "Error al actualizar la categoría.",
     "errorDeletingCategory": "Error al eliminar la categoría.",
+    "errorLoadingCategories": "Error al cargar las categorías.",
     "confirmDeleteCategory": "Confirmar eliminación de categoría",
     "deleteCategoryMsg": "¿Seguro que deseas eliminar esta categoría? Las tareas en esta categoría quedarán sin categorizar.",
     "colorRequired": "El color es requerido",
-    "nameRequired": "El nombre es requerido"
+    "nameRequired": "El nombre es requerido",
+    "edit_task": "Editar tarea",
+    "due_date": "Fecha de vencimiento",
+    "no_category": "Sin categoría"
 }

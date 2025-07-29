@@ -5,4 +5,5 @@ export interface Task {
     isCompleted: boolean;
     createdAt: string;
     dueDate?: string | null;
+    categoryId?: number | null;
 }

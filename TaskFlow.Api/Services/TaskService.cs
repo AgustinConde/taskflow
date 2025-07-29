@@ -56,6 +56,7 @@ namespace TaskFlow.Api.Services
             task.Description = dto.Description;
             task.IsCompleted = dto.IsCompleted;
             task.DueDate = dto.DueDate;
+            task.CategoryId = dto.CategoryId;
 
             _context.SaveChanges();
             return true;

@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import type { Task } from "../types/Task";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Snackbar, Alert, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress } from "@mui/material";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TaskItem from "./TaskItem";
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useTranslation } from "react-i18next";
 import { taskService } from "../services/taskService";
+import { useNotifications } from "../contexts/NotificationContext";
 
 const TaskList: React.FC = () => {
     const theme = useTheme();
@@ -20,13 +21,12 @@ const TaskList: React.FC = () => {
     const [sortBy, setSortBy] = useState<'custom' | 'dueDate' | 'createdAt'>('custom');
     const [customOrder, setCustomOrder] = useState<number[]>([]);
     const [creating, setCreating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [search, setSearch] = useState("");
-    const [toast, setToast] = useState<string | null>(null);
     const { t } = useTranslation();
+    const { showSuccess, showError } = useNotifications();
 
     const fetchTasks = async () => {
         setLoading(true);
@@ -44,21 +44,19 @@ const TaskList: React.FC = () => {
             }
         } catch (err: any) {
             console.error("Error fetching tasks:", err);
-            setError(err.message || 'Failed to fetch tasks');
+            showError(err.message || 'Failed to fetch tasks');
         } finally {
             setLoading(false);
         }
     };
 
     const showToast = (msg: string) => {
-        setToast(msg);
-        setTimeout(() => setToast(null), 2500);
+        showSuccess(msg);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setCreating(true);
-        setError(null);
 
         const localDateTimeToUTCISOString = (local: string) => {
             if (!local) return null;
@@ -81,7 +79,7 @@ const TaskList: React.FC = () => {
             await fetchTasks();
             showToast(t('taskCreated'));
         } catch (err: any) {
-            setError(err.message || t('errorCreatingTask'));
+            showError(err.message || t('errorCreatingTask'));
         } finally {
             setCreating(false);
         }
@@ -92,14 +90,13 @@ const TaskList: React.FC = () => {
     };
 
     const handleEditSave = async (task: Task) => {
-        setError(null);
         try {
             await taskService.updateTask(task.id, task);
             setEditingId(null);
             await fetchTasks();
             showToast(t('taskUpdated'));
         } catch (err: any) {
-            setError(err.message || t('errorUpdatingTask'));
+            showError(err.message || t('errorUpdatingTask'));
         }
     };
 
@@ -122,21 +119,19 @@ const TaskList: React.FC = () => {
     const handleDeleteConfirm = async () => {
         if (deleteId == null) return;
         setDeleteLoading(true);
-        setError(null);
         try {
             await taskService.deleteTask(deleteId);
             setDeleteId(null);
             await fetchTasks();
             showToast(t('taskDeleted'));
         } catch (err: any) {
-            setError(err.message || t('errorDeletingTask'));
+            showError(err.message || t('errorDeletingTask'));
         } finally {
             setDeleteLoading(false);
         }
     };
 
     const handleToggleCompleted = async (task: Task) => {
-        setError(null);
         setTasks(prevTasks => prevTasks.map(t =>
             t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
         ));
@@ -145,7 +140,7 @@ const TaskList: React.FC = () => {
         try {
             await taskService.updateTask(task.id, updatedTask);
         } catch (err: any) {
-            setError(err.message || t('errorUpdatingTask'));
+            showError(err.message || t('errorUpdatingTask'));
             setTasks(prevTasks => prevTasks.map(t =>
                 t.id === task.id ? { ...t, isCompleted: task.isCompleted } : t
             ));
@@ -263,7 +258,6 @@ const TaskList: React.FC = () => {
                         {creating ? t('creating') : t('addTask')}
                     </Button>
                 </Box>
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2, justifyContent: 'center' }}>
                     <TextField
                         label={t('searchTasks')}
@@ -357,16 +351,6 @@ const TaskList: React.FC = () => {
                     ))}
                 </Stack>
             )}
-            <Snackbar
-                open={!!toast}
-                autoHideDuration={2500}
-                onClose={() => setToast(null)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-                <Alert onClose={() => setToast(null)} severity="success" sx={{ width: '100%' }}>
-                    {toast}
-                </Alert>
-            </Snackbar>
 
             <Dialog
                 open={deleteId !== null}

@@ -48,5 +48,8 @@
     "loading": "Cargando...",
     "welcome": "Bienvenido",
     "authenticationRequired": "Autenticación Requerida",
-    "pleaseLoginToContinue": "Por favor inicia sesión para acceder a tus tareas"
+    "pleaseLoginToContinue": "Por favor inicia sesión para acceder a tus tareas",
+    "loginSuccessful": "¡Inicio de sesión exitoso! ¡Bienvenido de vuelta!",
+    "registerSuccessful": "¡Registro exitoso! ¡Bienvenido a TaskFlow!",
+    "logoutSuccessful": "Has cerrado sesión exitosamente"
 }

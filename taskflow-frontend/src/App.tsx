@@ -9,6 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import { useTranslation } from "react-i18next";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { NotificationProvider, useNotifications } from "./contexts/NotificationContext";
 import "./i18n";
 
 const AppContent = () => {
@@ -19,6 +20,7 @@ const AppContent = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { i18n } = useTranslation();
   const { isAuthenticated, user, logout, loading } = useAuth();
+  const { showInfo } = useNotifications();
   const { t } = useTranslation();
 
   const currentTheme = useTheme();
@@ -70,6 +72,11 @@ const AppContent = () => {
 
   const handleLangChange = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'es' : 'en');
+  };
+
+  const handleLogout = () => {
+    logout();
+    showInfo(t('logoutSuccessful'));
   };
 
   const toggleTheme = () => {
@@ -195,7 +202,7 @@ const AppContent = () => {
                 </Typography>
               )}
               <Button
-                onClick={logout}
+                onClick={handleLogout}
                 variant="outlined"
                 size="small"
                 startIcon={!isSmallScreen ? <LogoutIcon /> : undefined}
@@ -233,7 +240,9 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

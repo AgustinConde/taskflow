@@ -48,5 +48,8 @@
     "loading": "Loading...",
     "welcome": "Welcome",
     "authenticationRequired": "Authentication Required",
-    "pleaseLoginToContinue": "Please login to access your tasks"
+    "pleaseLoginToContinue": "Please login to access your tasks",
+    "loginSuccessful": "Login successful! Welcome back!",
+    "registerSuccessful": "Registration successful! Welcome to TaskFlow!",
+    "logoutSuccessful": "You have been logged out successfully"
 }

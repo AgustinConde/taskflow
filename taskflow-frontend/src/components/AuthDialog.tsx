@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAdd, Login } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import type { LoginRequest, RegisterRequest } from '../types/Auth';
 
 interface AuthDialogProps {
@@ -28,6 +29,7 @@ interface AuthDialogProps {
 const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
     const { login, register } = useAuth();
+    const { showSuccess, showError } = useNotifications();
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -69,9 +71,10 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
 
         const success = await login(loginData);
         if (success) {
+            showSuccess(t('loginSuccessful'));
             handleClose();
         } else {
-            setError(t('loginError'));
+            showError(t('loginError'));
         }
         setLoading(false);
     };
@@ -82,16 +85,17 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
         setError(null);
 
         if (registerData.password.length < 6) {
-            setError(t('passwordTooShort'));
+            showError(t('passwordTooShort'));
             setLoading(false);
             return;
         }
 
         const success = await register(registerData);
         if (success) {
+            showSuccess(t('registerSuccessful'));
             handleClose();
         } else {
-            setError(t('registerError'));
+            showError(t('registerError'));
         }
         setLoading(false);
     };

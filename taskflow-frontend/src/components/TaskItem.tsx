@@ -192,15 +192,15 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                 <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} /> {t('delete')}
                             </MenuItem>
                         </Menu>
-                        <Dialog 
-                            open={infoOpen} 
-                            onClose={handleInfoClose} 
-                            maxWidth="xs" 
+                        <Dialog
+                            open={infoOpen}
+                            onClose={handleInfoClose}
+                            maxWidth="xs"
                             fullWidth
                             slotProps={{
                                 paper: {
                                     sx: theme.palette.mode === 'dark' ? {
-                                        '--Paper-overlay': 'none'
+                                        '--Paper-overlay': 'none !important',
                                     } : {}
                                 }
                             }}

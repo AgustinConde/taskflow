@@ -74,7 +74,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
             const data = await categoryService.getCategories();
             setCategories(data);
         } catch (error) {
-            showError(t('errorCreatingCategory'));
+            showError(t('errorLoadingCategories'));
             console.error('Error loading categories:', error);
         } finally {
             setLoading(false);

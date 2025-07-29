@@ -7,6 +7,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { alpha } from "@mui/material/styles";
 import type { Task } from "../types/Task";
+import type { Category } from "../types/Category";
 
 export interface TaskItemProps {
     task: Task;
@@ -16,6 +17,7 @@ export interface TaskItemProps {
     onEditCancel: () => void;
     onDelete: () => void;
     onToggleCompleted: () => void;
+    categories: Category[];
 }
 
 
@@ -27,6 +29,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
     onEditCancel,
     onDelete,
     onToggleCompleted,
+    categories,
 }) => {
     const { t } = useTranslation();
     const theme = useTheme();
@@ -45,18 +48,18 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         return result;
     };
     const [localDueDate, setLocalDueDate] = React.useState(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
-    const [localCreatedAt, setLocalCreatedAt] = React.useState(task.createdAt ? toLocalInputDateTime(task.createdAt) : "");
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [infoOpen, setInfoOpen] = React.useState(false);
     const menuOpen = Boolean(anchorEl);
+
+    const taskCategory = task.categoryId ? categories.find(cat => cat.id === task.categoryId) : null;
 
     React.useEffect(() => {
         if (editing) {
             setLocalTitle(task.title);
             setLocalDescription(task.description || "");
             setLocalDueDate(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
-            setLocalCreatedAt(task.createdAt ? toLocalInputDateTime(task.createdAt) : "");
         }
     }, [editing, task]);
     let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
@@ -153,6 +156,20 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     <Typography variant="subtitle1" sx={{ flex: 1, minWidth: 80, maxWidth: 180 }}>
                         {task.title}
                     </Typography>
+                    {taskCategory && (
+                        <Chip
+                            label={taskCategory.name}
+                            size="small"
+                            sx={{
+                                backgroundColor: taskCategory.color,
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '0.7rem',
+                                height: 20,
+                                mx: 1
+                            }}
+                        />
+                    )}
                     <Typography
                         variant="body2"
                         color="text.secondary"

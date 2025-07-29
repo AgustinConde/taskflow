@@ -2,12 +2,16 @@ import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import type { Task } from "../types/Task";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress } from "@mui/material";
+import type { Category } from "../types/Category";
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress, FormControl, InputLabel } from "@mui/material";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CategoryIcon from '@mui/icons-material/Category';
 import TaskItem from "./TaskItem";
+import CategoryManager from "./CategoryManager";
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useTranslation } from "react-i18next";
 import { taskService } from "../services/taskService";
+import { categoryService } from "../services/categoryService";
 import { useNotifications } from "../contexts/NotificationContext";
 
 const TaskList: React.FC = () => {
@@ -17,6 +21,9 @@ const TaskList: React.FC = () => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("");
+    const [categoryId, setCategoryId] = useState<number | null>(null);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
     const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
     const [sortBy, setSortBy] = useState<'custom' | 'dueDate' | 'createdAt'>('custom');
     const [customOrder, setCustomOrder] = useState<number[]>([]);
@@ -50,6 +57,15 @@ const TaskList: React.FC = () => {
         }
     };
 
+    const fetchCategories = async () => {
+        try {
+            const data = await categoryService.getCategories();
+            setCategories(data);
+        } catch (err: any) {
+            console.error("Error fetching categories:", err);
+        }
+    };
+
     const showToast = (msg: string) => {
         showSuccess(msg);
     };
@@ -69,6 +85,7 @@ const TaskList: React.FC = () => {
             description,
             isCompleted: false,
             dueDate: dueDate ? localDateTimeToUTCISOString(dueDate) : null,
+            categoryId: categoryId,
         };
 
         try {
@@ -76,6 +93,7 @@ const TaskList: React.FC = () => {
             setTitle("");
             setDescription("");
             setDueDate("");
+            setCategoryId(null);
             await fetchTasks();
             showToast(t('taskCreated'));
         } catch (err: any) {
@@ -110,6 +128,7 @@ const TaskList: React.FC = () => {
 
     useEffect(() => {
         fetchTasks();
+        fetchCategories();
     }, []);
 
     const handleDeleteRequest = (id: number) => {
@@ -254,6 +273,33 @@ const TaskList: React.FC = () => {
                         slotProps={{ inputLabel: { shrink: true } }}
                         sx={{ minWidth: 220, maxWidth: 260, flex: '0 1 220px' }}
                     />
+                    <FormControl sx={{ minWidth: 220, maxWidth: 260, flex: '0 1 220px' }}>
+                        <InputLabel>{t('category')}</InputLabel>
+                        <Select
+                            value={categoryId || ''}
+                            onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
+                            label={t('category')}
+                        >
+                            <MenuItem value="">
+                                <em>{t('noCategorySelected')}</em>
+                            </MenuItem>
+                            {categories.map((category) => (
+                                <MenuItem key={category.id} value={category.id}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box
+                                            sx={{
+                                                width: 12,
+                                                height: 12,
+                                                backgroundColor: category.color,
+                                                borderRadius: '50%'
+                                            }}
+                                        />
+                                        {category.name}
+                                    </Box>
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <Button type="submit" variant="contained" color="primary" disabled={creating || !title} sx={{ minWidth: 150, maxWidth: 180, flex: '0 1 150px', whiteSpace: 'nowrap' }}>
                         {creating ? t('creating') : t('addTask')}
                     </Button>
@@ -266,6 +312,15 @@ const TaskList: React.FC = () => {
                         size="small"
                         sx={{ minWidth: 200, maxWidth: 220, height: 40, '.MuiInputBase-root': { height: 40 } }}
                     />
+                    <Button
+                        variant="outlined"
+                        startIcon={<CategoryIcon />}
+                        onClick={() => setCategoryManagerOpen(true)}
+                        size="small"
+                        sx={{ height: 40, whiteSpace: 'nowrap' }}
+                    >
+                        {t('manageCategories')}
+                    </Button>
                     <Box>
                         <Typography variant="body2" component="span" sx={{ mr: 1 }}>{t('filter')}</Typography>
                         <Select
@@ -322,6 +377,7 @@ const TaskList: React.FC = () => {
                                                         onEditCancel={handleEditCancel}
                                                         onDelete={() => handleDeleteRequest(task.id)}
                                                         onToggleCompleted={() => handleToggleCompleted(task)}
+                                                        categories={categories}
                                                     />
                                                 </div>
                                             )}
@@ -346,6 +402,7 @@ const TaskList: React.FC = () => {
                                 onEditCancel={handleEditCancel}
                                 onDelete={() => handleDeleteRequest(task.id)}
                                 onToggleCompleted={() => handleToggleCompleted(task)}
+                                categories={categories}
                             />
                         ) : null
                     ))}
@@ -391,6 +448,13 @@ const TaskList: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Category Manager Dialog */}
+            <CategoryManager
+                open={categoryManagerOpen}
+                onClose={() => setCategoryManagerOpen(false)}
+                onCategoriesChange={fetchCategories}
+            />
         </Box>
     );
 };

@@ -5,6 +5,7 @@ export interface Category {
     description?: string;
     createdAt: string;
     updatedAt: string;
+    userId: number;
 }
 
 export interface CreateCategoryRequest {

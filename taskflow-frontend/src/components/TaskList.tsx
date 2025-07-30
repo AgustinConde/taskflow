@@ -3,12 +3,11 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import type { Task } from "../types/Task";
 import type { Category } from "../types/Category";
-import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress, FormControl, InputLabel } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography, Select, MenuItem, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, useTheme, CircularProgress, FormControl, InputLabel } from "@mui/material";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CategoryIcon from '@mui/icons-material/Category';
 import TaskItem from "./TaskItem";
 import CategoryManager from "./CategoryManager";
-import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useTranslation } from "react-i18next";
 import { taskService } from "../services/taskService";
 import { categoryService } from "../services/categoryService";
@@ -24,8 +23,8 @@ const TaskList: React.FC = () => {
     const [categoryId, setCategoryId] = useState<number | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
-    const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
-    const [sortBy, setSortBy] = useState<'custom' | 'dueDate' | 'createdAt'>('custom');
+    const [filter, setFilter] = useState<'all' | 'completed' | 'pending' | number | 'none'>('all');
+    const [sortBy, setSortBy] = useState<'custom' | 'dueDate' | 'createdAt' | 'category'>('custom');
     const [customOrder, setCustomOrder] = useState<number[]>([]);
     const [creating, setCreating] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -159,13 +158,21 @@ const TaskList: React.FC = () => {
     let filteredTasks = tasks
         .filter(task => {
             if (search.trim() !== "") {
-                const text = (task.title + " " + (task.description || "")).toLowerCase();
+                const categoryName = task.categoryId ?
+                    categories.find(cat => cat.id === task.categoryId)?.name || "" :
+                    "";
+                const text = (task.title + " " + (task.description || "") + " " + categoryName).toLowerCase();
                 if (!text.includes(search.toLowerCase())) return false;
             }
+
             if (filter === 'completed') return task.isCompleted;
             if (filter === 'pending') return !task.isCompleted;
+            if (filter === 'none') return task.categoryId === null || task.categoryId === undefined;
+            if (typeof filter === 'number') return task.categoryId === filter;
+
             return true;
         });
+
     if (sortBy === 'dueDate') {
         filteredTasks = [...filteredTasks].sort((a, b) => {
             if (!a.dueDate && !b.dueDate) return 0;
@@ -175,6 +182,16 @@ const TaskList: React.FC = () => {
         });
     } else if (sortBy === 'createdAt') {
         filteredTasks = [...filteredTasks].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } else if (sortBy === 'category') {
+        filteredTasks = [...filteredTasks].sort((a, b) => {
+            const aCategoryName = a.categoryId ?
+                categories.find(cat => cat.id === a.categoryId)?.name || "zzzz" :
+                "zzzz";
+            const bCategoryName = b.categoryId ?
+                categories.find(cat => cat.id === b.categoryId)?.name || "zzzz" :
+                "zzzz";
+            return aCategoryName.localeCompare(bCategoryName);
+        });
     } else if (sortBy === 'custom') {
         filteredTasks = [...filteredTasks].sort((a, b) => customOrder.indexOf(a.id) - customOrder.indexOf(b.id));
     }
@@ -197,33 +214,7 @@ const TaskList: React.FC = () => {
     };
 
     return (
-        <Box sx={{ maxWidth: 900, margin: "0 auto", padding: 2 }}>
-            <AppBar
-                position="static"
-                elevation={3}
-                sx={{
-                    borderRadius: 2,
-                    mb: 4,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.primary.main} 60%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: 4,
-                }}
-            >
-                <Toolbar sx={{ justifyContent: 'center', minHeight: 72 }}>
-                    <ChecklistIcon sx={{ fontSize: 38, mr: 2, color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.18))' }} />
-                    <Typography
-                        variant="h4"
-                        fontWeight={800}
-                        letterSpacing={2}
-                        sx={{
-                            color: 'white',
-                            textShadow: '0 2px 8px rgba(0,0,0,0.10)',
-                            fontFamily: 'Montserrat, Roboto, Arial',
-                        }}
-                    >
-                        TaskFlow
-                    </Typography>
-                </Toolbar>
-            </AppBar>
+        <Box sx={{ maxWidth: 900, margin: "0 auto", padding: 2, position: 'relative' }}>
             <Paper elevation={3} sx={{ mb: 4, p: 3, backgroundColor: theme => theme.palette.primary.light + '22', borderRadius: 3 }}>
                 <Typography
                     variant="h6"
@@ -294,50 +285,116 @@ const TaskList: React.FC = () => {
                         {creating ? t('creating') : t('addTask')}
                     </Button>
                 </Box>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2, justifyContent: 'center' }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2,
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    justifyContent: 'center',
+                    mb: 2,
+                    flexWrap: 'wrap'
+                }}>
                     <TextField
                         label={t('searchTasks')}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         size="small"
-                        sx={{ minWidth: 200, maxWidth: 220, height: 40, '.MuiInputBase-root': { height: 40 } }}
+                        sx={{
+                            minWidth: { xs: '100%', sm: 200 },
+                            maxWidth: { xs: '100%', sm: 220 },
+                            height: 40,
+                            '.MuiInputBase-root': { height: 40 },
+                            order: { xs: 1, sm: 1 }
+                        }}
                     />
                     <Button
                         variant="outlined"
                         startIcon={<CategoryIcon />}
                         onClick={() => setCategoryManagerOpen(true)}
                         size="small"
-                        sx={{ height: 40, whiteSpace: 'nowrap' }}
+                        sx={{
+                            height: 40,
+                            whiteSpace: 'nowrap',
+                            minWidth: 'fit-content',
+                            order: { xs: 4, sm: 2 }
+                        }}
                     >
                         {t('manageCategories')}
                     </Button>
-                    <Box>
-                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>{t('filter')}</Typography>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        minWidth: 'fit-content',
+                        order: { xs: 2, sm: 3 }
+                    }}>
+                        <Typography
+                            variant="body2"
+                            component="span"
+                            sx={{
+                                mr: 1,
+                                whiteSpace: 'nowrap',
+                                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                            }}
+                        >
+                            {t('filter')}
+                        </Typography>
                         <Select
                             value={filter}
                             onChange={e => setFilter(e.target.value as any)}
                             size="small"
-                            sx={{ minWidth: 120 }}
+                            sx={{ minWidth: { xs: 120, sm: 140 } }}
                         >
                             <MenuItem value="all">{t('all')}</MenuItem>
                             <MenuItem value="completed">{t('completed')}</MenuItem>
                             <MenuItem value="pending">{t('pending')}</MenuItem>
+                            <MenuItem value="none">{t('noCategory')}</MenuItem>
+                            {categories.map((category) => (
+                                <MenuItem key={category.id} value={category.id}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box
+                                            sx={{
+                                                width: 8,
+                                                height: 8,
+                                                backgroundColor: category.color,
+                                                borderRadius: '50%'
+                                            }}
+                                        />
+                                        {category.name}
+                                    </Box>
+                                </MenuItem>
+                            ))}
                         </Select>
                     </Box>
-                    <Box>
-                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>{t('sortBy')}</Typography>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        minWidth: 'fit-content',
+                        order: { xs: 3, sm: 4 }
+                    }}>
+                        <Typography
+                            variant="body2"
+                            component="span"
+                            sx={{
+                                mr: 1,
+                                whiteSpace: 'nowrap',
+                                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                            }}
+                        >
+                            {t('sortBy')}
+                        </Typography>
                         <Select
                             value={sortBy}
                             onChange={e => setSortBy(e.target.value as any)}
                             size="small"
-                            sx={{ minWidth: 120 }}
+                            sx={{ minWidth: { xs: 100, sm: 120 } }}
                         >
                             <MenuItem value="custom">{t('custom')}</MenuItem>
                             <MenuItem value="dueDate">{t('dueDateSort')}</MenuItem>
                             <MenuItem value="createdAt">{t('createdAt')}</MenuItem>
+                            <MenuItem value="category">{t('category')}</MenuItem>
                         </Select>
                     </Box>
-                </Stack>
+                </Box>
             </Paper>
             {loading ? <Box width="100%" display="flex" justifyContent="center" alignItems="center"> <CircularProgress size="3rem" /></Box> : filteredTasks.length === 0 ? (
                 <Typography align="center" color="text.secondary">{t('noTasks')}</Typography>
@@ -433,7 +490,6 @@ const TaskList: React.FC = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Category Manager Dialog */}
             <CategoryManager
                 open={categoryManagerOpen}
                 onClose={() => setCategoryManagerOpen(false)}

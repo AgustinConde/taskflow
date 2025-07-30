@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import CountryFlag from "react-country-flag";
 import TaskList from "./components/TaskList";
 import AuthDialog from "./components/AuthDialog";
-import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress, useMediaQuery, useTheme } from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress, useMediaQuery, useTheme, AppBar, Toolbar } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useTranslation } from "react-i18next";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { NotificationProvider, useNotifications } from "./contexts/NotificationContext";
@@ -26,6 +27,13 @@ const AppContent = () => {
   const currentTheme = useTheme();
   const isSmallScreen = useMediaQuery(currentTheme.breakpoints.down('sm'));
   const isMediumScreen = useMediaQuery(currentTheme.breakpoints.down('md'));
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('selectedLanguage');
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'es')) {
+      i18n.changeLanguage(savedLanguage);
+    }
+  }, [i18n]);
 
   const theme = useMemo(() => createTheme({
     palette: {
@@ -71,7 +79,9 @@ const AppContent = () => {
   }), [mode]);
 
   const handleLangChange = () => {
-    i18n.changeLanguage(i18n.language === 'en' ? 'es' : 'en');
+    const newLanguage = i18n.language === 'en' ? 'es' : 'en';
+    i18n.changeLanguage(newLanguage);
+    localStorage.setItem('selectedLanguage', newLanguage);
   };
 
   const handleLogout = () => {
@@ -169,66 +179,141 @@ const AppContent = () => {
         </>
       ) : (
         <>
-          <Box sx={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            display: 'flex',
-            gap: 1,
-            zIndex: 1000,
-            maxWidth: { xs: 'calc(100vw - 160px)', sm: 'calc(100vw - 140px)', md: 'calc(100vw - 120px)' }
-          }}>
-            <Box sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mr: 2,
-              minWidth: 0,
-              overflow: 'hidden',
-              maxWidth: { xs: 140, sm: 180, md: 220, lg: 260 }
-            }}>
-              {!isSmallScreen && (
+          <AppBar
+            position="fixed"
+            elevation={3}
+            sx={{
+              background: theme => `linear-gradient(90deg, ${theme.palette.primary.main} 60%, ${theme.palette.secondary.main} 100%)`,
+              boxShadow: '0 2px 12px rgba(124, 58, 237, 0.25)',
+              backdropFilter: 'blur(8px)'
+            }}
+          >
+            <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 }, minHeight: { xs: 56, sm: 64 } }}>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 1, sm: 1.5 }
+              }}>
+                <ChecklistIcon sx={{
+                  fontSize: { xs: 28, sm: 32 },
+                  color: 'white',
+                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))'
+                }} />
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant="h5"
+                  fontWeight={700}
+                  letterSpacing={1}
                   sx={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: { xs: 60, sm: 80, md: 120, lg: 140 }
+                    color: 'white',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    fontFamily: 'Inter, Roboto, Arial',
+                    fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}`}
+                  TaskFlow
                 </Typography>
-              )}
-              <Button
-                onClick={handleLogout}
-                variant="outlined"
-                size="small"
-                startIcon={!isSmallScreen ? <LogoutIcon /> : undefined}
-                sx={{
-                  minHeight: 36,
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  minWidth: isSmallScreen ? 36 : 'auto',
-                  px: isSmallScreen ? 0 : undefined
-                }}
-              >
-                {isSmallScreen ? <LogoutIcon /> : t('logout')}
-              </Button>
-            </Box>
-            <IconButton onClick={toggleTheme} color="inherit">
-              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-            <Button onClick={handleLangChange} variant="outlined" color="inherit" size="small" sx={{ fontSize: 22, px: 1.5, minWidth: 44, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {i18n.language === 'en' ? (
-                <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
-              ) : (
-                <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
-              )}
-            </Button>
-          </Box>
-          <Box sx={{ minHeight: '100vh', width: '100vw', display: 'block' }}>
+              </Box>
+
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 0.5, sm: 1 }
+              }}>
+                {!isSmallScreen && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'rgba(255,255,255,0.85)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: { sm: 100, md: 140, lg: 180 },
+                      mr: 1.5,
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}`}
+                  </Typography>
+                )}
+
+                <Button
+                  onClick={handleLogout}
+                  variant="text"
+                  size="small"
+                  startIcon={!isSmallScreen ? <LogoutIcon sx={{ fontSize: 18 }} /> : undefined}
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 2,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      border: '1px solid rgba(255,255,255,0.4)'
+                    },
+                    minHeight: 36,
+                    px: isSmallScreen ? 1 : 2,
+                    minWidth: isSmallScreen ? 36 : 'auto',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {isSmallScreen ? <LogoutIcon sx={{ fontSize: 18 }} /> : t('logout')}
+                </Button>
+
+                <IconButton
+                  onClick={toggleTheme}
+                  size="small"
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 2,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      border: '1px solid rgba(255,255,255,0.4)'
+                    },
+                    width: 36,
+                    height: 36
+                  }}
+                >
+                  {mode === 'dark' ? <Brightness7Icon sx={{ fontSize: 18 }} /> : <Brightness4Icon sx={{ fontSize: 18 }} />}
+                </IconButton>
+
+                <Button
+                  onClick={handleLangChange}
+                  variant="text"
+                  size="small"
+                  sx={{
+                    minWidth: 36,
+                    minHeight: 36,
+                    px: 1,
+                    color: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 2,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      border: '1px solid rgba(255,255,255,0.4)'
+                    }
+                  }}
+                >
+                  {i18n.language === 'en' ? (
+                    <CountryFlag countryCode="US" svg style={{ width: 20, height: 15 }} title="English" />
+                  ) : (
+                    <CountryFlag countryCode="AR" svg style={{ width: 20, height: 15 }} title="Español" />
+                  )}
+                </Button>
+              </Box>
+            </Toolbar>
+          </AppBar>
+
+          <Box sx={{
+            minHeight: '100vh',
+            pt: { xs: 8, sm: 9 },
+            px: { xs: 2, sm: 3 },
+            maxWidth: 1200,
+            margin: '0 auto'
+          }}>
             <TaskList />
           </Box>
         </>

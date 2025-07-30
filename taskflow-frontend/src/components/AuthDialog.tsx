@@ -33,7 +33,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false);
+    const [showLoginPassword, setShowLoginPassword] = useState(false);
+    const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
     const [loginData, setLoginData] = useState<LoginRequest>({
         username: '',
@@ -51,7 +52,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
         setRegisterData({ username: '', email: '', password: '' });
         setError(null);
         setLoading(false);
-        setShowPassword(false);
+        setShowLoginPassword(false);
+        setShowRegisterPassword(false);
     };
 
     const handleClose = () => {
@@ -157,21 +159,32 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                         />
                         <TextField
                             label={t('password')}
-                            type={showPassword ? 'text' : 'password'}
+                            type={showLoginPassword ? 'text' : 'password'}
                             value={loginData.password}
                             onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
                             required
                             fullWidth
                             autoComplete="current-password"
+                            sx={{
+                                '& input[type="password"]::-ms-reveal': {
+                                    display: 'none'
+                                },
+                                '& input[type="password"]::-webkit-credentials-auto-fill-button': {
+                                    display: 'none !important'
+                                },
+                                '& input[type="password"]::-webkit-password-toggle-button': {
+                                    display: 'none'
+                                }
+                            }}
                             slotProps={{
                                 input: {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton
-                                                onClick={() => setShowPassword(!showPassword)}
+                                                onClick={() => setShowLoginPassword(!showLoginPassword)}
                                                 edge="end"
                                             >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                {showLoginPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     )
@@ -201,7 +214,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                         />
                         <TextField
                             label={t('password')}
-                            type={showPassword ? 'text' : 'password'}
+                            type={showRegisterPassword ? 'text' : 'password'}
                             value={registerData.password}
                             onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
                             required
@@ -209,15 +222,26 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                             inputProps={{ minLength: 6, maxLength: 100 }}
                             autoComplete="new-password"
                             helperText={t('passwordMinLength')}
+                            sx={{
+                                '& input[type="password"]::-ms-reveal': {
+                                    display: 'none'
+                                },
+                                '& input[type="password"]::-webkit-credentials-auto-fill-button': {
+                                    display: 'none !important'
+                                },
+                                '& input[type="password"]::-webkit-password-toggle-button': {
+                                    display: 'none'
+                                }
+                            }}
                             slotProps={{
                                 input: {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton
-                                                onClick={() => setShowPassword(!showPassword)}
+                                                onClick={() => setShowRegisterPassword(!showRegisterPassword)}
                                                 edge="end"
                                             >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                {showRegisterPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     )

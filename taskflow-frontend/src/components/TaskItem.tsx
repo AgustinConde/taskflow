@@ -22,7 +22,6 @@ export interface TaskItemProps {
     categories: Category[];
 }
 
-
 const TaskItem: React.FC<TaskItemProps> = memo(({
     task,
     onEditSave,
@@ -62,6 +61,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         setLocalDueDate(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
         setLocalCategoryId(task.categoryId || undefined);
     }, [task]);
+
     let bgColor: ((theme: import('@mui/material/styles').Theme) => string) | undefined = undefined;
     if (task.isCompleted) {
         bgColor = (theme) => alpha(theme.palette.primary.main, 0.6);
@@ -212,7 +212,6 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText component="div">
-
                             <Stack direction="row" spacing={1} justifyContent={'space-between'}>
                                 <Stack >
                                     <Typography fontSize='0.7rem' fontWeight={600}>{t('created')}</Typography>
@@ -231,7 +230,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                     </Typography>
                                 </Stack>
                             </Stack>
-                            <Box component="span" sx={{ display: 'block', whiteSpace: 'pre-line', textAlign: 'justify', mt: 0.5, mb: 1, wordBreak: 'break-word' }}>
+                            <Box component="span" sx={{ display: 'block', whiteSpace: 'pre-line', textAlign: 'justify', mt: 2, mb: 0, wordBreak: 'break-word' }}>
                                 <Alert icon={false} sx={{
                                     bgcolor: theme => theme.palette.mode === 'light' ? '#dacffc' : theme.palette.primary.main,
                                     color: 'text.primary'
@@ -242,7 +241,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                             </Box>
                         </DialogContentText>
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions sx={{ pt: 1, pb: 2 }}>
                         <Button
                             onClick={handleInfoClose}
                             autoFocus
@@ -262,22 +261,69 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     fullWidth
                     slotProps={{
                         paper: {
-                            sx: theme.palette.mode === 'dark' ? {
-                                '--Paper-overlay': 'none !important',
-                            } : {}
+                            sx: {
+                                borderRadius: 3,
+                                background: theme => theme.palette.mode === 'dark'
+                                    ? `linear-gradient(145deg, ${theme.palette.background.paper})`
+                                    : `linear-gradient(145deg, ${theme.palette.background.paper})`,
+                                boxShadow: 12,
+                                minHeight: 400,
+                                overflow: 'visible',
+                                position: 'relative',
+                                ...(theme.palette.mode === 'dark' ? {
+                                    '--Paper-overlay': 'none !important',
+                                } : {})
+                            }
                         }
                     }}
                 >
-                    <DialogTitle>{t('edit_task')}</DialogTitle>
-                    <DialogContent>
-                        <Stack spacing={2} sx={{ mt: 1 }}>
+                    <DialogTitle
+                        sx={{
+                            textAlign: 'center',
+                            background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                            color: 'white',
+                            fontWeight: 700,
+                            fontSize: '1.4rem',
+                            py: 2.5,
+                            textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                            borderRadius: '12px 12px 0 0',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%)',
+                                pointerEvents: 'none'
+                            }
+                        }}
+                    >
+                        <EditOutlinedIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        {t('edit_task')}
+                    </DialogTitle>
+                    <DialogContent sx={{ px: 3, py: 3 }}>
+                        <Stack spacing={3} sx={{ mt: 2 }}>
                             <TextField
                                 label={t('title')}
                                 value={localTitle}
                                 onChange={(e) => setLocalTitle(e.target.value)}
                                 fullWidth
                                 variant="outlined"
-                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        background: theme => alpha(theme.palette.background.paper, 0.8),
+                                        '&:hover': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                                        },
+                                        '&.Mui-focused': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`
+                                        }
+                                    }
+                                }}
                             />
                             <TextField
                                 label={t('description')}
@@ -287,7 +333,18 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                 multiline
                                 rows={3}
                                 variant="outlined"
-                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        background: theme => alpha(theme.palette.background.paper, 0.8),
+                                        '&:hover': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                                        },
+                                        '&.Mui-focused': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`
+                                        }
+                                    }
+                                }}
                             />
                             <TextField
                                 label={t('due_date')}
@@ -296,15 +353,36 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                                 onChange={(e) => setLocalDueDate(e.target.value)}
                                 fullWidth
                                 variant="outlined"
-                                size="small"
                                 InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        background: theme => alpha(theme.palette.background.paper, 0.8),
+                                        '&:hover': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                                        },
+                                        '&.Mui-focused': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`
+                                        }
+                                    }
+                                }}
                             />
-                            <FormControl fullWidth size="small">
+                            <FormControl fullWidth>
                                 <InputLabel>{t('category')}</InputLabel>
                                 <Select
                                     value={localCategoryId || ''}
                                     onChange={(e) => setLocalCategoryId(e.target.value ? Number(e.target.value) : undefined)}
                                     label={t('category')}
+                                    sx={{
+                                        borderRadius: 2,
+                                        background: theme => alpha(theme.palette.background.paper, 0.8),
+                                        '&:hover': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                                        },
+                                        '&.Mui-focused': {
+                                            boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`
+                                        }
+                                    }}
                                 >
                                     <MenuItem value="">
                                         <em>{t('no_category')}</em>
@@ -328,27 +406,44 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                             </FormControl>
                         </Stack>
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions sx={{ px: 3, py: 2.5, gap: 1, justifyContent: 'center' }}>
                         <Button
                             onClick={() => setEditModalOpen(false)}
-                            sx={theme => ({
-                                color: theme.palette.text.secondary,
-                                fontWeight: 600
-                            })}
+                            variant="outlined"
+                            sx={{
+                                borderRadius: 2,
+                                px: 3,
+                                py: 1,
+                                borderColor: theme => theme.palette.grey[400],
+                                color: theme => theme.palette.text.secondary,
+                                fontWeight: 600,
+                                minWidth: 100,
+                                '&:hover': {
+                                    borderColor: theme => theme.palette.grey[600],
+                                    background: theme => alpha(theme.palette.grey[500], 0.1)
+                                }
+                            }}
                         >
                             {t('cancel')}
                         </Button>
                         <Button
                             onClick={handleEditSave}
                             variant="contained"
-                            sx={theme => ({
-                                bgcolor: theme.palette.primary.main,
+                            sx={{
+                                borderRadius: 2,
+                                px: 3,
+                                py: 1,
+                                background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                                 color: 'white',
                                 fontWeight: 600,
+                                minWidth: 100,
+                                boxShadow: 3,
                                 '&:hover': {
-                                    bgcolor: theme.palette.primary.dark,
+                                    background: theme => `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+                                    boxShadow: 6,
+                                    transform: 'translateY(-1px)'
                                 }
-                            })}
+                            }}
                         >
                             {t('save')}
                         </Button>

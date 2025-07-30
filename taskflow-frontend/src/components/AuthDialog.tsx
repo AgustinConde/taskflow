@@ -191,6 +191,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                                 }
                             }}
                         />
+                        <button type="submit" style={{ display: 'none' }} />
                     </Box>
                 ) : (
                     <Box component="form" onSubmit={handleRegister} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -200,7 +201,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                             onChange={(e) => setRegisterData(prev => ({ ...prev, username: e.target.value }))}
                             required
                             fullWidth
-                            inputProps={{ minLength: 3, maxLength: 50 }}
+                            slotProps={{ htmlInput: { minLength: 3, maxLength: 50 } }}
                             autoComplete="username"
                         />
                         <TextField
@@ -219,7 +220,6 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                             onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
                             required
                             fullWidth
-                            inputProps={{ minLength: 6, maxLength: 100 }}
                             autoComplete="new-password"
                             helperText={t('passwordMinLength')}
                             sx={{
@@ -234,6 +234,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                                 }
                             }}
                             slotProps={{
+                                htmlInput: { minLength: 6, maxLength: 100 },
                                 input: {
                                     endAdornment: (
                                         <InputAdornment position="end">
@@ -248,6 +249,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                                 }
                             }}
                         />
+                        <button type="submit" style={{ display: 'none' }} />
                     </Box>
                 )}
             </DialogContent>
@@ -257,7 +259,6 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                     {t('cancel')}
                 </Button>
                 <Button
-                    type="submit"
                     variant="contained"
                     disabled={loading}
                     onClick={activeTab === 0 ? handleLogin : handleRegister}

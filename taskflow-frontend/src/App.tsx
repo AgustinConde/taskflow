@@ -1,16 +1,23 @@
 import { useMemo, useState, useEffect } from "react";
 import CountryFlag from "react-country-flag";
 import TaskList from "./components/TaskList";
+import Dashboard from "./components/Dashboard";
 import AuthDialog from "./components/AuthDialog";
-import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress, useMediaQuery, useTheme, AppBar, Toolbar } from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress, useMediaQuery, useTheme, AppBar, Toolbar, Tab, Tabs } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import ChecklistIcon from '@mui/icons-material/Checklist';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TaskIcon from '@mui/icons-material/Task';
 import { useTranslation } from "react-i18next";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { NotificationProvider, useNotifications } from "./contexts/NotificationContext";
+import type { Task } from "./types/Task";
+import type { Category } from "./types/Category";
+import { taskService } from "./services/taskService";
+import { categoryService } from "./services/categoryService";
 import "./i18n";
 
 const AppContent = () => {
@@ -19,6 +26,10 @@ const AppContent = () => {
     return (savedMode as 'light' | 'dark') || 'light';
   });
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'tasks' | 'dashboard'>('tasks');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const { i18n } = useTranslation();
   const { isAuthenticated, user, logout, loading } = useAuth();
   const { showInfo } = useNotifications();
@@ -34,6 +45,28 @@ const AppContent = () => {
       i18n.changeLanguage(savedLanguage);
     }
   }, [i18n]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchData = async () => {
+    try {
+      setDataLoading(true);
+      const [tasksData, categoriesData] = await Promise.all([
+        taskService.getTasks(),
+        categoryService.getCategories()
+      ]);
+      setTasks(tasksData);
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   const theme = useMemo(() => createTheme({
     palette: {
@@ -192,27 +225,75 @@ const AppContent = () => {
               <Box sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: { xs: 1, sm: 1.5 }
+                gap: { xs: 2, sm: 3 }
               }}>
-                <ChecklistIcon sx={{
-                  fontSize: { xs: 28, sm: 32 },
-                  color: 'white',
-                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))'
-                }} />
-                <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  letterSpacing={1}
-                  sx={{
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: { xs: 1, sm: 1.5 }
+                }}>
+                  <ChecklistIcon sx={{
+                    fontSize: { xs: 28, sm: 32 },
                     color: 'white',
-                    textShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    fontFamily: 'Inter, Roboto, Arial',
-                    fontSize: { xs: '1.3rem', sm: '1.5rem' },
-                    whiteSpace: 'nowrap'
+                    filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))'
+                  }} />
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    letterSpacing={1}
+                    sx={{
+                      color: 'white',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      fontFamily: 'Inter, Roboto, Arial',
+                      fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    TaskFlow
+                  </Typography>
+                </Box>
+
+                <Tabs
+                  value={currentTab}
+                  onChange={(_, newValue) => setCurrentTab(newValue)}
+                  textColor="inherit"
+                  TabIndicatorProps={{
+                    style: {
+                      backgroundColor: 'white',
+                      height: 3,
+                      borderRadius: '2px 2px 0 0'
+                    }
+                  }}
+                  sx={{
+                    '& .MuiTab-root': {
+                      color: 'rgba(255,255,255,0.7)',
+                      minHeight: 48,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      '&.Mui-selected': {
+                        color: 'white',
+                      },
+                      '&:hover': {
+                        color: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)'
+                      }
+                    }
                   }}
                 >
-                  TaskFlow
-                </Typography>
+                  <Tab
+                    value="tasks"
+                    label={t('tasks')}
+                    icon={<TaskIcon />}
+                    iconPosition="start"
+                  />
+                  <Tab
+                    value="dashboard"
+                    label={t('dashboard')}
+                    icon={<DashboardIcon />}
+                    iconPosition="start"
+                  />
+                </Tabs>
               </Box>
 
               <Box sx={{
@@ -310,11 +391,26 @@ const AppContent = () => {
           <Box sx={{
             minHeight: '100vh',
             pt: { xs: 8, sm: 9 },
-            px: { xs: 2, sm: 3 },
-            maxWidth: 1200,
-            margin: '0 auto'
+            backgroundColor: 'background.default'
           }}>
-            <TaskList />
+            {dataLoading ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '50vh'
+                }}
+              >
+                <CircularProgress size={60} />
+              </Box>
+            ) : currentTab === 'dashboard' ? (
+              <Dashboard tasks={tasks} categories={categories} />
+            ) : (
+              <Box sx={{ px: { xs: 2, sm: 3 }, maxWidth: 1200, margin: '0 auto' }}>
+                <TaskList />
+              </Box>
+            )}
           </Box>
         </>
       )}

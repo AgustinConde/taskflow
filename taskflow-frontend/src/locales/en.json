@@ -78,5 +78,7 @@
     "nameRequired": "Name is required",
     "edit_task": "Edit Task",
     "due_date": "Due Date",
-    "no_category": "No category"
+    "no_category": "No category",
+    "allCategories": "All Categories",
+    "noCategory": "No Category"
 }

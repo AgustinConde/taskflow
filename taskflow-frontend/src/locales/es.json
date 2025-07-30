@@ -78,5 +78,7 @@
     "nameRequired": "El nombre es requerido",
     "edit_task": "Editar tarea",
     "due_date": "Fecha de vencimiento",
-    "no_category": "Sin categoría"
+    "no_category": "Sin categoría",
+    "allCategories": "Todas las categorías",
+    "noCategory": "Sin categoría"
 }

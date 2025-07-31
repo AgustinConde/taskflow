@@ -1,15 +1,15 @@
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
-import TaskListHeader from './tasks/TaskListHeader';
-import TaskGrid from './tasks/TaskGrid';
-import DeleteConfirmDialog from './tasks/DeleteConfirmDialog';
-import CategoryManager from './CategoryManager';
+import TaskListHeader from './TaskListHeader';
+import TaskGrid from './TaskGrid';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
+import CategoryManager from '../CategoryManager';
 
-import { useTaskManagement } from './tasks/hooks/useTaskManagement';
-import { useTaskFiltering } from './tasks/hooks/useTaskFiltering';
-import { useTaskSorting } from './tasks/hooks/useTaskSorting';
-import { useCategoryManagement } from './tasks/hooks/useCategoryManagement';
+import { useTaskManagement } from './hooks/useTaskManagement';
+import { useTaskFiltering } from './hooks/useTaskFiltering';
+import { useTaskSorting } from './hooks/useTaskSorting';
+import { useCategoryManagement } from './hooks/useCategoryManagement';
 
 const TaskList = () => {
     const { t } = useTranslation();

@@ -1,7 +1,7 @@
 import { Stack } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import TaskItem from '../TaskItem';
+import TaskItem from '../task-item';
 import type { Task } from '../../types/Task';
 import type { Category } from '../../types/Category';
 

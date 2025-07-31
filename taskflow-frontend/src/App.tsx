@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import CountryFlag from "react-country-flag";
 import TaskList from "./components/task-list/TaskList";
-import Dashboard from "./components/Dashboard";
+import { Dashboard } from "./components/dashboard";
 import { AuthDialog } from "./components/auth-dialog";
 import { ThemeProvider, createTheme, CssBaseline, IconButton, Box, Button, Typography, Paper, CircularProgress, useMediaQuery, useTheme, AppBar, Toolbar, Tab, Tabs } from "@mui/material";
 import Brightness4Icon from '@mui/icons-material/Brightness4';

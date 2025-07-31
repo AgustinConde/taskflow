@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import TaskListHeader from './TaskListHeader';
 import TaskGrid from './TaskGrid';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
-import CategoryManager from '../CategoryManager';
+import CategoryManager from '../category-manager';
 
 import { useTaskManagement } from './hooks/useTaskManagement';
 import { useTaskFiltering } from './hooks/useTaskFiltering';

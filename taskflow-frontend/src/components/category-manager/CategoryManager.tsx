@@ -107,8 +107,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
             slotProps={{
                 paper: {
                     sx: {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         minHeight: 500,
+                        overflow: 'hidden',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                         ...(theme.palette.mode === 'dark' ? {
                             '--Paper-overlay': 'none !important',
                         } : {})
@@ -121,63 +123,113 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                     background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     color: 'white',
                     fontWeight: 700,
+                    fontSize: '1.5rem',
                     textAlign: 'center',
-                    position: 'relative'
+                    position: 'relative',
+                    py: 2.5,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}
             >
-                {t('categoryManager')}
+                {t('manageCategories')}
                 <Button
                     onClick={handleClose}
                     sx={{
                         position: 'absolute',
-                        right: 8,
+                        right: 12,
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        color: 'white',
+                        color: 'rgba(255,255,255,0.9)',
                         minWidth: 'auto',
-                        p: 1
+                        p: 1,
+                        borderRadius: 2,
+                        '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            color: 'white'
+                        }
                     }}
                 >
                     <CloseIcon />
                 </Button>
             </DialogTitle>
 
-            <DialogContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-                    {/* Form Section */}
-                    <Box sx={{ flex: 1, minWidth: 300 }}>
-                        <CategoryForm
-                            formData={formData}
-                            setFormData={setFormData}
-                            formErrors={formErrors}
-                            predefinedColors={PREDEFINED_COLORS}
+            <DialogContent sx={{ p: 3, backgroundColor: 'background.default' }}>
+                {/* Form Section */}
+                <Box sx={{
+                    mb: 3,
+                    p: 3,
+                    mt: 2,
+                    background: theme => theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(99, 102, 241, 0.05))'
+                        : 'linear-gradient(135deg, rgba(124, 58, 237, 0.02), rgba(99, 102, 241, 0.02))',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                }}>
+                    <CategoryForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        formErrors={formErrors}
+                        predefinedColors={PREDEFINED_COLORS}
+                        editingCategory={editingCategory}
+                    />
+
+                    <Box sx={{ mt: 2 }}>
+                        <CategoryFormActions
                             editingCategory={editingCategory}
-                        />
-
-                        <Box sx={{ mt: 2 }}>
-                            <CategoryFormActions
-                                editingCategory={editingCategory}
-                                onSave={handleSave}
-                                onCancel={handleCancel}
-                                loading={loading}
-                            />
-                        </Box>
-                    </Box>
-
-                    {/* Categories List Section */}
-                    <Box sx={{ flex: 1, minWidth: 300 }}>
-                        <CategoryList
-                            categories={categories}
+                            onSave={handleSave}
+                            onCancel={handleCancel}
                             loading={loading}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
                         />
                     </Box>
                 </Box>
+
+                {/* Categories List Section */}
+                <Box sx={{
+                    p: 3,
+                    background: theme => theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(59, 130, 246, 0.05))'
+                        : 'linear-gradient(135deg, rgba(34, 197, 94, 0.02), rgba(59, 130, 246, 0.02))',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                }}>
+                    <CategoryList
+                        categories={categories}
+                        loading={loading}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                    />
+                </Box>
             </DialogContent>
 
-            <DialogActions>
-                <Button onClick={handleClose} variant="outlined">
+            <DialogActions sx={{
+                p: 3,
+                backgroundColor: theme => theme.palette.mode === 'dark'
+                    ? theme.palette.grey[900]
+                    : theme.palette.grey[50],
+                borderTop: 1,
+                borderColor: 'divider',
+                gap: 2
+            }}>
+                <Button
+                    onClick={handleClose}
+                    variant="outlined"
+                    size="large"
+                    sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 4,
+                        py: 1.5,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }
+                    }}
+                >
                     {t('close')}
                 </Button>
             </DialogActions>

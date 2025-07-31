@@ -1,5 +1,5 @@
 import { Box, Button } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
 interface CategoryFormActionsProps {
@@ -28,10 +28,10 @@ const CategoryFormActions = ({ editingCategory, onSave, onCancel, loading }: Cat
                 onClick={onSave}
                 variant="contained"
                 size="small"
-                startIcon={<AddIcon />}
+                startIcon={editingCategory ? <EditIcon /> : <AddIcon />}
                 disabled={loading}
             >
-                {editingCategory ? t('update') : t('add')}
+                {editingCategory ? t('updateCategory') : t('createCategory')}
             </Button>
         </Box>
     );

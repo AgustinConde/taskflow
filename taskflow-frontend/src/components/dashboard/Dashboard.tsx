@@ -11,17 +11,17 @@ import {
     Legend,
     ArcElement,
 } from 'chart.js';
-import type { Task } from '../types/Task';
-import type { Category } from '../types/Category';
+import type { Task } from '../../types/Task';
+import type { Category } from '../../types/Category';
 
-import DashboardHeader from './dashboard/DashboardHeader';
-import MetricsCards from './dashboard/MetricsCards';
-import ActivityChart from './dashboard/ActivityChart';
-import CategoryChart from './dashboard/CategoryChart';
+import DashboardHeader from './DashboardHeader';
+import MetricsCards from './MetricsCards';
+import ActivityChart from './ActivityChart';
+import CategoryChart from './CategoryChart';
 
-import { useFilteredTasks, useActivityChartData } from './dashboard/hooks/useChartData';
-import { useDashboardMetrics } from './dashboard/hooks/useDashboardMetrics';
-import { useCategoryChartData } from './dashboard/hooks/useCategoryData';
+import { useFilteredTasks, useActivityChartData } from './hooks/useChartData';
+import { useDashboardMetrics } from './hooks/useDashboardMetrics';
+import { useCategoryChartData } from './hooks/useCategoryData';
 
 ChartJS.register(
     CategoryScale,

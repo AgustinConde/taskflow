@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { Stack } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
@@ -15,7 +16,7 @@ interface TaskGridProps {
     isDragEnabled: boolean;
 }
 
-const TaskGrid = ({
+const TaskGrid = memo(({
     tasks,
     categories,
     onEditSave,
@@ -24,6 +25,13 @@ const TaskGrid = ({
     onDragEnd,
     isDragEnabled
 }: TaskGridProps) => {
+    const handleTaskDelete = useCallback((taskId: number) => {
+        onDelete(taskId);
+    }, [onDelete]);
+
+    const handleTaskToggle = useCallback((task: Task) => {
+        onToggleCompleted(task);
+    }, [onToggleCompleted]);
     if (isDragEnabled) {
         return (
             <DragDropContext onDragEnd={onDragEnd}>
@@ -46,8 +54,8 @@ const TaskGrid = ({
                                                 <TaskItem
                                                     task={task}
                                                     onEditSave={onEditSave}
-                                                    onDelete={() => onDelete(task.id)}
-                                                    onToggleCompleted={() => onToggleCompleted(task)}
+                                                    onDelete={() => handleTaskDelete(task.id)}
+                                                    onToggleCompleted={() => handleTaskToggle(task)}
                                                     categories={categories}
                                                 />
                                             </div>
@@ -71,14 +79,16 @@ const TaskGrid = ({
                         key={task.id}
                         task={task}
                         onEditSave={onEditSave}
-                        onDelete={() => onDelete(task.id)}
-                        onToggleCompleted={() => onToggleCompleted(task)}
+                        onDelete={() => handleTaskDelete(task.id)}
+                        onToggleCompleted={() => handleTaskToggle(task)}
                         categories={categories}
                     />
                 ) : null
             ))}
         </Stack>
     );
-};
+});
+
+TaskGrid.displayName = 'TaskGrid';
 
 export default TaskGrid;

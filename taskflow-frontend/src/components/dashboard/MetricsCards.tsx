@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Box, Card, CardContent, Typography, LinearProgress, Chip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +15,7 @@ interface MetricsCardsProps {
     metrics: MetricsData;
 }
 
-const MetricCard = ({ title, value, color, children }: {
+const MetricCard = memo(({ title, value, color, children }: {
     title: string;
     value: number;
     color?: string;
@@ -31,9 +32,11 @@ const MetricCard = ({ title, value, color, children }: {
             {children}
         </CardContent>
     </Card>
-);
+));
 
-const CompletionProgressCard = ({ completed, completionRate, t }: {
+MetricCard.displayName = 'MetricCard';
+
+const CompletionProgressCard = memo(({ completed, completionRate, t }: {
     completed: number;
     completionRate: number;
     t: (key: string) => string;
@@ -59,9 +62,11 @@ const CompletionProgressCard = ({ completed, completionRate, t }: {
             </Box>
         </CardContent>
     </Card>
-);
+));
 
-const OverdueTasksCard = ({ overdue, dueSoon, t }: {
+CompletionProgressCard.displayName = 'CompletionProgressCard';
+
+const OverdueTasksCard = memo(({ overdue, dueSoon, t }: {
     overdue: number;
     dueSoon: number;
     t: (key: string) => string;
@@ -86,9 +91,11 @@ const OverdueTasksCard = ({ overdue, dueSoon, t }: {
             )}
         </CardContent>
     </Card>
-);
+));
 
-const MetricsCards = ({ metrics }: MetricsCardsProps) => {
+OverdueTasksCard.displayName = 'OverdueTasksCard';
+
+const MetricsCards = memo(({ metrics }: MetricsCardsProps) => {
     const { t } = useTranslation();
 
     return (
@@ -123,6 +130,8 @@ const MetricsCards = ({ metrics }: MetricsCardsProps) => {
             />
         </Box>
     );
-};
+});
+
+MetricsCards.displayName = 'MetricsCards';
 
 export default MetricsCards;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useMemo, useCallback } from 'react';
 import { Box } from '@mui/material';
 import {
     Chart as ChartJS,
@@ -51,21 +51,30 @@ const CHART_OPTIONS = {
     },
 };
 
-const Dashboard = ({ tasks, categories }: DashboardProps) => {
+const Dashboard = memo(({ tasks, categories }: DashboardProps) => {
     const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
+    // Memoize expensive calculations
     const filteredTasks = useFilteredTasks(tasks, timeRange);
     const metrics = useDashboardMetrics(filteredTasks);
     const activityChartData = useActivityChartData(tasks, filteredTasks, timeRange);
     const categoryChartData = useCategoryChartData(filteredTasks, categories);
 
-    const hasChartData = categoryChartData.datasets[0].data.some(d => d > 0);
+    // Memoize chart data validation
+    const hasChartData = useMemo(() => {
+        return categoryChartData.datasets[0].data.some(d => d > 0);
+    }, [categoryChartData]);
+
+    // Memoize callback to prevent unnecessary re-renders
+    const handleTimeRangeChange = useCallback((newTimeRange: TimeRange) => {
+        setTimeRange(newTimeRange);
+    }, []);
 
     return (
         <Box sx={{ p: 3 }}>
             <DashboardHeader
                 timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
+                onTimeRangeChange={handleTimeRangeChange}
             />
 
             <MetricsCards metrics={metrics} />
@@ -88,6 +97,8 @@ const Dashboard = ({ tasks, categories }: DashboardProps) => {
             </Box>
         </Box>
     );
-};
+});
+
+Dashboard.displayName = 'Dashboard';
 
 export default Dashboard;

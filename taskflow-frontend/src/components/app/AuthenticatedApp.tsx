@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { Box, CircularProgress } from '@mui/material';
 import TaskList from '../task-list/TaskList';
-import { Dashboard } from '../dashboard';
+import { LazyDashboard } from '../dashboard';
 import AppNavBar from './AppNavBar';
 import type { Task } from '../../types/Task';
 import type { Category } from '../../types/Category';
@@ -71,7 +71,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
                         <CircularProgress size={60} />
                     </Box>
                 ) : currentTab === 'dashboard' ? (
-                    <Dashboard tasks={tasks} categories={categories} />
+                    <LazyDashboard tasks={tasks} categories={categories} />
                 ) : (
                     <Box sx={{ px: { xs: 2, sm: 3 }, maxWidth: 1200, margin: '0 auto' }}>
                         <TaskList />

@@ -1,3 +1,4 @@
+import { useState, memo, useCallback } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
@@ -6,35 +7,24 @@ import TaskGrid from './TaskGrid';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import CategoryManager from '../category-manager';
 
-import { useTaskManagement } from './hooks/useTaskManagement';
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskCompletion } from '../../hooks/useTasks';
+import { useCategories } from '../../hooks/useCategories';
 import { useTaskFiltering } from './hooks/useTaskFiltering';
 import { useTaskSorting } from './hooks/useTaskSorting';
-import { useCategoryManagement } from './hooks/useCategoryManagement';
 
-const TaskList = () => {
+const TaskList = memo(() => {
     const { t } = useTranslation();
 
-    const {
-        tasks,
-        loading,
-        creating,
-        deleteId,
-        deleteLoading,
-        createTask,
-        updateTask,
-        toggleTaskCompleted,
-        requestDeleteTask,
-        cancelDeleteTask,
-        confirmDeleteTask
-    } = useTaskManagement();
+    const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+    const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
-    const {
-        categories,
-        categoryManagerOpen,
-        openCategoryManager,
-        closeCategoryManager,
-        fetchCategories
-    } = useCategoryManagement();
+    const createTaskMutation = useCreateTask();
+    const updateTaskMutation = useUpdateTask();
+    const deleteTaskMutation = useDeleteTask();
+    const toggleCompletionMutation = useToggleTaskCompletion();
+
+    const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const {
         search,
@@ -52,7 +42,63 @@ const TaskList = () => {
         isCustomSort
     } = useTaskSorting(filteredTasks, categories, tasks);
 
-    if (loading) {
+    const handleCreateTask = useCallback(async (taskData: any): Promise<boolean> => {
+        try {
+            await createTaskMutation.mutateAsync(taskData);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }, [createTaskMutation]);
+
+    const handleUpdateTask = useCallback(async (task: any) => {
+        try {
+            await updateTaskMutation.mutateAsync(task);
+        } catch (error) {
+            console.error('Error updating task:', error);
+        }
+    }, [updateTaskMutation]);
+
+    const handleToggleCompleted = useCallback(async (task: any) => {
+        try {
+            await toggleCompletionMutation.mutateAsync(task);
+        } catch (error) {
+            console.error('Error toggling task completion:', error);
+        }
+    }, [toggleCompletionMutation]);
+
+    const handleDeleteRequest = useCallback((taskId: number) => {
+        setDeleteId(taskId);
+    }, []);
+
+    const handleDeleteConfirm = useCallback(async () => {
+        if (deleteId) {
+            try {
+                await deleteTaskMutation.mutateAsync(deleteId);
+                setDeleteId(null);
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+    }, [deleteId, deleteTaskMutation]);
+
+    const handleDeleteCancel = useCallback(() => {
+        setDeleteId(null);
+    }, []);
+
+    const handleOpenCategoryManager = useCallback(() => {
+        setCategoryManagerOpen(true);
+    }, []);
+
+    const handleCloseCategoryManager = useCallback(() => {
+        setCategoryManagerOpen(false);
+    }, []);
+
+    const isLoading = tasksLoading || categoriesLoading;
+    const isCreating = createTaskMutation.isPending;
+    const isDeleting = deleteTaskMutation.isPending;
+
+    if (isLoading) {
         return (
             <Box
                 sx={{
@@ -60,12 +106,17 @@ const TaskList = () => {
                     margin: "0 auto",
                     padding: 2,
                     display: 'flex',
-                    justifyContent: 'center',
                     alignItems: 'center',
-                    minHeight: '50vh'
+                    justifyContent: 'center',
+                    minHeight: '50vh',
+                    flexDirection: 'column',
+                    gap: 2
                 }}
             >
-                <CircularProgress size="3rem" />
+                <CircularProgress size={60} />
+                <Typography variant="h6" color="text.secondary">
+                    {t('loading')}
+                </Typography>
             </Box>
         );
     }
@@ -74,15 +125,15 @@ const TaskList = () => {
         <Box sx={{ maxWidth: 900, margin: "0 auto", padding: 2, position: 'relative' }}>
             <TaskListHeader
                 categories={categories}
-                onSubmit={createTask}
-                creating={creating}
+                onSubmit={handleCreateTask}
+                creating={isCreating}
                 search={search}
                 onSearchChange={setSearch}
                 filter={filter}
                 onFilterChange={setFilter}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
-                onCategoryManagerOpen={openCategoryManager}
+                onCategoryManagerOpen={handleOpenCategoryManager}
             />
 
             {sortedTasks.length === 0 ? (
@@ -93,28 +144,29 @@ const TaskList = () => {
                 <TaskGrid
                     tasks={sortedTasks}
                     categories={categories}
-                    onEditSave={updateTask}
-                    onDelete={requestDeleteTask}
-                    onToggleCompleted={toggleTaskCompleted}
+                    onEditSave={handleUpdateTask}
+                    onDelete={handleDeleteRequest}
+                    onToggleCompleted={handleToggleCompleted}
                     onDragEnd={handleDragEnd}
                     isDragEnabled={isCustomSort}
                 />
             )}
 
             <DeleteConfirmDialog
-                open={deleteId !== null}
-                onCancel={cancelDeleteTask}
-                onConfirm={confirmDeleteTask}
-                loading={deleteLoading}
+                open={!!deleteId}
+                onConfirm={handleDeleteConfirm}
+                onCancel={handleDeleteCancel}
+                loading={isDeleting}
             />
 
             <CategoryManager
                 open={categoryManagerOpen}
-                onClose={closeCategoryManager}
-                onCategoriesChange={fetchCategories}
+                onClose={handleCloseCategoryManager}
             />
         </Box>
     );
-};
+});
+
+TaskList.displayName = 'TaskList';
 
 export default TaskList;

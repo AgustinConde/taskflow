@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { taskService } from '../../../services/taskService';
 import { useNotifications } from '../../../contexts/NotificationContext';
@@ -14,7 +14,7 @@ export const useTaskManagement = () => {
     const { t } = useTranslation();
     const { showSuccess, showError } = useNotifications();
 
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         setLoading(true);
         try {
             const data = await taskService.getTasks();
@@ -27,9 +27,9 @@ export const useTaskManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showError]);
 
-    const createTask = async (taskData: {
+    const createTask = useCallback(async (taskData: {
         title: string;
         description: string;
         dueDate: string | null;
@@ -61,7 +61,7 @@ export const useTaskManagement = () => {
         } finally {
             setCreating(false);
         }
-    };
+    }, [fetchTasks, showSuccess, showError, t]);
 
     const updateTask = async (task: Task) => {
         try {

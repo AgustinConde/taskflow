@@ -85,6 +85,7 @@ export const useUpdateTask = () => {
         },
         onError: (error, updatedTask, context) => {
             // If the mutation fails, use the context to roll back
+        onError: (error, _updatedTask, context) => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }
@@ -126,6 +127,7 @@ export const useDeleteTask = () => {
         },
         onError: (error, deletedTaskId, context) => {
             // If the mutation fails, use the context to roll back
+        onError: (error, _deletedTaskId, context) => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }
@@ -172,6 +174,7 @@ export const useToggleTaskCompletion = () => {
         },
         onError: (error, task, context) => {
             // If the mutation fails, use the context to roll back
+        onError: (error, _task, context) => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }

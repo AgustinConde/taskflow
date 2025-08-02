@@ -100,5 +100,6 @@
     "tasksCreated": "Tasks Created",
     "tasksCompleted": "Tasks Completed",
     "uncategorized": "Uncategorized",
-    "noDataAvailable": "No data available"
+    "noDataAvailable": "No data available",
+    "noCategoriesFound": "No categories found. Create your first category!"
 }

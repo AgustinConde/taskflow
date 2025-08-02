@@ -22,8 +22,7 @@ import {
     Close as CloseIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { categoryService } from '../../services/categoryService';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../../hooks';
 import { ConfirmationDialog } from '../common';
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../../types/Category';
 
@@ -51,10 +50,13 @@ const PREDEFINED_COLORS = [
 const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCategoriesChange }) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const { showSuccess, showError } = useNotifications();
 
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
+    // React Query hooks
+    const { data: categories = [], isLoading } = useCategories();
+    const createCategoryMutation = useCreateCategory();
+    const updateCategoryMutation = useUpdateCategory();
+    const deleteCategoryMutation = useDeleteCategory();
+
     const [formData, setFormData] = useState({
         name: '',
         color: PREDEFINED_COLORS[0],
@@ -72,24 +74,12 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
         loading: false
     });
 
+    // Call onCategoriesChange when categories change
     useEffect(() => {
-        if (open) {
-            loadCategories();
+        if (categories.length > 0) {
+            onCategoriesChange?.();
         }
-    }, [open]);
-
-    const loadCategories = async () => {
-        setLoading(true);
-        try {
-            const data = await categoryService.getCategories();
-            setCategories(data);
-        } catch (error) {
-            showError(t('errorLoadingCategories'));
-            console.error('Error loading categories:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [categories, onCategoriesChange]);
 
     const validateForm = () => {
         const errors: Record<string, string> = {};
@@ -109,7 +99,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
     const handleSave = async () => {
         if (!validateForm()) return;
 
-        setLoading(true);
         try {
             if (editingCategory) {
                 const updateData: UpdateCategoryRequest = {
@@ -117,26 +106,23 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                     color: formData.color,
                     description: formData.description || undefined
                 };
-                await categoryService.updateCategory(editingCategory.id, updateData);
-                showSuccess(t('categoryUpdated'));
+                await updateCategoryMutation.mutateAsync({
+                    ...editingCategory,
+                    ...updateData
+                });
             } else {
                 const createData: CreateCategoryRequest = {
                     name: formData.name,
                     color: formData.color,
                     description: formData.description || undefined
                 };
-                await categoryService.createCategory(createData);
-                showSuccess(t('categoryCreated'));
+                await createCategoryMutation.mutateAsync(createData);
             }
 
             resetForm();
-            loadCategories();
             onCategoriesChange?.();
         } catch (error) {
-            showError(editingCategory ? t('errorUpdatingCategory') : t('errorCreatingCategory'));
             console.error('Error saving category:', error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -307,7 +293,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                             </Box>
                         ) : categories.length === 0 ? (
                             <Alert severity="info">
-                                No categories found. Create your first category!
+                                {t('noCategoriesFound')}
                             </Alert>
                         ) : (
                             <Stack spacing={1}>

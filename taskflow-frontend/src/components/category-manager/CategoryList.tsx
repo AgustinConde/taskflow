@@ -25,7 +25,7 @@ const CategoryList = ({ categories, loading, onEdit, onDelete }: CategoryListPro
                 </Box>
             ) : categories.length === 0 ? (
                 <Alert severity="info">
-                    No categories found. Create your first category!
+                    {t('noCategoriesFound')}
                 </Alert>
             ) : (
                 <Stack spacing={1}>

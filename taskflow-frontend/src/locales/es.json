@@ -100,5 +100,6 @@
     "tasksCreated": "Tareas Creadas",
     "tasksCompleted": "Tareas Completadas",
     "uncategorized": "Sin categoría",
-    "noDataAvailable": "No hay datos disponibles"
+    "noDataAvailable": "No hay datos disponibles",
+    "noCategoriesFound": "No se encontraron categorías. ¡Crea tu primera categoría!"
 }

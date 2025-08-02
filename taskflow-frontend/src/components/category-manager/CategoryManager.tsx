@@ -1,22 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
     Button,
+    TextField,
     Box,
+    Chip,
+    IconButton,
+    Typography,
+    Stack,
+    Alert,
+    CircularProgress,
     useTheme
 } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import {
+    Add as AddIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Close as CloseIcon
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-
-import CategoryForm from './CategoryForm';
-import CategoryList from './CategoryList';
-import CategoryFormActions from './CategoryFormActions';
-
-import { useCategoryState } from './hooks/useCategoryState';
-import { useCategoryOperations } from './hooks/useCategoryOperations';
+import { categoryService } from '../../services/categoryService';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { ConfirmationDialog } from '../common';
+import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../../types/Category';
 
 interface CategoryManagerProps {
     open: boolean;
@@ -24,69 +33,162 @@ interface CategoryManagerProps {
     onCategoriesChange?: () => void;
 }
 
+const PREDEFINED_COLORS = [
+    '#7C3AED', // violet
+    '#3B82F6', // blue
+    '#10B981', // emerald
+    '#F59E0B', // amber
+    '#EF4444', // red
+    '#8B5CF6', // purple
+    '#06B6D4', // cyan
+    '#84CC16', // lime
+    '#F97316', // orange
+    '#EC4899', // pink
+    '#6366F1', // indigo
+    '#14B8A6', // teal
+];
+
 const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCategoriesChange }) => {
     const { t } = useTranslation();
     const theme = useTheme();
+    const { showSuccess, showError } = useNotifications();
 
-    const {
-        categories,
-        setCategories,
-        loading,
-        setLoading,
-        formData,
-        setFormData,
-        editingCategory,
-        formErrors,
-        setFormErrors,
-        resetForm,
-        startEdit,
-        PREDEFINED_COLORS
-    } = useCategoryState();
-
-    const {
-        loadCategories,
-        validateForm,
-        saveCategory,
-        deleteCategory
-    } = useCategoryOperations();
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        color: PREDEFINED_COLORS[0],
+        description: ''
+    });
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        category: Category | null;
+        loading: boolean;
+    }>({
+        open: false,
+        category: null,
+        loading: false
+    });
 
     useEffect(() => {
         if (open) {
-            loadCategories(setCategories, setLoading);
+            loadCategories();
         }
-    }, [open, loadCategories]);
+    }, [open]);
+
+    const loadCategories = async () => {
+        setLoading(true);
+        try {
+            const data = await categoryService.getCategories();
+            setCategories(data);
+        } catch (error) {
+            showError(t('errorLoadingCategories'));
+            console.error('Error loading categories:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const validateForm = () => {
+        const errors: Record<string, string> = {};
+
+        if (!formData.name.trim()) {
+            errors.name = t('nameRequired');
+        }
+
+        if (!formData.color) {
+            errors.color = t('colorRequired');
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const handleSave = async () => {
-        const { errors, isValid } = validateForm(formData);
-        setFormErrors(errors);
+        if (!validateForm()) return;
 
-        if (!isValid) return;
-
-        await saveCategory(
-            formData,
-            editingCategory,
-            setLoading,
-            () => {
-                resetForm();
-                loadCategories(setCategories, setLoading);
-                onCategoriesChange?.();
+        setLoading(true);
+        try {
+            if (editingCategory) {
+                const updateData: UpdateCategoryRequest = {
+                    name: formData.name,
+                    color: formData.color,
+                    description: formData.description || undefined
+                };
+                await categoryService.updateCategory(editingCategory.id, updateData);
+                showSuccess(t('categoryUpdated'));
+            } else {
+                const createData: CreateCategoryRequest = {
+                    name: formData.name,
+                    color: formData.color,
+                    description: formData.description || undefined
+                };
+                await categoryService.createCategory(createData);
+                showSuccess(t('categoryCreated'));
             }
-        );
+
+            resetForm();
+            loadCategories();
+            onCategoriesChange?.();
+        } catch (error) {
+            showError(editingCategory ? t('errorUpdatingCategory') : t('errorCreatingCategory'));
+            console.error('Error saving category:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDelete = async (category: any) => {
-        await deleteCategory(
+    const handleDelete = (category: Category) => {
+        setConfirmDialog({
+            open: true,
             category,
-            setLoading,
-            () => {
-                loadCategories(setCategories, setLoading);
-                onCategoriesChange?.();
-            }
-        );
+            loading: false
+        });
     };
 
-    const handleEdit = (category: any) => {
-        startEdit(category);
+    const handleConfirmDelete = async () => {
+        const { category } = confirmDialog;
+        if (!category) return;
+
+        setConfirmDialog(prev => ({ ...prev, loading: true }));
+
+        try {
+            await categoryService.deleteCategory(category.id);
+            showSuccess(t('categoryDeleted'));
+            loadCategories();
+            onCategoriesChange?.();
+            setConfirmDialog({ open: false, category: null, loading: false });
+        } catch (error) {
+            showError(t('errorDeletingCategory'));
+            console.error('Error deleting category:', error);
+            setConfirmDialog(prev => ({ ...prev, loading: false }));
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setConfirmDialog({ open: false, category: null, loading: false });
+    };
+
+    const handleEdit = (category: Category) => {
+        setEditingCategory(category);
+        setFormData({
+            name: category.name,
+            color: category.color,
+            description: category.description || ''
+        });
+        setFormErrors({});
+    };
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            color: PREDEFINED_COLORS[0],
+            description: ''
+        });
+        setEditingCategory(null);
+        setFormErrors({});
     };
 
     const handleClose = () => {
@@ -94,146 +196,196 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
         onClose();
     };
 
-    const handleCancel = () => {
-        resetForm();
-    };
-
     return (
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            maxWidth="md"
-            fullWidth
-            slotProps={{
-                paper: {
-                    sx: {
-                        borderRadius: 3,
-                        minHeight: 500,
-                        overflow: 'hidden',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                        ...(theme.palette.mode === 'dark' ? {
-                            '--Paper-overlay': 'none !important',
-                        } : {})
+        <>
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                maxWidth="md"
+                fullWidth
+                slotProps={{
+                    paper: {
+                        sx: theme.palette.mode === 'dark' ? {
+                            '--Paper-overlay': 'none !important'
+                        } : {}
                     }
-                }
-            }}
-        >
-            <DialogTitle
-                sx={{
-                    background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    color: 'white',
-                    fontWeight: 700,
-                    fontSize: '1.5rem',
-                    textAlign: 'center',
-                    position: 'relative',
-                    py: 2.5,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}
             >
-                {t('manageCategories')}
-                <Button
-                    onClick={handleClose}
-                    sx={{
-                        position: 'absolute',
-                        right: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'rgba(255,255,255,0.9)',
-                        minWidth: 'auto',
-                        p: 1,
-                        borderRadius: 2,
-                        '&:hover': {
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'white'
-                        }
-                    }}
-                >
-                    <CloseIcon />
-                </Button>
-            </DialogTitle>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {t('manageCategories')}
+                    <IconButton onClick={handleClose} size="small">
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
 
-            <DialogContent sx={{ p: 3, backgroundColor: 'background.default' }}>
-                {/* Form Section */}
-                <Box sx={{
-                    mb: 3,
-                    p: 3,
-                    mt: 2,
-                    background: theme => theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(99, 102, 241, 0.05))'
-                        : 'linear-gradient(135deg, rgba(124, 58, 237, 0.02), rgba(99, 102, 241, 0.02))',
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                }}>
-                    <CategoryForm
-                        formData={formData}
-                        setFormData={setFormData}
-                        formErrors={formErrors}
-                        predefinedColors={PREDEFINED_COLORS}
-                        editingCategory={editingCategory}
-                    />
+                <DialogContent>
+                    <Box sx={{ mb: 3, p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                            {editingCategory ? t('editCategory') : t('createCategory')}
+                        </Typography>
 
-                    <Box sx={{ mt: 2 }}>
-                        <CategoryFormActions
-                            editingCategory={editingCategory}
-                            onSave={handleSave}
-                            onCancel={handleCancel}
-                            loading={loading}
-                        />
+                        <Stack spacing={2}>
+                            <TextField
+                                label={t('categoryName')}
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                error={!!formErrors.name}
+                                helperText={formErrors.name}
+                                fullWidth
+                                size="small"
+                            />
+
+                            <TextField
+                                label={t('categoryDescription')}
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                fullWidth
+                                size="small"
+                                multiline
+                                rows={2}
+                            />
+
+                            <Box>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    {t('categoryColor')}
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    {PREDEFINED_COLORS.map((color) => (
+                                        <Box
+                                            key={color}
+                                            onClick={() => setFormData({ ...formData, color })}
+                                            sx={{
+                                                width: 32,
+                                                height: 32,
+                                                backgroundColor: color,
+                                                borderRadius: 1,
+                                                cursor: 'pointer',
+                                                border: formData.color === color ? 3 : 1,
+                                                borderColor: formData.color === color ? 'primary.main' : 'divider',
+                                                transition: 'all 0.2s',
+                                                '&:hover': {
+                                                    transform: 'scale(1.1)'
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </Box>
+                                {formErrors.color && (
+                                    <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                                        {formErrors.color}
+                                    </Typography>
+                                )}
+                            </Box>
+
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                {editingCategory && (
+                                    <Button onClick={resetForm} variant="outlined" size="small">
+                                        {t('cancel')}
+                                    </Button>
+                                )}
+                                <Button
+                                    onClick={handleSave}
+                                    variant="contained"
+                                    startIcon={editingCategory ? <EditIcon /> : <AddIcon />}
+                                    disabled={loading}
+                                    size="small"
+                                >
+                                    {editingCategory ? t('updateCategory') : t('createCategory')}
+                                </Button>
+                            </Box>
+                        </Stack>
                     </Box>
-                </Box>
 
-                {/* Categories List Section */}
-                <Box sx={{
-                    p: 3,
-                    background: theme => theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(59, 130, 246, 0.05))'
-                        : 'linear-gradient(135deg, rgba(34, 197, 94, 0.02), rgba(59, 130, 246, 0.02))',
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                }}>
-                    <CategoryList
-                        categories={categories}
-                        loading={loading}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                    />
-                </Box>
-            </DialogContent>
+                    <Box>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                            {t('categories')} ({categories.length})
+                        </Typography>
 
-            <DialogActions sx={{
-                p: 3,
-                backgroundColor: theme => theme.palette.mode === 'dark'
-                    ? theme.palette.grey[900]
-                    : theme.palette.grey[50],
-                borderTop: 1,
-                borderColor: 'divider',
-                gap: 2
-            }}>
-                <Button
-                    onClick={handleClose}
-                    variant="outlined"
-                    size="large"
-                    sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 4,
-                        py: 1.5,
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                            transform: 'translateY(-1px)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                        }
-                    }}
-                >
-                    {t('close')}
-                </Button>
-            </DialogActions>
-        </Dialog>
+                        {loading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : categories.length === 0 ? (
+                            <Alert severity="info">
+                                No categories found. Create your first category!
+                            </Alert>
+                        ) : (
+                            <Stack spacing={1}>
+                                {categories.map((category) => (
+                                    <Box
+                                        key={category.id}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            p: 1.5,
+                                            border: 1,
+                                            borderColor: 'divider',
+                                            borderRadius: 1,
+                                            '&:hover': {
+                                                backgroundColor: 'action.hover'
+                                            }
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                                            <Chip
+                                                label={category.name}
+                                                sx={{
+                                                    backgroundColor: category.color,
+                                                    color: 'white',
+                                                    fontWeight: 600
+                                                }}
+                                                size="small"
+                                            />
+                                            {category.description && (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {category.description}
+                                                </Typography>
+                                            )}
+                                        </Box>
+
+                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                            <IconButton
+                                                onClick={() => handleEdit(category)}
+                                                size="small"
+                                                color="primary"
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                                onClick={() => handleDelete(category)}
+                                                size="small"
+                                                color="error"
+                                            >
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        )}
+                    </Box>
+                </DialogContent>
+
+                <DialogActions>
+                    <Button onClick={handleClose} variant="outlined">
+                        {t('close')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <ConfirmationDialog
+                open={confirmDialog.open}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+                title={t('confirmDeleteCategory')}
+                message={t('deleteCategoryConfirmation', { name: confirmDialog.category?.name || '' })}
+                confirmText={t('delete')}
+                cancelText={t('cancel')}
+                type="delete"
+                loading={confirmDialog.loading}
+            />
+        </>
     );
 };
 

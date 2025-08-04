@@ -33,7 +33,7 @@ export const useAuthOperations = ({ setLoading, setError, onSuccess }: UseAuthOp
         setError(null);
 
         if (registerData.password.length < 6) {
-            showError(t('passwordTooShort'));
+            setError(t('passwordTooShort', 'Password must be at least 6 characters long'));
             setLoading(false);
             return;
         }

@@ -51,7 +51,7 @@ class TaskService {
         return response.json();
     }
 
-    async updateTask(id: number, task: Partial<Omit<Task, 'id' | 'createdAt' | 'userId'>>): Promise<void> {
+    async updateTask(id: number, task: Partial<Omit<Task, 'id' | 'createdAt' | 'userId'>>): Promise<Task> {
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
             headers: this.getAuthHeaders(),
@@ -61,6 +61,20 @@ class TaskService {
         if (!response.ok) {
             throw new Error('Failed to update task');
         }
+
+        return response.json();
+    }
+
+    async getTaskById(id: number): Promise<Task> {
+        const response = await fetch(`${API_URL}/${id}`, {
+            headers: this.getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch task');
+        }
+
+        return response.json();
     }
 
     async deleteTask(id: number): Promise<void> {

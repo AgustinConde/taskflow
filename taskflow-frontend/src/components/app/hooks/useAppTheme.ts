@@ -4,7 +4,7 @@ import { createTheme } from '@mui/material';
 export const useAppTheme = () => {
     const [mode, setMode] = useState<'light' | 'dark'>(() => {
         const savedMode = localStorage.getItem('themeMode');
-        return (savedMode as 'light' | 'dark') || 'light';
+        return (savedMode === 'light' || savedMode === 'dark') ? savedMode : 'light';
     });
 
     const theme = useMemo(() => createTheme({

@@ -7,11 +7,16 @@ import type { Task } from '../../types/Task';
 import type { Category, CreateCategoryRequest } from '../../types/Category';
 
 const testCategories = new Map<number, Category>();
+const testTasks = new Map<number, Task>();
 
 export const resetTestData = () => {
     testCategories.clear();
+    testTasks.clear();
     mockCategories.forEach(category => {
         testCategories.set(category.id, { ...category });
+    });
+    mockTasks.forEach(task => {
+        testTasks.set(task.id, { ...task });
     });
 };
 
@@ -35,38 +40,59 @@ export const handlers = [
 
     // Tasks endpoints
     http.get(`${API_BASE_URL}/tasks`, () => {
-        return HttpResponse.json(mockTasks);
+        return HttpResponse.json(Array.from(testTasks.values()));
+    }),
+
+    http.get(`${API_BASE_URL}/tasks/:id`, ({ params }) => {
+        const task = testTasks.get(Number(params.id));
+        if (!task) {
+            return HttpResponse.json({ error: 'Task not found' }, { status: 404 });
+        }
+        return HttpResponse.json(task);
     }),
 
     http.post(`${API_BASE_URL}/tasks`, async ({ request }) => {
-        const newTask = await request.json() as Partial<Task>;
-        return HttpResponse.json({
+        const newTaskData = await request.json() as Partial<Task>;
+        const task: Task = {
             id: Date.now(),
-            title: newTask.title || 'New Task',
-            description: newTask.description,
+            title: newTaskData.title || 'New Task',
+            description: newTaskData.description,
             isCompleted: false,
             createdAt: new Date().toISOString(),
-            dueDate: newTask.dueDate,
-            categoryId: newTask.categoryId,
-            categoryName: newTask.categoryName
-        });
+            dueDate: newTaskData.dueDate,
+            categoryId: newTaskData.categoryId,
+            categoryName: newTaskData.categoryName
+        };
+        testTasks.set(task.id, task);
+        return HttpResponse.json(task);
     }),
 
     http.put(`${API_BASE_URL}/tasks/:id`, async ({ params, request }) => {
-        const updatedTask = await request.json() as Partial<Task>;
-        return HttpResponse.json({
-            id: Number(params.id),
-            title: updatedTask.title || 'Updated Task',
-            description: updatedTask.description,
-            isCompleted: updatedTask.isCompleted || false,
-            createdAt: new Date().toISOString(),
-            dueDate: updatedTask.dueDate,
-            categoryId: updatedTask.categoryId,
-            categoryName: updatedTask.categoryName
-        });
+        const taskId = Number(params.id);
+        const updates = await request.json() as Partial<Task>;
+        const existingTask = testTasks.get(taskId);
+
+        if (!existingTask) {
+            return HttpResponse.json({ error: 'Task not found' }, { status: 404 });
+        }
+
+        const updatedTask: Task = {
+            ...existingTask,
+            ...updates,
+            id: taskId
+        };
+
+        testTasks.set(taskId, updatedTask);
+        return HttpResponse.json(updatedTask);
     }),
 
-    http.delete(`${API_BASE_URL}/tasks/:id`, () => {
+    http.delete(`${API_BASE_URL}/tasks/:id`, ({ params }) => {
+        const taskId = Number(params.id);
+        const existed = testTasks.has(taskId);
+        if (!existed) {
+            return HttpResponse.json({ error: 'Task not found' }, { status: 404 });
+        }
+        testTasks.delete(taskId);
         return HttpResponse.json({ success: true });
     }),
 

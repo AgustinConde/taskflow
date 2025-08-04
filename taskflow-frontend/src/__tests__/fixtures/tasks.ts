@@ -13,4 +13,22 @@ export const createMockTask = (overrides?: Partial<Task>): Task => ({
     ...overrides
 });
 
-export const mockTasks: Task[] = Array.from({ length: 10 }, () => createMockTask());
+export const mockTasks: Task[] = [
+    createMockTask({
+        id: 1,
+        title: 'Test Task 1',
+        description: 'First test task',
+        isCompleted: false,
+        categoryId: 1,
+        categoryName: 'Work'
+    }),
+    createMockTask({
+        id: 2,
+        title: 'Test Task 2',
+        description: 'Second test task',
+        isCompleted: true,
+        categoryId: 2,
+        categoryName: 'Personal'
+    }),
+    ...Array.from({ length: 8 }, (_, index) => createMockTask({ id: index + 3 }))
+];

@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { authService } from './authService';
-import { server } from '../__tests__/mocks/server';
+import { authService } from '../authService';
+import { server } from '../../__tests__/mocks/server';
 
-// Mock localStorage
 const mockLocalStorage = {
     getItem: vi.fn(),
     setItem: vi.fn(),

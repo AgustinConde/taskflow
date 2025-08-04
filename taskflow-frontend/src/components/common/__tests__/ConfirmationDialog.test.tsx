@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '../../__tests__/utils/test-utils';
-import ConfirmationDialog from './ConfirmationDialog';
+import { render, screen } from '../../../__tests__/utils/test-utils';
+import ConfirmationDialog from '../ConfirmationDialog';
 
 describe('ConfirmationDialog', () => {
     const defaultProps = {

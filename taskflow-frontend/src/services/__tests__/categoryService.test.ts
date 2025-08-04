@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { server } from '../__tests__/mocks/server';
-import { categoryService } from './categoryService';
-import { mockCategories } from '../__tests__/fixtures/categories';
+import { server } from '../../__tests__/mocks/server';
+import { categoryService } from '../categoryService';
+import { mockCategories } from '../../__tests__/fixtures/categories';
 
 describe('CategoryService', () => {
     beforeEach(() => {

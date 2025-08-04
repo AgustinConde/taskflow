@@ -51,7 +51,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
     const { t } = useTranslation();
     const theme = useTheme();
 
-    // React Query hooks
     const { data: categories = [], isLoading } = useCategories();
     const createCategoryMutation = useCreateCategory();
     const updateCategoryMutation = useUpdateCategory();
@@ -74,7 +73,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
         loading: false
     });
 
-    // Call onCategoriesChange when categories change
     useEffect(() => {
         if (categories.length > 0) {
             onCategoriesChange?.();
@@ -116,7 +114,14 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                     color: formData.color,
                     description: formData.description || undefined
                 };
-                await createCategoryMutation.mutateAsync(createData);
+                await createCategoryMutation.mutateAsync({
+                    name: createData.name,
+                    color: createData.color,
+                    description: createData.description,
+                    createdAt: '',
+                    updatedAt: '',
+                    userId: 0
+                });
             }
 
             resetForm();
@@ -141,13 +146,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
         setConfirmDialog(prev => ({ ...prev, loading: true }));
 
         try {
-            await categoryService.deleteCategory(category.id);
-            showSuccess(t('categoryDeleted'));
-            loadCategories();
+            await deleteCategoryMutation.mutateAsync(category.id);
             onCategoriesChange?.();
             setConfirmDialog({ open: false, category: null, loading: false });
         } catch (error) {
-            showError(t('errorDeletingCategory'));
             console.error('Error deleting category:', error);
             setConfirmDialog(prev => ({ ...prev, loading: false }));
         }
@@ -273,7 +275,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                                     onClick={handleSave}
                                     variant="contained"
                                     startIcon={editingCategory ? <EditIcon /> : <AddIcon />}
-                                    disabled={loading}
+                                    disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
                                     size="small"
                                 >
                                     {editingCategory ? t('updateCategory') : t('createCategory')}
@@ -287,7 +289,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                             {t('categories')} ({categories.length})
                         </Typography>
 
-                        {loading ? (
+                        {isLoading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                                 <CircularProgress />
                             </Box>

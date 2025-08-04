@@ -73,7 +73,7 @@ export const useUpdateCategory = () => {
             queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
         },
         onSuccess: () => {
-            showSuccess(t('categoryUpdatedSuccessfully', 'Category updated successfully'));
+            showSuccess(t('categoryUpdated', 'Category updated successfully'));
         },
     });
 };

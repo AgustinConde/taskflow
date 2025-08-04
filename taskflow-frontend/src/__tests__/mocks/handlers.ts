@@ -3,7 +3,7 @@ import { API_BASE_URL } from '../../config/api';
 import { mockTasks } from '../fixtures/tasks';
 import { mockCategories } from '../fixtures/categories';
 import { mockUsers } from '../fixtures/users';
-import type { Task } from '../../types/Task';
+import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../../types/Task';
 import type { Category, CreateCategoryRequest } from '../../types/Category';
 
 const testCategories = new Map<number, Category>();
@@ -24,18 +24,42 @@ resetTestData();
 
 export const handlers = [
     // Auth endpoints
-    http.post(`${API_BASE_URL}/auth/login`, () => {
+    http.post(`${API_BASE_URL}/auth/login`, async ({ request }) => {
+        const credentials = await request.json() as { username: string; password: string };
+
+        if (credentials.username === 'wronguser' || credentials.password === 'wrongpassword') {
+            return HttpResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+        }
+
         return HttpResponse.json({
-            user: mockUsers[0],
-            token: 'mock-jwt-token'
+            token: 'mock-jwt-token',
+            username: credentials.username,
+            email: `${credentials.username}@test.com`,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
         });
     }),
 
-    http.post(`${API_BASE_URL}/auth/register`, () => {
+    http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
+        const userData = await request.json() as { username: string; email: string; password: string };
+
+        if (!userData.username || !userData.email || userData.password.length < 6) {
+            return HttpResponse.json({ error: 'Invalid registration data' }, { status: 400 });
+        }
+
         return HttpResponse.json({
-            user: mockUsers[0],
-            token: 'mock-jwt-token'
+            token: 'mock-jwt-token',
+            username: userData.username,
+            email: userData.email,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
         });
+    }),
+
+    http.get(`${API_BASE_URL}/auth/me`, () => {
+        return HttpResponse.json(mockUsers[0]);
+    }),
+
+    http.get(`${API_BASE_URL}/auth/validate`, () => {
+        return HttpResponse.json({ valid: true });
     }),
 
     // Tasks endpoints
@@ -52,10 +76,10 @@ export const handlers = [
     }),
 
     http.post(`${API_BASE_URL}/tasks`, async ({ request }) => {
-        const newTaskData = await request.json() as Partial<Task>;
+        const newTaskData = await request.json() as CreateTaskRequest;
         const task: Task = {
             id: Date.now(),
-            title: newTaskData.title || 'New Task',
+            title: newTaskData.title,
             description: newTaskData.description,
             isCompleted: false,
             createdAt: new Date().toISOString(),
@@ -69,7 +93,7 @@ export const handlers = [
 
     http.put(`${API_BASE_URL}/tasks/:id`, async ({ params, request }) => {
         const taskId = Number(params.id);
-        const updates = await request.json() as Partial<Task>;
+        const updates = await request.json() as UpdateTaskRequest;
         const existingTask = testTasks.get(taskId);
 
         if (!existingTask) {
@@ -84,9 +108,7 @@ export const handlers = [
 
         testTasks.set(taskId, updatedTask);
         return HttpResponse.json(updatedTask);
-    }),
-
-    http.delete(`${API_BASE_URL}/tasks/:id`, ({ params }) => {
+    }), http.delete(`${API_BASE_URL}/tasks/:id`, ({ params }) => {
         const taskId = Number(params.id);
         const existed = testTasks.has(taskId);
         if (!existed) {

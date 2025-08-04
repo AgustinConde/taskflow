@@ -1,4 +1,4 @@
-import type { Task } from '../types/Task';
+import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../types/Task';
 import { authService } from './authService';
 
 const API_URL = "http://localhost:5149/api/tasks";
@@ -36,7 +36,7 @@ class TaskService {
         return response.json();
     }
 
-    async createTask(task: Omit<Task, 'id' | 'createdAt' | 'userId'>): Promise<Task> {
+    async createTask(task: CreateTaskRequest): Promise<Task> {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: this.getAuthHeaders(),
@@ -51,7 +51,7 @@ class TaskService {
         return response.json();
     }
 
-    async updateTask(id: number, task: Partial<Omit<Task, 'id' | 'createdAt' | 'userId'>>): Promise<Task> {
+    async updateTask(id: number, task: UpdateTaskRequest): Promise<Task> {
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
             headers: this.getAuthHeaders(),

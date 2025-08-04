@@ -9,12 +9,23 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/__tests__/setup.ts'],
-        css: true,
+        css: false,
         pool: 'threads',
         poolOptions: {
             threads: {
                 singleThread: true,
+                maxThreads: 1,
+                minThreads: 1,
             },
+        },
+        testTimeout: 30000,
+        hookTimeout: 30000,
+        deps: {
+            optimizer: {
+                web: {
+                    include: ['@mui/material', '@mui/icons-material']
+                }
+            }
         },
         coverage: {
             provider: 'v8',

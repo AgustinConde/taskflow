@@ -78,6 +78,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         <Box>
             <Paper
                 elevation={2}
+                data-testid={`task-item-${task.id}`}
                 sx={{
                     p: 2,
                     display: 'flex',

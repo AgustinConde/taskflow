@@ -14,7 +14,7 @@ const CategoryChart = ({ data, options, hasData }: CategoryChartProps) => {
     const chartOptions = {
         ...options,
         plugins: {
-            ...options.plugins,
+            ...(options?.plugins || {}),
             legend: {
                 position: 'bottom' as const,
             }

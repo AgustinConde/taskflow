@@ -30,6 +30,8 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
+            reportsDirectory: './coverage',
+            include: ['src/**/*.{ts,tsx}'],
             exclude: [
                 'node_modules/',
                 'src/__tests__/',
@@ -39,8 +41,12 @@ export default defineConfig({
                 'build/',
                 'coverage/',
                 '**/*.test.*',
-                '**/*.spec.*'
+                '**/*.spec.*',
+                '**/vite/**',
+                '**/.vite/**'
             ],
+            clean: true,
+            all: false,
             thresholds: {
                 global: {
                     branches: 80,

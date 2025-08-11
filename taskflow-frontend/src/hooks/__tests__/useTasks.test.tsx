@@ -1,119 +1,137 @@
-import React from 'react';
-import { describe, it, expect } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../useTasks';
+import { useTasks, useTask, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskCompletion } from '../useTasks';
+import { taskService } from '../../services/taskService';
 import { NotificationProvider } from '../../contexts/NotificationContext';
-import { I18nextProvider } from 'react-i18next';
-import i18n from '../../__tests__/utils/i18n-test';
+import type { Task } from '../../types/Task';
 
-const createWrapper = () => {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-        },
-    });
+vi.mock('../../services/taskService', () => ({
+    taskService: { getTasks: vi.fn(), getTask: vi.fn(), createTask: vi.fn(), updateTask: vi.fn(), deleteTask: vi.fn() }
+}));
 
-    return ({ children }: { children: React.ReactNode }) => (
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => key })
+}));
+
+describe('useTasks Hooks', () => {
+    let queryClient: QueryClient;
+    const mockTask: Task = { id: 1, title: 'Task 1', description: 'Desc 1', isCompleted: false, createdAt: '2024-01-01T00:00:00Z', categoryId: 1 };
+    const mockTasks = [mockTask, { ...mockTask, id: 2, title: 'Task 2' }];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
         <QueryClientProvider client={queryClient}>
-            <I18nextProvider i18n={i18n}>
-                <NotificationProvider>
-                    {children}
-                </NotificationProvider>
-            </I18nextProvider>
+            <NotificationProvider>{children}</NotificationProvider>
         </QueryClientProvider>
     );
-};
 
-describe('useTasks Hook', () => {
-    describe('useTasks', () => {
-        it('should fetch tasks', async () => {
-            const { result } = renderHook(() => useTasks(), {
-                wrapper: createWrapper(),
-            });
+    beforeEach(() => {
+        queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+        vi.clearAllMocks();
+    });
+
+    describe('Core Functionality', () => {
+        it('should fetch tasks and single task', async () => {
+            vi.mocked(taskService.getTasks).mockResolvedValue(mockTasks);
+            vi.mocked(taskService.getTask).mockResolvedValue(mockTask);
+
+            const { result: listResult } = renderHook(() => useTasks(), { wrapper });
+            const { result: singleResult } = renderHook(() => useTask(1), { wrapper });
 
             await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
+                expect(listResult.current.isSuccess).toBe(true);
+                expect(singleResult.current.isSuccess).toBe(true);
             });
 
-            expect(result.current.data).toBeDefined();
-            expect(Array.isArray(result.current.data)).toBe(true);
+            expect(listResult.current.data).toEqual(mockTasks);
+            expect(singleResult.current.data).toEqual(mockTask);
         });
 
-        it('should handle loading state', () => {
-            const { result } = renderHook(() => useTasks(), {
-                wrapper: createWrapper(),
+        it('should handle CRUD operations', async () => {
+            const newTask = { title: 'New Task', description: 'New Desc', isCompleted: false, createdAt: '2024-01-01T00:00:00Z', categoryId: 1 };
+            const createdTask = { ...newTask, id: 3 };
+            const updatedTask = { ...mockTask, title: 'Updated' };
+
+            vi.mocked(taskService.createTask).mockResolvedValue(createdTask);
+            vi.mocked(taskService.updateTask).mockResolvedValue(updatedTask);
+            vi.mocked(taskService.deleteTask).mockResolvedValue(undefined);
+
+            const { result: createResult } = renderHook(() => useCreateTask(), { wrapper });
+            const { result: updateResult } = renderHook(() => useUpdateTask(), { wrapper });
+            const { result: deleteResult } = renderHook(() => useDeleteTask(), { wrapper });
+            const { result: toggleResult } = renderHook(() => useToggleTaskCompletion(), { wrapper });
+
+            createResult.current.mutate(newTask);
+            updateResult.current.mutate(updatedTask);
+            deleteResult.current.mutate(1);
+            toggleResult.current.mutate(mockTask);
+
+            await waitFor(() => {
+                expect(createResult.current.isSuccess).toBe(true);
+                expect(updateResult.current.isSuccess).toBe(true);
+                expect(deleteResult.current.isSuccess).toBe(true);
+                expect(toggleResult.current.isSuccess).toBe(true);
             });
-
-            expect(result.current.isLoading).toBeDefined();
-            expect(typeof result.current.isLoading).toBe('boolean');
-        });
-    });
-
-    describe('useCreateTask', () => {
-        it('should provide create task mutation', () => {
-            const { result } = renderHook(() => useCreateTask(), {
-                wrapper: createWrapper(),
-            });
-
-            expect(result.current.mutate).toBeDefined();
-            expect(result.current.mutateAsync).toBeDefined();
-            expect(typeof result.current.mutate).toBe('function');
-        });
-
-        it('should handle mutation states', () => {
-            const { result } = renderHook(() => useCreateTask(), {
-                wrapper: createWrapper(),
-            });
-
-            expect(result.current.isPending).toBeDefined();
-            expect(result.current.isError).toBeDefined();
-            expect(result.current.isSuccess).toBeDefined();
         });
     });
 
-    describe('useUpdateTask', () => {
-        it('should provide update task mutation', () => {
-            const { result } = renderHook(() => useUpdateTask(), {
-                wrapper: createWrapper(),
-            });
+    describe('Error Handling', () => {
+        it('should handle all operation errors', async () => {
+            const error = new Error('Operation failed');
+            vi.mocked(taskService.getTasks).mockRejectedValue(error);
+            vi.mocked(taskService.createTask).mockRejectedValue(error);
+            vi.mocked(taskService.updateTask).mockRejectedValue(error);
+            vi.mocked(taskService.deleteTask).mockRejectedValue(error);
 
-            expect(result.current.mutate).toBeDefined();
-            expect(result.current.mutateAsync).toBeDefined();
-            expect(typeof result.current.mutate).toBe('function');
+            const { result: fetchResult } = renderHook(() => useTasks(), { wrapper });
+            const { result: createResult } = renderHook(() => useCreateTask(), { wrapper });
+            const { result: updateResult } = renderHook(() => useUpdateTask(), { wrapper });
+            const { result: deleteResult } = renderHook(() => useDeleteTask(), { wrapper });
+
+            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, createdAt: '', categoryId: 1 });
+            updateResult.current.mutate(mockTask);
+            deleteResult.current.mutate(1);
+
+            await waitFor(() => {
+                expect(fetchResult.current.isError).toBe(true);
+                expect(createResult.current.isError).toBe(true);
+                expect(updateResult.current.isError).toBe(true);
+                expect(deleteResult.current.isError).toBe(true);
+            });
         });
     });
 
-    describe('useDeleteTask', () => {
-        it('should provide delete task mutation', () => {
-            const { result } = renderHook(() => useDeleteTask(), {
-                wrapper: createWrapper(),
-            });
+    describe('Edge Cases', () => {
+        it('should handle edge cases and state management', async () => {
+            vi.mocked(taskService.getTasks).mockResolvedValue([]);
+            vi.mocked(taskService.createTask).mockResolvedValue(mockTask);
 
-            expect(result.current.mutate).toBeDefined();
-            expect(result.current.mutateAsync).toBeDefined();
-            expect(typeof result.current.mutate).toBe('function');
-        });
-    });
+            const { result: createResult } = renderHook(() => useCreateTask(), { wrapper });
+            const { result: disabledResult } = renderHook(() => useTask(0), { wrapper });
 
-    describe('task operations integration', () => {
-        it('should handle task completion toggle', async () => {
-            const { result } = renderHook(() => useUpdateTask(), {
-                wrapper: createWrapper(),
-            });
+            expect(createResult.current.isPending).toBe(false);
+            expect(createResult.current.isSuccess).toBe(false);
+            expect(disabledResult.current.isFetching).toBe(false);
 
-            expect(result.current.mutate).toBeDefined();
-            expect(typeof result.current.mutate).toBe('function');
+            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, createdAt: '', categoryId: 1 });
+
+            await waitFor(() => expect(createResult.current.isSuccess).toBe(true));
         });
 
-        it('should handle task creation with category', async () => {
-            const { result } = renderHook(() => useCreateTask(), {
-                wrapper: createWrapper(),
-            });
+        it('should handle concurrent operations', async () => {
+            vi.mocked(taskService.createTask).mockResolvedValue(mockTask);
+            vi.mocked(taskService.updateTask).mockResolvedValue(mockTask);
 
-            expect(result.current.mutate).toBeDefined();
-            expect(typeof result.current.mutate).toBe('function');
+            const { result: createResult } = renderHook(() => useCreateTask(), { wrapper });
+            const { result: updateResult } = renderHook(() => useUpdateTask(), { wrapper });
+
+            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, createdAt: '', categoryId: 1 });
+            updateResult.current.mutate(mockTask);
+
+            await waitFor(() => {
+                expect(createResult.current.isSuccess).toBe(true);
+                expect(updateResult.current.isSuccess).toBe(true);
+            });
         });
     });
 });

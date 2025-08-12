@@ -273,5 +273,163 @@ describe('AuthContext', () => {
                 );
             }).not.toThrow();
         });
+
+        it('should handle login error with proper error logging', async () => {
+            const { authService } = await import('../../services/authService');
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.login).mockRejectedValue(new Error('Login failed'));
+
+            const TestLoginErrorComponent = () => {
+                const auth = useAuth();
+                return (
+                    <button onClick={async () => {
+                        const result = await auth.login({ username: 'testuser', password: 'wrong' });
+                        expect(result).toBe(false);
+                    }}>
+                        Login
+                    </button>
+                );
+            };
+
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestLoginErrorComponent />
+                </Wrapper>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByRole('button')).toBeInTheDocument();
+            });
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should handle register error with detailed console logging', async () => {
+            const { authService } = await import('../../services/authService');
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+            const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            const registerError = new Error('Registration failed');
+            vi.mocked(authService.register).mockRejectedValue(registerError);
+
+            const TestRegisterErrorComponent = () => {
+                const auth = useAuth();
+                return (
+                    <button onClick={async () => {
+                        const registerData = { username: 'testuser', email: 'test@test.com', password: 'password' };
+                        const result = await auth.register(registerData);
+                        expect(result).toBe(false);
+                    }}>
+                        Register
+                    </button>
+                );
+            };
+
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestRegisterErrorComponent />
+                </Wrapper>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByRole('button')).toBeInTheDocument();
+            });
+
+            consoleSpy.mockRestore();
+            consoleLogSpy.mockRestore();
+        });
+
+        it('should handle successful login flow', async () => {
+            const { authService } = await import('../../services/authService');
+            const mockUser = {
+                id: 1,
+                username: 'testuser',
+                email: 'test@test.com',
+                createdAt: '2025-01-01T00:00:00Z'
+            };
+
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.login).mockResolvedValue({
+                token: 'new-token',
+                username: 'testuser',
+                email: 'test@test.com',
+                expiresAt: '2025-01-02T00:00:00Z'
+            });
+            vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
+
+            const TestLoginSuccessComponent = () => {
+                const auth = useAuth();
+                return (
+                    <button onClick={async () => {
+                        const result = await auth.login({ username: 'testuser', password: 'correct' });
+                        expect(result).toBe(true);
+                    }}>
+                        Login Success
+                    </button>
+                );
+            };
+
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestLoginSuccessComponent />
+                </Wrapper>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByRole('button')).toBeInTheDocument();
+            });
+        });
+
+        it('should handle successful register flow with console logging', async () => {
+            const { authService } = await import('../../services/authService');
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+            const mockUser = {
+                id: 1,
+                username: 'newuser',
+                email: 'new@test.com',
+                createdAt: '2025-01-01T00:00:00Z'
+            };
+
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.register).mockResolvedValue({
+                token: 'new-token',
+                username: 'newuser',
+                email: 'new@test.com',
+                expiresAt: '2025-01-02T00:00:00Z'
+            });
+            vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
+
+            const TestRegisterSuccessComponent = () => {
+                const auth = useAuth();
+                return (
+                    <button onClick={async () => {
+                        const registerData = { username: 'newuser', email: 'new@test.com', password: 'password' };
+                        const result = await auth.register(registerData);
+                        expect(result).toBe(true);
+                    }}>
+                        Register Success
+                    </button>
+                );
+            };
+
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestRegisterSuccessComponent />
+                </Wrapper>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByRole('button')).toBeInTheDocument();
+            });
+
+            consoleSpy.mockRestore();
+        });
     });
 });

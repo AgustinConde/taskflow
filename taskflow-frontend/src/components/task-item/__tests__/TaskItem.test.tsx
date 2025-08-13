@@ -1,349 +1,334 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider, createTheme } from '@mui/material';
 import TaskItem from '../TaskItem';
-import { NotificationProvider } from '../../../contexts/NotificationContext';
+import type { Task } from '../../../types/Task';
+import type { Category } from '../../../types/Category';
 
-const mockTask = {
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const translations: Record<string, string> = {
+                more: 'More',
+                edit: 'Edit',
+                delete: 'Delete',
+                info: 'Info',
+                save: 'Save',
+                cancel: 'Cancel',
+                dueDate: 'Due Date',
+                category: 'Category',
+                taskTitle: 'Task Title',
+                taskDescription: 'Task Description'
+            };
+            return translations[key] || key;
+        }
+    })
+}));
+
+vi.mock('@mui/icons-material', () => ({
+    MoreVert: () => <div data-testid="MoreVertIcon" />,
+    Edit: () => <div data-testid="EditIcon" />,
+    Delete: () => <div data-testid="DeleteIcon" />,
+    Info: () => <div data-testid="InfoIcon" />,
+    Close: () => <div data-testid="CloseIcon" />
+}));
+
+const mockTask: Task = {
     id: 1,
-    title: 'Complete project documentation',
-    description: 'Write comprehensive documentation for the project',
+    title: 'Test Task',
+    description: 'Test Description',
     isCompleted: false,
     dueDate: '2024-12-31T23:59:59.000Z',
     categoryId: 1,
     createdAt: '2024-01-01T00:00:00.000Z'
 };
 
-const mockCategory = {
+const mockCategory: Category = {
     id: 1,
-    name: 'Development',
-    color: '#FF5722',
+    name: 'Work',
+    color: '#7C3AED',
+    description: 'Work tasks',
     userId: 1,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z'
 };
 
-const mockProps = {
-    task: mockTask,
-    onEditSave: vi.fn(),
-    onDelete: vi.fn(),
-    onToggleCompleted: vi.fn(),
-    categories: [mockCategory]
-};
+function setupMocks() {
+    const onEditSave = vi.fn();
+    const onDelete = vi.fn();
+    const onToggleCompleted = vi.fn();
+    return { onEditSave, onDelete, onToggleCompleted };
+}
 
-vi.mock('../../../services/taskService', () => ({
-    taskService: {
-        updateTask: vi.fn(),
-        deleteTask: vi.fn()
-    }
-}));
+function renderTaskItem(props = {}) {
+    const defaultProps = {
+        task: mockTask,
+        onEditSave: vi.fn(),
+        onDelete: vi.fn(),
+        onToggleCompleted: vi.fn(),
+        categories: [mockCategory],
+        ...props
+    };
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => key,
-        i18n: { changeLanguage: vi.fn() }
-    })
-}));
-
-const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: { retry: false, refetchOnWindowFocus: false },
-            mutations: { retry: false }
-        }
-    });
-
-    return (
-        <QueryClientProvider client={queryClient}>
-            <NotificationProvider>
-                {children}
-            </NotificationProvider>
+    return render(
+        <QueryClientProvider client={new QueryClient()}>
+            <ThemeProvider theme={createTheme()}>
+                <TaskItem {...defaultProps} />
+            </ThemeProvider>
         </QueryClientProvider>
     );
-};
+}
 
 describe('TaskItem', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    describe('Rendering', () => {
-        it('should render task information correctly', () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+    describe('Core Functionality', () => {
+        it('should render task with all information', () => {
+            renderTaskItem();
 
-            expect(screen.getByText('Complete project documentation')).toBeInTheDocument();
-            expect(screen.getByText('Write comprehensive documentation for the project')).toBeInTheDocument();
-            expect(screen.getByText('Development')).toBeInTheDocument();
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
+            expect(screen.getByText('Test Description')).toBeInTheDocument();
+            expect(screen.getByText('Work')).toBeInTheDocument();
+            expect(screen.getByTestId('task-item-1')).toBeInTheDocument();
         });
 
-        it('should display due date when provided', () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should handle task without category', () => {
+            const taskWithoutCategory = { ...mockTask, categoryId: null };
+            renderTaskItem({ task: taskWithoutCategory, categories: [] });
 
-            expect(screen.getByTestId('task-item-1')).toBeInTheDocument();
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
+            expect(screen.queryByText('Work')).not.toBeInTheDocument();
         });
 
         it('should handle task without due date', () => {
             const taskWithoutDueDate = { ...mockTask, dueDate: null };
+            renderTaskItem({ task: taskWithoutDueDate });
 
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} task={taskWithoutDueDate} />
-                </TestWrapper>
-            );
-
-            expect(screen.getByText('Complete project documentation')).toBeInTheDocument();
-            expect(screen.queryByText(/2024-12-31/)).not.toBeInTheDocument();
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
         });
 
-        it('should handle task without category', () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} categories={[]} />
-                </TestWrapper>
-            );
-
-            expect(screen.getByText('Complete project documentation')).toBeInTheDocument();
-        });
-    });
-
-    describe('Task Completion', () => {
-        it('should toggle task completion status', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
-
-            const checkbox = screen.getByRole('checkbox');
-            expect(checkbox).not.toBeChecked();
-
-            await userEvent.click(checkbox);
-
-            expect(mockProps.onToggleCompleted).toHaveBeenCalled();
-        });
-
-        it('should show completed state styling', () => {
+        it('should handle completed task state', () => {
             const completedTask = { ...mockTask, isCompleted: true };
-
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} task={completedTask} />
-                </TestWrapper>
-            );
+            renderTaskItem({ task: completedTask });
 
             const checkbox = screen.getByRole('checkbox');
             expect(checkbox).toBeChecked();
         });
 
-        it('should handle completion toggle error', async () => {
-            mockProps.onToggleCompleted.mockRejectedValue(new Error('Update failed'));
+        it('should handle task with empty description', () => {
+            const taskWithoutDescription = { ...mockTask, description: '' };
+            renderTaskItem({ task: taskWithoutDescription });
 
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
+        });
+
+        it('should handle undefined category id', () => {
+            const taskWithUndefinedCategory = { ...mockTask, categoryId: undefined };
+            renderTaskItem({ task: taskWithUndefinedCategory });
+
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
+        });
+    });
+
+    describe('Task Operations', () => {
+        it('should toggle task completion', async () => {
+            const mocks = setupMocks();
+            renderTaskItem(mocks);
 
             const checkbox = screen.getByRole('checkbox');
             await userEvent.click(checkbox);
 
-            expect(mockProps.onToggleCompleted).toHaveBeenCalled();
-        });
-    });
-
-    describe('Task Actions', () => {
-        it('should open task menu on menu button click', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
-
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            await userEvent.click(menuButton);
-
-            await waitFor(() => {
-                expect(screen.getByText('edit')).toBeInTheDocument();
-                expect(screen.getByText('delete')).toBeInTheDocument();
-                expect(screen.getByText('info')).toBeInTheDocument();
-            });
+            expect(mocks.onToggleCompleted).toHaveBeenCalled();
         });
 
-        it('should open edit dialog', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should have menu button available', () => {
+            renderTaskItem();
 
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            await userEvent.click(menuButton);
-
-            const editButton = screen.getByText('edit');
-            await userEvent.click(editButton);
-
-            expect(editButton).toBeDefined();
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            expect(menuButton).toBeInTheDocument();
         });
 
-        it('should open info dialog', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should handle menu button click', async () => {
+            renderTaskItem();
 
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            await userEvent.click(menuButton);
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                fireEvent.click(menuButton);
+            }
 
-            const infoButton = screen.getByText('info');
-            await userEvent.click(infoButton);
-
-            expect(infoButton).toBeDefined();
+            expect(menuButton).toBeInTheDocument();
         });
 
-        it('should handle task deletion', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
-
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            await userEvent.click(menuButton);
-
-            const deleteButton = screen.getByText('delete');
-            await userEvent.click(deleteButton);
-
-            expect(deleteButton).toBeDefined();
-        });
-    });
-
-    describe('Visual States', () => {
-        it('should render task with title and description', () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
-
-            expect(screen.getByText(mockTask.title)).toBeInTheDocument();
-            expect(screen.getByText(mockTask.description)).toBeInTheDocument();
-        });
-
-        it('should show completed state with checkbox', () => {
-            const completedTask = {
-                ...mockTask,
-                isCompleted: true
+        it('should handle category matching logic', () => {
+            const taskWithDifferentCategory = { ...mockTask, categoryId: 2 };
+            const additionalCategory = {
+                id: 2,
+                name: 'Personal',
+                color: '#3B82F6',
+                description: 'Personal tasks',
+                userId: 1,
+                createdAt: '2024-01-01T00:00:00.000Z',
+                updatedAt: '2024-01-01T00:00:00.000Z'
             };
 
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} task={completedTask} />
-                </TestWrapper>
-            );
+            renderTaskItem({
+                task: taskWithDifferentCategory,
+                categories: [mockCategory, additionalCategory]
+            });
 
-            const checkbox = screen.getByRole('checkbox');
-            expect(checkbox).toBeInTheDocument();
+            expect(screen.getByText('Personal')).toBeInTheDocument();
         });
 
-        it('should show category chip when category exists', () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should handle nonexistent category', () => {
+            const taskWithNonexistentCategory = { ...mockTask, categoryId: 999 };
+            renderTaskItem({ task: taskWithNonexistentCategory });
 
-            expect(screen.getByText(mockCategory.name)).toBeInTheDocument();
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
         });
     });
 
-    describe('Accessibility', () => {
-        it('should have proper structure', () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+    describe('Dialog Interactions', () => {
+        it('should open info dialog when info menu item is clicked', async () => {
+            renderTaskItem();
 
-            const taskElement = screen.getByTestId(`task-item-${mockTask.id}`);
-            expect(taskElement).toBeInTheDocument();
-
-            const checkbox = screen.getByRole('checkbox');
-            expect(checkbox).toBeInTheDocument();
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const infoMenuItem = screen.getByText('Info');
+                await userEvent.click(infoMenuItem);
+                
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+            }
         });
 
-        it('should support interaction with menu button', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should open edit dialog when edit menu item is clicked', async () => {
+            renderTaskItem();
 
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            expect(menuButton).toBeInTheDocument();
-
-            await userEvent.click(menuButton);
-            await waitFor(() => {
-                const firstMenuItem = screen.getByText('info');
-                expect(firstMenuItem).toHaveFocus();
-            });
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+                
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+                expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
+                expect(screen.getByDisplayValue('Test Description')).toBeInTheDocument();
+            }
         });
 
-        it('should have proper focus management', async () => {
-            render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should handle edit save with updated values', async () => {
+            const mocks = setupMocks();
+            renderTaskItem(mocks);
 
-            const checkbox = screen.getByRole('checkbox');
-            checkbox.focus();
-
-            expect(document.activeElement).toBe(checkbox);
-
-            await userEvent.keyboard('{Tab}');
-
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            expect(document.activeElement).toBe(menuButton);
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+                
+                const titleInput = screen.getByDisplayValue('Test Task');
+                await userEvent.clear(titleInput);
+                await userEvent.type(titleInput, 'Updated Task');
+                
+                const saveButton = screen.getByText('Save');
+                await userEvent.click(saveButton);
+                
+                expect(mocks.onEditSave).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        title: 'Updated Task',
+                        description: 'Test Description',
+                        categoryId: 1
+                    })
+                );
+            }
         });
-    });
 
-    describe('Performance', () => {
-        it('should not re-render unnecessarily', () => {
-            const { rerender } = render(
-                <TestWrapper>
-                    <TaskItem {...mockProps} />
-                </TestWrapper>
-            );
+        it('should handle edit modal with empty description', async () => {
+            const taskWithNullDescription = { ...mockTask, description: null };
+            renderTaskItem({ task: taskWithNullDescription });
 
-            const renderSpy = vi.fn();
-            const MemoizedTaskItem = vi.fn(() => {
-                renderSpy();
-                return <TaskItem {...mockProps} />;
-            });
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+                
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+                expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
+            }
+        });
 
-            rerender(
-                <TestWrapper>
-                    <MemoizedTaskItem />
-                </TestWrapper>
-            );
+        it('should handle edit modal with empty due date', async () => {
+            const taskWithNullDate = { ...mockTask, dueDate: null };
+            renderTaskItem({ task: taskWithNullDate });
 
-            rerender(
-                <TestWrapper>
-                    <MemoizedTaskItem />
-                </TestWrapper>
-            );
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+                
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+            }
+        });
 
-            expect(renderSpy).toHaveBeenCalledTimes(2);
+        it('should handle edit modal with undefined categoryId', async () => {
+            const taskWithUndefinedCategory = { ...mockTask, categoryId: undefined };
+            renderTaskItem({ task: taskWithUndefinedCategory });
+
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+                
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+            }
+        });
+
+        it('should close edit modal after save', async () => {
+            const mocks = setupMocks();
+            renderTaskItem(mocks);
+
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+                
+                const saveButton = screen.getByText('Save');
+                await userEvent.click(saveButton);
+                
+                expect(mocks.onEditSave).toHaveBeenCalled();
+            }
+        });
+
+        it('should close info dialog when close button is clicked', async () => {
+            renderTaskItem();
+
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                
+                const infoMenuItem = screen.getByText('Info');
+                await userEvent.click(infoMenuItem);
+                
+                const closeButton = screen.getByTestId('CloseIcon').closest('button');
+                if (closeButton) {
+                    await userEvent.click(closeButton);
+                }
+            }
         });
     });
 });

@@ -16,6 +16,8 @@ vi.mock('../../services/authService', () => ({
     }
 }));
 
+import { authService } from '../../services/authService';
+
 const TestComponent = () => {
     const auth = useAuth();
 
@@ -54,7 +56,6 @@ describe('AuthContext', () => {
     });
 
     it('should provide auth context value', async () => {
-        const { authService } = await import('../../services/authService');
         vi.mocked(authService.getToken).mockReturnValue(null);
 
         const Wrapper = createWrapper();
@@ -69,8 +70,9 @@ describe('AuthContext', () => {
     });
 
     it('should start with unauthenticated state when no token', async () => {
-        const { authService } = await import('../../services/authService');
         vi.mocked(authService.getToken).mockReturnValue(null);
+        vi.mocked(authService.isTokenExpired).mockReturnValue(false);
+        vi.mocked(authService.validateToken).mockResolvedValue(false);
 
         const Wrapper = createWrapper();
 
@@ -82,14 +84,14 @@ describe('AuthContext', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('is-loading')).toHaveTextContent('false');
-        });
+        }, { timeout: 1000 });
 
         expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
         expect(screen.getByTestId('has-token')).toHaveTextContent('false');
     });
 
     it('should handle existing valid token', async () => {
-        const { authService } = await import('../../services/authService');
+
         const mockUser = {
             id: 1,
             username: 'testuser',
@@ -125,7 +127,7 @@ describe('AuthContext', () => {
     });
 
     it('should handle expired token', async () => {
-        const { authService } = await import('../../services/authService');
+
 
         vi.mocked(authService.getToken).mockReturnValue('expired-token');
         vi.mocked(authService.isTokenExpired).mockReturnValue(false);
@@ -160,7 +162,6 @@ describe('AuthContext', () => {
 
     describe('authentication methods', () => {
         it('should provide login method', async () => {
-            const { authService } = await import('../../services/authService');
             vi.mocked(authService.getToken).mockReturnValue(null);
 
             const TestLoginComponent = () => {
@@ -182,7 +183,6 @@ describe('AuthContext', () => {
         });
 
         it('should provide register method', async () => {
-            const { authService } = await import('../../services/authService');
             vi.mocked(authService.getToken).mockReturnValue(null);
 
             const TestRegisterComponent = () => {
@@ -204,7 +204,6 @@ describe('AuthContext', () => {
         });
 
         it('should provide logout method', async () => {
-            const { authService } = await import('../../services/authService');
             vi.mocked(authService.getToken).mockReturnValue(null);
 
             const TestLogoutComponent = () => {
@@ -228,7 +227,7 @@ describe('AuthContext', () => {
 
     describe('error handling', () => {
         it('should handle auth initialization errors', async () => {
-            const { authService } = await import('../../services/authService');
+
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             vi.mocked(authService.getToken).mockReturnValue('valid-token');
@@ -275,7 +274,7 @@ describe('AuthContext', () => {
         });
 
         it('should handle login error with proper error logging', async () => {
-            const { authService } = await import('../../services/authService');
+
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             vi.mocked(authService.getToken).mockReturnValue(null);
@@ -308,7 +307,7 @@ describe('AuthContext', () => {
         });
 
         it('should handle register error with detailed console logging', async () => {
-            const { authService } = await import('../../services/authService');
+
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
             const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
@@ -345,7 +344,7 @@ describe('AuthContext', () => {
         });
 
         it('should handle successful login flow', async () => {
-            const { authService } = await import('../../services/authService');
+
             const mockUser = {
                 id: 1,
                 username: 'testuser',
@@ -387,7 +386,7 @@ describe('AuthContext', () => {
         });
 
         it('should handle successful register flow with console logging', async () => {
-            const { authService } = await import('../../services/authService');
+
             const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
             const mockUser = {
                 id: 1,

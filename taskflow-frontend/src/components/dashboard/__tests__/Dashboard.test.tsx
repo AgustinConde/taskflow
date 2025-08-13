@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ThemeProvider, createTheme } from '@mui/material';
@@ -145,12 +145,19 @@ describe('Dashboard', () => {
             const user = userEvent.setup();
             renderDashboard();
 
-            await user.click(screen.getByText('7d'));
-            expect(screen.getByText('Current: 7d')).toBeInTheDocument();
+            const sevenDayButton = screen.getByText('7d');
+            const thirtyDayButton = screen.getByText('30d');
+
+            await user.click(sevenDayButton);
+            await waitFor(() => {
+                expect(screen.getByText('Current: 7d')).toBeInTheDocument();
+            }, { timeout: 2000 });
             expect(mockUseFilteredTasks).toHaveBeenLastCalledWith(mockTasks, '7d');
 
-            await user.click(screen.getByText('30d'));
-            expect(screen.getByText('Current: 30d')).toBeInTheDocument();
+            await user.click(thirtyDayButton);
+            await waitFor(() => {
+                expect(screen.getByText('Current: 30d')).toBeInTheDocument();
+            }, { timeout: 2000 });
         });
 
         it('should call hooks with correct parameters', () => {

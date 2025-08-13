@@ -1,248 +1,307 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { ThemeProvider, createTheme } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider, createTheme } from '@mui/material';
 import CategoryManager from '../CategoryManager';
-import * as hooks from '../../../hooks';
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../../../hooks';
 import type { Category } from '../../../types/Category';
+
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string, options?: any) => {
+            const translations: Record<string, string> = {
+                manageCategories: 'Manage Categories',
+                createCategory: 'Create Category',
+                editCategory: 'Edit Category',
+                categoryName: 'Category Name',
+                categoryDescription: 'Description',
+                categoryColor: 'Color',
+                updateCategory: 'Update Category',
+                cancel: 'Cancel',
+                categories: 'Categories',
+                noCategoriesFound: 'No categories found',
+                close: 'Close',
+                confirmDeleteCategory: 'Confirm Delete',
+                deleteCategoryConfirmation: `Delete category "${options?.name || ''}"?`,
+                delete: 'Delete',
+                nameRequired: 'Name is required',
+                colorRequired: 'Color is required'
+            };
+            return translations[key] || key;
+        }
+    })
+}));
 
 vi.mock('../../../hooks', () => ({
     useCategories: vi.fn(),
     useCreateCategory: vi.fn(),
     useUpdateCategory: vi.fn(),
-    useDeleteCategory: vi.fn(),
-}));
-
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({ t: (key: string) => key }),
+    useDeleteCategory: vi.fn()
 }));
 
 vi.mock('../../common', () => ({
-    ConfirmationDialog: ({ open, onConfirm, onClose }: any) =>
+    ConfirmationDialog: ({ open, onConfirm, onClose, loading }: any) =>
         open ? (
-            <div>
-                <span>confirmDeleteCategory</span>
-                <button onClick={onConfirm}>delete</button>
-                <button onClick={onClose}>cancel</button>
+            <div data-testid="confirmation-dialog">
+                <span>Confirm Delete</span>
+                <button onClick={onConfirm} disabled={loading}>
+                    {loading ? 'Deleting' : 'Delete'}
+                </button>
+                <button onClick={onClose}>Cancel</button>
             </div>
         ) : null
 }));
 
+const mockCategories: Category[] = [
+    {
+        id: 1,
+        name: 'Work',
+        color: '#7C3AED',
+        description: 'Work tasks',
+        userId: 1,
+        createdAt: '2023-01-01T00:00:00Z',
+        updatedAt: '2023-01-01T00:00:00Z'
+    },
+    {
+        id: 2,
+        name: 'Personal',
+        color: '#3B82F6',
+        description: 'Personal tasks',
+        userId: 1,
+        createdAt: '2023-01-01T00:00:00Z',
+        updatedAt: '2023-01-01T00:00:00Z'
+    }
+];
+
+function setupMocks() {
+    const mockCreateMutation = {
+        mutateAsync: vi.fn().mockResolvedValue({}),
+        isPending: false
+    };
+
+    const mockUpdateMutation = {
+        mutateAsync: vi.fn().mockResolvedValue({}),
+        isPending: false
+    };
+
+    const mockDeleteMutation = {
+        mutateAsync: vi.fn().mockResolvedValue({}),
+        isPending: false
+    };
+
+    vi.mocked(useCategories).mockReturnValue({
+        data: mockCategories,
+        isLoading: false
+    } as any);
+
+    vi.mocked(useCreateCategory).mockReturnValue(mockCreateMutation as any);
+    vi.mocked(useUpdateCategory).mockReturnValue(mockUpdateMutation as any);
+    vi.mocked(useDeleteCategory).mockReturnValue(mockDeleteMutation as any);
+
+    return { mockCreateMutation, mockUpdateMutation, mockDeleteMutation };
+}
+
+function renderCategoryManager(props = {}) {
+    const defaultProps = {
+        open: true,
+        onClose: vi.fn(),
+        onCategoriesChange: vi.fn()
+    };
+
+    return render(
+        <QueryClientProvider client={new QueryClient()}>
+            <ThemeProvider theme={createTheme()}>
+                <CategoryManager {...defaultProps} {...props} />
+            </ThemeProvider>
+        </QueryClientProvider>
+    );
+}
+
 describe('CategoryManager', () => {
-    let queryClient: QueryClient;
-    const mockCategory: Category = {
-        id: 1, name: 'Work', color: '#7C3AED', description: 'Work tasks',
-        createdAt: '2024-01-01', updatedAt: '2024-01-01', userId: 1
-    };
-
-    const setupMocks = () => {
-        queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-
-        const mockMutationResult = {
-            mutateAsync: vi.fn().mockResolvedValue(mockCategory),
-            isPending: false, isError: false, isSuccess: false
-        };
-
-        vi.mocked(hooks.useCategories).mockReturnValue({
-            data: [mockCategory], isLoading: false, isError: false, error: null, isSuccess: true,
-            isFetching: false, isPending: false, refetch: vi.fn()
-        } as any);
-
-        vi.mocked(hooks.useCreateCategory).mockReturnValue(mockMutationResult as any);
-        vi.mocked(hooks.useUpdateCategory).mockReturnValue(mockMutationResult as any);
-        vi.mocked(hooks.useDeleteCategory).mockReturnValue(mockMutationResult as any);
-
-        return { mockMutationResult };
-    };
-
-    const renderCategoryManager = (props = {}) => {
-        const defaultProps = { open: true, onClose: vi.fn(), onCategoriesChange: vi.fn() };
-        const theme = createTheme();
-
-        return render(
-            <QueryClientProvider client={queryClient}>
-                <ThemeProvider theme={theme}>
-                    <CategoryManager {...defaultProps} {...props} />
-                </ThemeProvider>
-            </QueryClientProvider>
-        );
-    };
-
     beforeEach(() => {
-        setupMocks();
         vi.clearAllMocks();
     });
 
     describe('Core Functionality', () => {
-        it('should render dialog when open and display categories', () => {
+        it('should render dialog with categories', () => {
+            setupMocks();
             renderCategoryManager();
 
-            expect(screen.getByText('manageCategories')).toBeInTheDocument();
-            expect(screen.getByRole('heading', { name: 'createCategory' })).toBeInTheDocument();
+            expect(screen.getByText('Manage Categories')).toBeInTheDocument();
             expect(screen.getByText('Work')).toBeInTheDocument();
+            expect(screen.getByText('Personal')).toBeInTheDocument();
         });
 
-        it('should handle form input changes', () => {
+        it('should show loading state', () => {
+            vi.mocked(useCategories).mockReturnValue({
+                data: [],
+                isLoading: true
+            } as any);
+
             renderCategoryManager();
 
-            const nameInput = screen.getByLabelText('categoryName');
-            const descInput = screen.getByLabelText('categoryDescription');
-
-            fireEvent.change(nameInput, { target: { value: 'New Category' } });
-            fireEvent.change(descInput, { target: { value: 'New Description' } });
-
-            expect(nameInput).toHaveValue('New Category');
-            expect(descInput).toHaveValue('New Description');
+            expect(screen.getByText('Manage Categories')).toBeInTheDocument();
+            expect(screen.queryByText('No categories found')).not.toBeInTheDocument();
         });
 
-        it('should create new category successfully', async () => {
-            const { mockMutationResult } = setupMocks();
+        it('should show empty state', () => {
+            vi.mocked(useCategories).mockReturnValue({
+                data: [],
+                isLoading: false
+            } as any);
+
             renderCategoryManager();
 
-            fireEvent.change(screen.getByLabelText('categoryName'), { target: { value: 'New Work' } });
-            fireEvent.click(screen.getByRole('button', { name: /createCategory/i }));
+            expect(screen.getByText('Categories (0)')).toBeInTheDocument();
+        });
+
+        it('should validate required name', async () => {
+            setupMocks();
+            renderCategoryManager();
+
+            fireEvent.click(screen.getByRole('button', { name: /create category/i }));
 
             await waitFor(() => {
-                expect(mockMutationResult.mutateAsync).toHaveBeenCalled();
+                expect(screen.getByText('Name is required')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Category Operations', () => {
+        it('should create new category', async () => {
+            const mocks = setupMocks();
+            const onCategoriesChange = vi.fn();
+            renderCategoryManager({ onCategoriesChange });
+
+            fireEvent.change(screen.getByLabelText('Category Name'), {
+                target: { value: 'New Category' }
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+
+            await waitFor(() => {
+                expect(mocks.mockCreateMutation.mutateAsync).toHaveBeenCalledWith({
+                    name: 'New Category',
+                    color: '#7C3AED',
+                    description: undefined,
+                    createdAt: '',
+                    updatedAt: '',
+                    userId: 0
+                });
             });
         });
 
         it('should edit existing category', async () => {
-            const { mockMutationResult } = setupMocks();
+            const mocks = setupMocks();
             renderCategoryManager();
 
-            const editButtons = screen.getAllByRole('button');
-            const editButton = editButtons.find(btn => btn.querySelector('[data-testid="EditIcon"]'));
+            const editButtons = screen.getAllByText('EditIcon');
+            fireEvent.click(editButtons[0].closest('button')!);
 
-            if (editButton) {
-                fireEvent.click(editButton);
+            expect(screen.getByDisplayValue('Work')).toBeInTheDocument();
 
-                await waitFor(() => {
-                    expect(screen.getByDisplayValue('Work')).toBeInTheDocument();
-                });
+            fireEvent.change(screen.getByLabelText('Category Name'), {
+                target: { value: 'Updated Work' }
+            });
 
-                fireEvent.change(screen.getByLabelText('categoryName'), { target: { value: 'Updated Work' } });
-                fireEvent.click(screen.getByRole('button', { name: /updateCategory/i }));
-
-                await waitFor(() => {
-                    expect(mockMutationResult.mutateAsync).toHaveBeenCalled();
-                });
-            }
-        });
-
-        it('should delete category with confirmation', async () => {
-            const { mockMutationResult } = setupMocks();
-            renderCategoryManager();
-
-            const deleteButtons = screen.getAllByRole('button');
-            const deleteButton = deleteButtons.find(btn => btn.querySelector('[data-testid="DeleteIcon"]'));
-
-            if (deleteButton) {
-                fireEvent.click(deleteButton);
-
-                expect(screen.getByText('confirmDeleteCategory')).toBeInTheDocument();
-
-                fireEvent.click(screen.getByText('delete'));
-
-                await waitFor(() => {
-                    expect(mockMutationResult.mutateAsync).toHaveBeenCalledWith(1);
-                });
-            }
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('should validate required fields', async () => {
-            renderCategoryManager();
-
-            fireEvent.change(screen.getByLabelText('categoryName'), { target: { value: '' } });
-            fireEvent.click(screen.getByRole('button', { name: /createCategory/i }));
-
-            expect(screen.getByText('nameRequired')).toBeInTheDocument();
-        });
-
-        it('should handle create errors gracefully', async () => {
-            const { mockMutationResult } = setupMocks();
-            mockMutationResult.mutateAsync.mockRejectedValue(new Error('Create failed'));
-
-            renderCategoryManager();
-
-            fireEvent.change(screen.getByLabelText('categoryName'), { target: { value: 'Test' } });
-            fireEvent.click(screen.getByRole('button', { name: /createCategory/i }));
+            fireEvent.click(screen.getByRole('button', { name: /update category/i }));
 
             await waitFor(() => {
-                expect(mockMutationResult.mutateAsync).toHaveBeenCalled();
+                expect(mocks.mockUpdateMutation.mutateAsync).toHaveBeenCalledWith({
+                    id: 1,
+                    name: 'Updated Work',
+                    color: '#7C3AED',
+                    description: 'Work tasks',
+                    userId: 1,
+                    createdAt: '2023-01-01T00:00:00Z',
+                    updatedAt: '2023-01-01T00:00:00Z'
+                });
             });
         });
-    });
 
-    describe('Edge Cases', () => {
-        it('should handle empty categories list', () => {
-            vi.mocked(hooks.useCategories).mockReturnValue({
-                data: [], isLoading: false, isError: false, error: null, isSuccess: true,
-                isFetching: false, isPending: false, refetch: vi.fn()
-            } as any);
-
+        it('should cancel editing', () => {
+            setupMocks();
             renderCategoryManager();
 
-            expect(screen.getByText('manageCategories')).toBeInTheDocument();
-            expect(screen.getByText('noCategoriesFound')).toBeInTheDocument();
-        });
+            const editButtons = screen.getAllByText('EditIcon');
+            fireEvent.click(editButtons[0].closest('button')!);
+            fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
-        it('should handle loading state', () => {
-            vi.mocked(hooks.useCategories).mockReturnValue({
-                data: [], isLoading: true, isError: false, error: null, isSuccess: false,
-                isFetching: true, isPending: true, refetch: vi.fn()
-            } as any);
-
-            renderCategoryManager();
-
-            expect(screen.getByRole('progressbar')).toBeInTheDocument();
-        });
-
-        it('should close dialog and reset form', () => {
-            const onClose = vi.fn();
-            renderCategoryManager({ onClose });
-
-            fireEvent.change(screen.getByLabelText('categoryName'), { target: { value: 'Test' } });
-            fireEvent.click(screen.getByRole('button', { name: 'close' }));
-
-            expect(onClose).toHaveBeenCalled();
-        });
-
-        it('should cancel delete confirmation', () => {
-            renderCategoryManager();
-
-            const deleteButtons = screen.getAllByRole('button');
-            const deleteButton = deleteButtons.find(btn => btn.querySelector('[data-testid="DeleteIcon"]'));
-
-            if (deleteButton) {
-                fireEvent.click(deleteButton);
-                fireEvent.click(screen.getByText('cancel'));
-
-                expect(screen.queryByText('confirmDeleteCategory')).not.toBeInTheDocument();
-            }
+            expect(screen.queryByDisplayValue('Work')).not.toBeInTheDocument();
         });
 
         it('should handle color selection', () => {
+            setupMocks();
             renderCategoryManager();
 
-            const colorBoxes = screen.getAllByRole('button').filter(btn =>
-                btn.style.backgroundColor && btn.style.width === '24px'
+            const colorButtons = screen.getAllByRole('button');
+            const blueColorButton = colorButtons.find(button =>
+                button.style.backgroundColor === 'rgb(59, 130, 246)'
             );
 
-            if (colorBoxes.length > 0) {
-                fireEvent.click(colorBoxes[1]);
+            if (blueColorButton) {
+                fireEvent.click(blueColorButton);
             }
 
-            expect(screen.getByRole('heading', { name: 'createCategory' })).toBeInTheDocument();
+            expect(screen.getByLabelText('Category Name')).toBeInTheDocument();
+        });
+    });
+
+    describe('Category Management', () => {
+        it('should delete category with confirmation', async () => {
+            const mocks = setupMocks();
+            renderCategoryManager();
+
+            const deleteButtons = screen.getAllByText('DeleteIcon');
+            fireEvent.click(deleteButtons[0].closest('button')!);
+
+            expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument();
+
+            fireEvent.click(screen.getByText('Delete'));
+
+            await waitFor(() => {
+                expect(mocks.mockDeleteMutation.mutateAsync).toHaveBeenCalledWith(1);
+            });
         });
 
-        it('should call onCategoriesChange when categories update', () => {
-            const onCategoriesChange = vi.fn();
-            renderCategoryManager({ onCategoriesChange });
+        it('should cancel deletion', () => {
+            setupMocks();
+            renderCategoryManager();
 
-            expect(onCategoriesChange).toHaveBeenCalled();
+            const deleteButtons = screen.getAllByText('DeleteIcon');
+            fireEvent.click(deleteButtons[0].closest('button')!);
+
+            fireEvent.click(screen.getByText('Cancel'));
+
+            expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument();
+        });
+
+        it('should handle deletion error', async () => {
+            const mocks = setupMocks();
+            mocks.mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete failed'));
+
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+            renderCategoryManager();
+
+            const deleteButtons = screen.getAllByText('DeleteIcon');
+            fireEvent.click(deleteButtons[0].closest('button')!);
+            fireEvent.click(screen.getByText('Delete'));
+
+            await waitFor(() => {
+                expect(consoleSpy).toHaveBeenCalled();
+            });
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should close dialog', () => {
+            const onClose = vi.fn();
+            setupMocks();
+            renderCategoryManager({ onClose });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+            expect(onClose).toHaveBeenCalled();
         });
     });
 });

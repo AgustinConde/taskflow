@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -59,7 +59,16 @@ function setupMocks() {
     const onEditSave = vi.fn();
     const onDelete = vi.fn();
     const onToggleCompleted = vi.fn();
-    return { onEditSave, onDelete, onToggleCompleted };
+    const categories = [mockCategory, {
+        id: 2,
+        name: 'Personal',
+        color: '#3B82F6',
+        description: 'Personal tasks',
+        userId: 1,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z'
+    }];
+    return { onEditSave, onDelete, onToggleCompleted, categories };
 }
 
 function renderTaskItem(props = {}) {
@@ -331,6 +340,143 @@ describe('TaskItem', () => {
 
                 await new Promise(resolve => setTimeout(resolve, 300));
                 expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+            }
+        });
+
+        it('should handle category change in edit dialog', async () => {
+            const mocks = setupMocks();
+            const secondCategory = {
+                id: 2,
+                name: 'Personal',
+                color: '#3B82F6',
+                description: 'Personal tasks',
+                userId: 1,
+                createdAt: '2024-01-01T00:00:00.000Z',
+                updatedAt: '2024-01-01T00:00:00.000Z'
+            };
+
+            renderTaskItem({
+                ...mocks,
+                categories: [mockCategory, secondCategory]
+            });
+
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+
+                const categorySelect = screen.getByRole('combobox');
+                await userEvent.click(categorySelect);
+
+                const personalOption = screen.getByText('Personal');
+                await userEvent.click(personalOption);
+
+                const saveButton = screen.getByText('Save');
+                await userEvent.click(saveButton);
+
+                expect(mocks.onEditSave).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        categoryId: 2
+                    })
+                );
+            }
+        });
+
+        it('should properly pass and utilize localCategoryId and setLocalCategoryId props to TaskEditDialog', async () => {
+            const mocks = setupMocks();
+            const taskWithoutCategory = { ...mockTask, categoryId: undefined };
+
+            renderTaskItem({
+                ...mocks,
+                task: taskWithoutCategory
+            });
+
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+
+                const editMenuItem = screen.getByText('Edit');
+                await userEvent.click(editMenuItem);
+
+
+                await waitFor(() => {
+                    expect(screen.getByRole('dialog')).toBeInTheDocument();
+                });
+
+                const categorySelect = screen.getByRole('combobox');
+                expect(categorySelect).toBeInTheDocument();
+
+                await userEvent.click(categorySelect);
+                const workOption = screen.getByText('Work');
+                await userEvent.click(workOption);
+
+
+                const saveButton = screen.getByText('Save');
+                await userEvent.click(saveButton);
+
+                expect(mocks.onEditSave).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        categoryId: 1
+                    })
+                );
+            }
+        });
+
+        it('should render TaskEditDialog with localCategoryId and setLocalCategoryId props', async () => {
+            const mocks = setupMocks();
+
+            const taskWithoutCategory = { ...mockTask, categoryId: undefined };
+
+            const { rerender } = renderTaskItem({
+                ...mocks,
+                task: taskWithoutCategory
+            });
+
+            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton) {
+                await userEvent.click(menuButton);
+                await userEvent.click(screen.getByText('Edit'));
+
+                await waitFor(() => {
+                    expect(screen.getByRole('dialog')).toBeInTheDocument();
+                }, { timeout: 3000 });
+                const categorySelect = screen.getByRole('combobox');
+                await userEvent.click(categorySelect);
+                await userEvent.click(screen.getByText('Work'));
+                await userEvent.click(screen.getByText('Save'));
+
+                expect(mocks.onEditSave).toHaveBeenCalled();
+            }
+
+            const taskWithCategory = { ...mockTask, categoryId: 1 };
+
+            rerender(
+                <QueryClientProvider client={new QueryClient()}>
+                    <ThemeProvider theme={createTheme()}>
+                        <TaskItem
+                            task={taskWithCategory}
+                            onEditSave={mocks.onEditSave}
+                            onDelete={mocks.onDelete}
+                            onToggleCompleted={mocks.onToggleCompleted}
+                            categories={mocks.categories}
+                        />
+                    </ThemeProvider>
+                </QueryClientProvider>
+            );
+
+            const menuButton2 = screen.getByTestId('MoreVertIcon').closest('button');
+            if (menuButton2) {
+                await userEvent.click(menuButton2);
+                await userEvent.click(screen.getByText('Edit'));
+
+                await waitFor(() => {
+                    expect(screen.getByRole('dialog')).toBeInTheDocument();
+                });
+
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+                await userEvent.click(screen.getByText('Cancel'));
             }
         });
     });

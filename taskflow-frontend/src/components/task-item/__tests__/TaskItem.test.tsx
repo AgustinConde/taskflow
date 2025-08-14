@@ -323,11 +323,14 @@ describe('TaskItem', () => {
                 
                 const infoMenuItem = screen.getByText('Info');
                 await userEvent.click(infoMenuItem);
-                
-                const closeButton = screen.getByTestId('CloseIcon').closest('button');
-                if (closeButton) {
-                    await userEvent.click(closeButton);
-                }
+
+                expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+                const closeButton = screen.getByText('close');
+                await userEvent.click(closeButton);
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+                expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
             }
         });
     });

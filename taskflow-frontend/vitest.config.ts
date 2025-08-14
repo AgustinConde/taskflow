@@ -45,6 +45,7 @@ export default defineConfig({
                 '**/vite/**',
                 '**/.vite/**'
             ],
+            skipFull: false,
             clean: true,
             all: false,
             thresholds: {
@@ -53,6 +54,12 @@ export default defineConfig({
                     functions: 80,
                     lines: 80,
                     statements: 80
+                },
+                'src/components/task-item/TaskEditDialog.tsx': {
+                    branches: 90,
+                    functions: 80,
+                    lines: 99,
+                    statements: 99
                 }
             }
         }

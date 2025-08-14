@@ -56,28 +56,29 @@ const mockCategory: Category = {
 };
 
 function setupMocks() {
-    const onEditSave = vi.fn();
-    const onDelete = vi.fn();
-    const onToggleCompleted = vi.fn();
-    const categories = [mockCategory, {
-        id: 2,
-        name: 'Personal',
-        color: '#3B82F6',
-        description: 'Personal tasks',
-        userId: 1,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-    }];
-    return { onEditSave, onDelete, onToggleCompleted, categories };
+    return {
+        onEditSave: vi.fn(),
+        onDelete: vi.fn(),
+        onToggleCompleted: vi.fn(),
+        categories: [
+            mockCategory,
+            {
+                id: 2,
+                name: 'Personal',
+                color: '#3B82F6',
+                description: 'Personal tasks',
+                userId: 1,
+                createdAt: '2024-01-01T00:00:00.000Z',
+                updatedAt: '2024-01-01T00:00:00.000Z'
+            }
+        ]
+    };
 }
 
 function renderTaskItem(props = {}) {
     const defaultProps = {
         task: mockTask,
-        onEditSave: vi.fn(),
-        onDelete: vi.fn(),
-        onToggleCompleted: vi.fn(),
-        categories: [mockCategory],
+        ...setupMocks(),
         ...props
     };
 
@@ -93,6 +94,7 @@ function renderTaskItem(props = {}) {
 describe('TaskItem', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        document.body.innerHTML = '';
     });
 
     describe('Core Functionality', () => {
@@ -113,17 +115,22 @@ describe('TaskItem', () => {
             expect(screen.queryByText('Work')).not.toBeInTheDocument();
         });
 
+        it('should handle undefined categoryId', () => {
+            const taskWithUndefinedCategory = { ...mockTask, categoryId: undefined };
+            renderTaskItem({ task: taskWithUndefinedCategory });
+
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
+        });
+
         it('should handle task without due date', () => {
             const taskWithoutDueDate = { ...mockTask, dueDate: null };
             renderTaskItem({ task: taskWithoutDueDate });
-
             expect(screen.getByText('Test Task')).toBeInTheDocument();
         });
 
         it('should handle completed task state', () => {
             const completedTask = { ...mockTask, isCompleted: true };
             renderTaskItem({ task: completedTask });
-
             const checkbox = screen.getByRole('checkbox');
             expect(checkbox).toBeChecked();
         });
@@ -131,14 +138,6 @@ describe('TaskItem', () => {
         it('should handle task with empty description', () => {
             const taskWithoutDescription = { ...mockTask, description: '' };
             renderTaskItem({ task: taskWithoutDescription });
-
-            expect(screen.getByText('Test Task')).toBeInTheDocument();
-        });
-
-        it('should handle undefined category id', () => {
-            const taskWithUndefinedCategory = { ...mockTask, categoryId: undefined };
-            renderTaskItem({ task: taskWithUndefinedCategory });
-
             expect(screen.getByText('Test Task')).toBeInTheDocument();
         });
     });
@@ -154,22 +153,15 @@ describe('TaskItem', () => {
             expect(mocks.onToggleCompleted).toHaveBeenCalled();
         });
 
-        it('should have menu button available', () => {
+        it('should have menu button available and handle click', async () => {
             renderTaskItem();
 
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             expect(menuButton).toBeInTheDocument();
-        });
 
-        it('should handle menu button click', async () => {
-            renderTaskItem();
-
-            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 fireEvent.click(menuButton);
             }
-
-            expect(menuButton).toBeInTheDocument();
         });
 
         it('should handle category matching logic', () => {
@@ -207,10 +199,10 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
+
                 const infoMenuItem = screen.getByText('Info');
                 await userEvent.click(infoMenuItem);
-                
+
                 expect(screen.getByRole('dialog')).toBeInTheDocument();
             }
         });
@@ -221,10 +213,10 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
+
                 const editMenuItem = screen.getByText('Edit');
                 await userEvent.click(editMenuItem);
-                
+
                 expect(screen.getByRole('dialog')).toBeInTheDocument();
                 expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
                 expect(screen.getByDisplayValue('Test Description')).toBeInTheDocument();
@@ -238,17 +230,17 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
+
                 const editMenuItem = screen.getByText('Edit');
                 await userEvent.click(editMenuItem);
-                
+
                 const titleInput = screen.getByDisplayValue('Test Task');
                 await userEvent.clear(titleInput);
                 await userEvent.type(titleInput, 'Updated Task');
-                
+
                 const saveButton = screen.getByText('Save');
                 await userEvent.click(saveButton);
-                
+
                 expect(mocks.onEditSave).toHaveBeenCalledWith(
                     expect.objectContaining({
                         title: 'Updated Task',
@@ -266,12 +258,10 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
-                const editMenuItem = screen.getByText('Edit');
-                await userEvent.click(editMenuItem);
-                
+                await userEvent.click(screen.getByText('Edit'));
                 expect(screen.getByRole('dialog')).toBeInTheDocument();
                 expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
+                await userEvent.click(screen.getByText('Cancel'));
             }
         });
 
@@ -282,11 +272,9 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
-                const editMenuItem = screen.getByText('Edit');
-                await userEvent.click(editMenuItem);
-                
+                await userEvent.click(screen.getByText('Edit'));
                 expect(screen.getByRole('dialog')).toBeInTheDocument();
+                await userEvent.click(screen.getByText('Cancel'));
             }
         });
 
@@ -297,11 +285,9 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
-                const editMenuItem = screen.getByText('Edit');
-                await userEvent.click(editMenuItem);
-                
+                await userEvent.click(screen.getByText('Edit'));
                 expect(screen.getByRole('dialog')).toBeInTheDocument();
+                await userEvent.click(screen.getByText('Cancel'));
             }
         });
 
@@ -312,13 +298,13 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
+
                 const editMenuItem = screen.getByText('Edit');
                 await userEvent.click(editMenuItem);
-                
+
                 const saveButton = screen.getByText('Save');
                 await userEvent.click(saveButton);
-                
+
                 expect(mocks.onEditSave).toHaveBeenCalled();
             }
         });
@@ -329,7 +315,7 @@ describe('TaskItem', () => {
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
                 await userEvent.click(menuButton);
-                
+
                 const infoMenuItem = screen.getByText('Info');
                 await userEvent.click(infoMenuItem);
 
@@ -387,52 +373,7 @@ describe('TaskItem', () => {
         it('should properly pass and utilize localCategoryId and setLocalCategoryId props to TaskEditDialog', async () => {
             const mocks = setupMocks();
             const taskWithoutCategory = { ...mockTask, categoryId: undefined };
-
-            renderTaskItem({
-                ...mocks,
-                task: taskWithoutCategory
-            });
-
-            const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
-            if (menuButton) {
-                await userEvent.click(menuButton);
-
-                const editMenuItem = screen.getByText('Edit');
-                await userEvent.click(editMenuItem);
-
-
-                await waitFor(() => {
-                    expect(screen.getByRole('dialog')).toBeInTheDocument();
-                });
-
-                const categorySelect = screen.getByRole('combobox');
-                expect(categorySelect).toBeInTheDocument();
-
-                await userEvent.click(categorySelect);
-                const workOption = screen.getByText('Work');
-                await userEvent.click(workOption);
-
-
-                const saveButton = screen.getByText('Save');
-                await userEvent.click(saveButton);
-
-                expect(mocks.onEditSave).toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        categoryId: 1
-                    })
-                );
-            }
-        });
-
-        it('should render TaskEditDialog with localCategoryId and setLocalCategoryId props', async () => {
-            const mocks = setupMocks();
-
-            const taskWithoutCategory = { ...mockTask, categoryId: undefined };
-
-            const { rerender } = renderTaskItem({
-                ...mocks,
-                task: taskWithoutCategory
-            });
+            const { rerender } = renderTaskItem({ ...mocks, task: taskWithoutCategory });
 
             const menuButton = screen.getByTestId('MoreVertIcon').closest('button');
             if (menuButton) {
@@ -441,8 +382,10 @@ describe('TaskItem', () => {
 
                 await waitFor(() => {
                     expect(screen.getByRole('dialog')).toBeInTheDocument();
-                }, { timeout: 3000 });
+                });
+
                 const categorySelect = screen.getByRole('combobox');
+                expect(categorySelect).toBeInTheDocument();
                 await userEvent.click(categorySelect);
                 await userEvent.click(screen.getByText('Work'));
                 await userEvent.click(screen.getByText('Save'));
@@ -451,16 +394,12 @@ describe('TaskItem', () => {
             }
 
             const taskWithCategory = { ...mockTask, categoryId: 1 };
-
             rerender(
                 <QueryClientProvider client={new QueryClient()}>
                     <ThemeProvider theme={createTheme()}>
                         <TaskItem
                             task={taskWithCategory}
-                            onEditSave={mocks.onEditSave}
-                            onDelete={mocks.onDelete}
-                            onToggleCompleted={mocks.onToggleCompleted}
-                            categories={mocks.categories}
+                            {...setupMocks()}
                         />
                     </ThemeProvider>
                 </QueryClientProvider>

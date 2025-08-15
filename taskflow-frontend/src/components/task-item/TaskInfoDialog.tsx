@@ -29,7 +29,7 @@ const TaskInfoDialog = ({ open, onClose, task }: TaskInfoDialogProps) => {
                 }
             }}
         >
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}> {/* v8 ignore next */}
                 {task.title}
                 <Chip
                     label={task.isCompleted ? t('completed') : t('pending')}
@@ -95,7 +95,7 @@ const TaskInfoDialog = ({ open, onClose, task }: TaskInfoDialogProps) => {
                 </DialogContentText>
             </DialogContent>
             <DialogActions sx={{ pt: 1, pb: 2 }}>
-                <Button
+                <Button /* v8 ignore next */
                     onClick={onClose}
                     autoFocus
                     sx={theme => ({

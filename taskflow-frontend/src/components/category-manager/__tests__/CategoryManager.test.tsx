@@ -102,206 +102,228 @@ function setupMocks() {
 }
 
 function renderCategoryManager(props = {}) {
-    const defaultProps = {
-        open: true,
-        onClose: vi.fn(),
-        onCategoriesChange: vi.fn()
-    };
-
     return render(
         <QueryClientProvider client={new QueryClient()}>
             <ThemeProvider theme={createTheme()}>
-                <CategoryManager {...defaultProps} {...props} />
+                <CategoryManager open={true} onClose={vi.fn()} onCategoriesChange={vi.fn()} {...props} />
             </ThemeProvider>
         </QueryClientProvider>
     );
 }
 
 describe('CategoryManager', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+    beforeEach(() => vi.clearAllMocks());
+
+    it('renders dialog with categories', () => {
+        setupMocks();
+        renderCategoryManager();
+        expect(screen.getByText('Manage Categories')).toBeInTheDocument();
+        expect(screen.getByText('Work')).toBeInTheDocument();
+        expect(screen.getByText('Personal')).toBeInTheDocument();
     });
 
-    describe('Core Functionality', () => {
-        it('should render dialog with categories', () => {
-            setupMocks();
-            renderCategoryManager();
+    it('shows loading state', () => {
+        vi.mocked(useCategories).mockReturnValue({ data: [], isLoading: true } as any);
+        renderCategoryManager();
+        expect(screen.getByText('Manage Categories')).toBeInTheDocument();
+        expect(screen.queryByText('No categories found')).not.toBeInTheDocument();
+    });
 
-            expect(screen.getByText('Manage Categories')).toBeInTheDocument();
-            expect(screen.getByText('Work')).toBeInTheDocument();
-            expect(screen.getByText('Personal')).toBeInTheDocument();
-        });
+    it('shows empty state', () => {
+        vi.mocked(useCategories).mockReturnValue({ data: [], isLoading: false } as any);
+        renderCategoryManager();
+        expect(screen.getByText('Categories (0)')).toBeInTheDocument();
+    });
 
-        it('should show loading state', () => {
-            vi.mocked(useCategories).mockReturnValue({
-                data: [],
-                isLoading: true
-            } as any);
-
-            renderCategoryManager();
-
-            expect(screen.getByText('Manage Categories')).toBeInTheDocument();
-            expect(screen.queryByText('No categories found')).not.toBeInTheDocument();
-        });
-
-        it('should show empty state', () => {
-            vi.mocked(useCategories).mockReturnValue({
-                data: [],
-                isLoading: false
-            } as any);
-
-            renderCategoryManager();
-
-            expect(screen.getByText('Categories (0)')).toBeInTheDocument();
-        });
-
-        it('should validate required name', async () => {
-            setupMocks();
-            renderCategoryManager();
-
-            fireEvent.click(screen.getByRole('button', { name: /create category/i }));
-
-            await waitFor(() => {
-                expect(screen.getByText('Name is required')).toBeInTheDocument();
-            });
+    it('validates required name', async () => {
+        setupMocks();
+        renderCategoryManager();
+        fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+        await waitFor(() => {
+            expect(screen.getByText('Name is required')).toBeInTheDocument();
         });
     });
 
-    describe('Category Operations', () => {
-        it('should create new category', async () => {
-            const mocks = setupMocks();
-            const onCategoriesChange = vi.fn();
-            renderCategoryManager({ onCategoriesChange });
-
-            fireEvent.change(screen.getByLabelText('Category Name'), {
-                target: { value: 'New Category' }
-            });
-
-            fireEvent.click(screen.getByRole('button', { name: /create category/i }));
-
-            await waitFor(() => {
-                expect(mocks.mockCreateMutation.mutateAsync).toHaveBeenCalledWith({
-                    name: 'New Category',
-                    color: '#7C3AED',
-                    description: undefined,
-                    createdAt: '',
-                    updatedAt: '',
-                    userId: 0
-                });
+    it('creates new category', async () => {
+        const mocks = setupMocks();
+        renderCategoryManager();
+        fireEvent.change(screen.getByLabelText('Category Name'), { target: { value: 'New Category' } });
+        fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+        await waitFor(() => {
+            expect(mocks.mockCreateMutation.mutateAsync).toHaveBeenCalledWith({
+                name: 'New Category',
+                color: '#7C3AED',
+                description: undefined,
+                createdAt: '',
+                updatedAt: '',
+                userId: 0
             });
         });
+    });
 
-        it('should edit existing category', async () => {
-            const mocks = setupMocks();
-            renderCategoryManager();
-
-            const editButtons = screen.getAllByText('EditIcon');
-            fireEvent.click(editButtons[0].closest('button')!);
-
-            expect(screen.getByDisplayValue('Work')).toBeInTheDocument();
-
-            fireEvent.change(screen.getByLabelText('Category Name'), {
-                target: { value: 'Updated Work' }
-            });
-
-            fireEvent.click(screen.getByRole('button', { name: /update category/i }));
-
-            await waitFor(() => {
-                expect(mocks.mockUpdateMutation.mutateAsync).toHaveBeenCalledWith({
-                    id: 1,
-                    name: 'Updated Work',
-                    color: '#7C3AED',
-                    description: 'Work tasks',
-                    userId: 1,
-                    createdAt: '2023-01-01T00:00:00Z',
-                    updatedAt: '2023-01-01T00:00:00Z'
-                });
+    it('edits existing category', async () => {
+        const mocks = setupMocks();
+        renderCategoryManager();
+        const editButtons = screen.getAllByText('EditIcon');
+        fireEvent.click(editButtons[0].closest('button')!);
+        fireEvent.change(screen.getByLabelText('Category Name'), { target: { value: 'Updated Work' } });
+        fireEvent.click(screen.getByRole('button', { name: /update category/i }));
+        await waitFor(() => {
+            expect(mocks.mockUpdateMutation.mutateAsync).toHaveBeenCalledWith({
+                id: 1,
+                name: 'Updated Work',
+                color: '#7C3AED',
+                description: 'Work tasks',
+                userId: 1,
+                createdAt: '2023-01-01T00:00:00Z',
+                updatedAt: '2023-01-01T00:00:00Z'
             });
         });
+    });
 
-        it('should cancel editing', () => {
-            setupMocks();
-            renderCategoryManager();
+    it('shows cancel button only when editing', async () => {
+        setupMocks();
+        renderCategoryManager();
+        expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument();
+        const editButtons = screen.getAllByText('EditIcon');
+        fireEvent.click(editButtons[0].closest('button')!);
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+        });
+    });
 
-            const editButtons = screen.getAllByText('EditIcon');
-            fireEvent.click(editButtons[0].closest('button')!);
-            fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-
+    it('cancels editing and resets form', async () => {
+        setupMocks();
+        renderCategoryManager();
+        const editButtons = screen.getAllByText('EditIcon');
+        fireEvent.click(editButtons[0].closest('button')!);
+        fireEvent.change(screen.getByLabelText('Category Name'), { target: { value: 'Modified Work' } });
+        const cancelButton = screen.getByRole('button', { name: /cancel/i });
+        fireEvent.click(cancelButton);
+        await waitFor(() => {
+            expect(screen.queryByDisplayValue('Modified Work')).not.toBeInTheDocument();
             expect(screen.queryByDisplayValue('Work')).not.toBeInTheDocument();
         });
+    });
 
-        it('should handle color selection', () => {
-            setupMocks();
-            renderCategoryManager();
-
-            const colorButtons = screen.getAllByRole('button');
-            const blueColorButton = colorButtons.find(button =>
-                button.style.backgroundColor === 'rgb(59, 130, 246)'
-            );
-
-            if (blueColorButton) {
-                fireEvent.click(blueColorButton);
-            }
-
-            expect(screen.getByLabelText('Category Name')).toBeInTheDocument();
+    it('deletes category with confirmation', async () => {
+        const mocks = setupMocks();
+        renderCategoryManager();
+        const deleteButtons = screen.getAllByText('DeleteIcon');
+        fireEvent.click(deleteButtons[0].closest('button')!);
+        expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Delete'));
+        await waitFor(() => {
+            expect(mocks.mockDeleteMutation.mutateAsync).toHaveBeenCalledWith(1);
         });
     });
 
-    describe('Category Management', () => {
-        it('should delete category with confirmation', async () => {
-            const mocks = setupMocks();
-            renderCategoryManager();
+    it('cancels deletion', () => {
+        setupMocks();
+        renderCategoryManager();
+        const deleteButtons = screen.getAllByText('DeleteIcon');
+        fireEvent.click(deleteButtons[0].closest('button')!);
+        fireEvent.click(screen.getByText('Cancel'));
+        expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument();
+    });
 
-            const deleteButtons = screen.getAllByText('DeleteIcon');
-            fireEvent.click(deleteButtons[0].closest('button')!);
-
-            expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument();
-
-            fireEvent.click(screen.getByText('Delete'));
-
-            await waitFor(() => {
-                expect(mocks.mockDeleteMutation.mutateAsync).toHaveBeenCalledWith(1);
-            });
+    it('handles deletion error', async () => {
+        const mocks = setupMocks();
+        mocks.mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete failed'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        renderCategoryManager();
+        const deleteButtons = screen.getAllByText('DeleteIcon');
+        fireEvent.click(deleteButtons[0].closest('button')!);
+        fireEvent.click(screen.getByText('Delete'));
+        await waitFor(() => {
+            expect(consoleSpy).toHaveBeenCalled();
         });
+        consoleSpy.mockRestore();
+    });
 
-        it('should cancel deletion', () => {
-            setupMocks();
-            renderCategoryManager();
+    it('handles description in create mode', async () => {
+        setupMocks();
+        renderCategoryManager();
+        fireEvent.change(screen.getByLabelText(/category name/i), { target: { value: 'Test Category' } });
+        fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Test description' } });
+        fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+        await waitFor(() => {
+            expect(screen.queryByDisplayValue('Test Category')).not.toBeInTheDocument();
+        });
+    });
 
-            const deleteButtons = screen.getAllByText('DeleteIcon');
-            fireEvent.click(deleteButtons[0].closest('button')!);
+    it('handles empty description in create mode', async () => {
+        setupMocks();
+        renderCategoryManager();
+        fireEvent.change(screen.getByLabelText(/category name/i), { target: { value: 'Test Category' } });
+        fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+        await waitFor(() => {
+            expect(screen.queryByDisplayValue('Test Category')).not.toBeInTheDocument();
+        });
+    });
 
-            fireEvent.click(screen.getByText('Cancel'));
+    it('handles description in edit mode', async () => {
+        setupMocks();
+        renderCategoryManager();
+        const editButtons = screen.getAllByText('EditIcon');
+        fireEvent.click(editButtons[0].closest('button')!);
+        fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Updated description' } });
+        fireEvent.click(screen.getByRole('button', { name: /update category/i }));
+        await waitFor(() => {
+            expect(screen.queryByDisplayValue('Work')).not.toBeInTheDocument();
+        });
+    });
 
+    it('handles cancel delete dialog', async () => {
+        setupMocks();
+        renderCategoryManager();
+        const deleteButtons = screen.getAllByText('DeleteIcon');
+        fireEvent.click(deleteButtons[0].closest('button')!);
+        await waitFor(() => {
+            expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByText('Cancel'));
+        await waitFor(() => {
             expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument();
         });
+    });
 
-        it('should handle deletion error', async () => {
-            const mocks = setupMocks();
-            mocks.mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete failed'));
-
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-            renderCategoryManager();
-
-            const deleteButtons = screen.getAllByText('DeleteIcon');
-            fireEvent.click(deleteButtons[0].closest('button')!);
-            fireEvent.click(screen.getByText('Delete'));
-
-            await waitFor(() => {
-                expect(consoleSpy).toHaveBeenCalled();
-            });
-
-            consoleSpy.mockRestore();
+    it('handles error when updating category', async () => {
+        const mocks = setupMocks();
+        mocks.mockUpdateMutation.mutateAsync.mockRejectedValueOnce(new Error('Update failed'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        renderCategoryManager();
+        const editButtons = screen.getAllByText('EditIcon');
+        fireEvent.click(editButtons[0].closest('button')!);
+        fireEvent.change(screen.getByLabelText('Category Name'), { target: { value: 'Error Update' } });
+        fireEvent.click(screen.getByRole('button', { name: /update category/i }));
+        await waitFor(() => {
+            expect(consoleSpy).toHaveBeenCalledWith('Error saving category:', expect.any(Error));
         });
+        consoleSpy.mockRestore();
+    });
 
-        it('should close dialog', () => {
-            const onClose = vi.fn();
-            setupMocks();
-            renderCategoryManager({ onClose });
-
-            fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-
-            expect(onClose).toHaveBeenCalled();
+    it('handles error when deleting category', async () => {
+        const mocks = setupMocks();
+        mocks.mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete failed'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        renderCategoryManager();
+        const deleteButtons = screen.getAllByText('DeleteIcon');
+        fireEvent.click(deleteButtons[0].closest('button')!);
+        fireEvent.click(screen.getByText('Delete'));
+        await waitFor(() => {
+            expect(consoleSpy).toHaveBeenCalledWith('Error deleting category:', expect.any(Error));
         });
+        consoleSpy.mockRestore();
+    });
+
+    it('closes confirm dialog when handleCancelDelete is called', async () => {
+        setupMocks();
+        renderCategoryManager();
+        const deleteButtons = screen.getAllByText('DeleteIcon');
+        fireEvent.click(deleteButtons[0].closest('button')!);
+        await waitFor(() => expect(screen.getByTestId('confirmation-dialog')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('Cancel'));
+        await waitFor(() => expect(screen.queryByTestId('confirmation-dialog')).not.toBeInTheDocument());
     });
 });

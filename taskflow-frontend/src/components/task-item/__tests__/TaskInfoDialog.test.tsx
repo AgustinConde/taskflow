@@ -73,91 +73,88 @@ describe('TaskInfoDialog', () => {
         vi.clearAllMocks();
     });
 
-    it('should render dialog with task information', () => {
-        renderDialog();
-
-        expect(screen.getByText('Test Task')).toBeInTheDocument();
-        expect(screen.getByText('Test task description')).toBeInTheDocument();
-        expect(screen.getByText('pending')).toBeInTheDocument();
-    });
-
-    it('should display completed status and primary chip color', () => {
-        renderDialog({ task: { ...mockTask, isCompleted: true } });
-
-        const chip = screen.getByText('completed');
-        expect(chip).toBeInTheDocument();
-        expect(chip.closest('.MuiChip-colorPrimary')).toBeInTheDocument();
-    });
-
-    it('should display pending status and default chip color', () => {
-        renderDialog({ task: { ...mockTask, isCompleted: false } });
-
-        const chip = screen.getByText('pending');
-        expect(chip).toBeInTheDocument();
-        expect(chip.closest('.MuiChip-colorDefault')).toBeInTheDocument();
-    });
-
-    it('should handle close button interaction', async () => {
-        const user = userEvent.setup();
-        const { onClose } = renderDialog();
-
-        await user.click(screen.getByText('close'));
-        expect(onClose).toHaveBeenCalledOnce();
-    });
-
-    it('should not render when closed', () => {
-        renderDialog({ open: false });
-
-        expect(screen.queryByText('Test Task')).not.toBeInTheDocument();
-    });
-
-    it('should format dates correctly', () => {
-        renderDialog();
-
-        expect(screen.getByText('created')).toBeInTheDocument();
-        expect(screen.getByText('due')).toBeInTheDocument();
-        expect(screen.getByText('12/31/2023, 09:00 PM')).toBeInTheDocument();
-        expect(screen.getByText('12/31/2024, 08:59 PM')).toBeInTheDocument();
-    });
-
-    it('should handle null dates', () => {
-        renderDialog({ task: { ...mockTask, createdAt: null, dueDate: null } });
-        expect(screen.getAllByText('-')).toHaveLength(2);
-    });
-
-    it('should handle empty description', () => {
-        renderDialog({ task: { ...mockTask, description: '' } });
-        expect(screen.getByText('description')).toBeInTheDocument();
-        expect(screen.getByText('-')).toBeInTheDocument();
-    });
-
-    it('should handle null description', () => {
-        renderDialog({ task: { ...mockTask, description: null } });
-        expect(screen.getByText('description')).toBeInTheDocument();
-        expect(screen.getByText('-')).toBeInTheDocument();
-    });
-
-    it('should apply dark theme button colors', () => {
-        const darkTheme = createTheme({
-            palette: {
-                mode: 'dark',
-                primary: { main: '#1976d2', light: '#42a5f5' }
-            }
+    describe('Dialog Rendering', () => {
+        it('renders with all task info', () => {
+            renderDialog();
+            expect(screen.getByText('Test Task')).toBeInTheDocument();
+            expect(screen.getByText('Test task description')).toBeInTheDocument();
+            expect(screen.getByText('pending')).toBeInTheDocument();
         });
 
-        renderWithTheme(darkTheme);
-        expect(screen.getByText('close')).toBeInTheDocument();
+        it('does not render when closed', () => {
+            renderDialog({ open: false });
+            expect(screen.queryByText('Test Task')).not.toBeInTheDocument();
+        });
+
+        it('handles different task titles', () => {
+            renderDialog({ task: { ...mockTask, title: 'Custom Task Title' } });
+            expect(screen.getByText('Custom Task Title')).toBeInTheDocument();
+        });
     });
 
-    it('should apply light theme button colors', () => {
-        const lightTheme = createTheme({ palette: { mode: 'light' } });
-        renderWithTheme(lightTheme);
-        expect(screen.getByText('close')).toBeInTheDocument();
+    describe('Status Chip', () => {
+        it('shows completed status and primary color', () => {
+            renderDialog({ task: { ...mockTask, isCompleted: true } });
+            const chip = screen.getByText('completed');
+            expect(chip).toBeInTheDocument();
+            expect(chip.closest('.MuiChip-colorPrimary')).toBeInTheDocument();
+        });
+        it('shows pending status and default color', () => {
+            renderDialog({ task: { ...mockTask, isCompleted: false } });
+            const chip = screen.getByText('pending');
+            expect(chip).toBeInTheDocument();
+            expect(chip.closest('.MuiChip-colorDefault')).toBeInTheDocument();
+        });
     });
 
-    it('should handle different task titles', () => {
-        renderDialog({ task: { ...mockTask, title: 'Custom Task Title' } });
+    describe('Button & Interaction', () => {
+        it('handles close button click', async () => {
+            const user = userEvent.setup();
+            const { onClose } = renderDialog();
+            await user.click(screen.getByText('close'));
+            expect(onClose).toHaveBeenCalledOnce();
+        });
+    });
 
-        expect(screen.getByText('Custom Task Title')).toBeInTheDocument();
+    describe('Dates & Description', () => {
+        it('formats created and due dates', () => {
+            renderDialog();
+            expect(screen.getByText('created')).toBeInTheDocument();
+            expect(screen.getByText('due')).toBeInTheDocument();
+            expect(screen.getByText('12/31/2023, 09:00 PM')).toBeInTheDocument();
+            expect(screen.getByText('12/31/2024, 08:59 PM')).toBeInTheDocument();
+        });
+        it('shows dash for null dates', () => {
+            renderDialog({ task: { ...mockTask, createdAt: null, dueDate: null } });
+            expect(screen.getAllByText('-')).toHaveLength(2);
+        });
+        it('shows dash for empty description', () => {
+            renderDialog({ task: { ...mockTask, description: '' } });
+            expect(screen.getByText('description')).toBeInTheDocument();
+            expect(screen.getByText('-')).toBeInTheDocument();
+        });
+        it('shows dash for null description', () => {
+            renderDialog({ task: { ...mockTask, description: null } });
+            expect(screen.getByText('description')).toBeInTheDocument();
+            expect(screen.getByText('-')).toBeInTheDocument();
+        });
+    });
+
+    describe('Theme Support', () => {
+        it('applies dark theme button colors', () => {
+            const darkTheme = createTheme({
+                palette: {
+                    mode: 'dark',
+                    primary: { main: '#1976d2', light: '#42a5f5' }
+                }
+            });
+            renderWithTheme(darkTheme);
+            expect(screen.getByText('close')).toBeInTheDocument();
+        });
+        it('applies light theme button colors', () => {
+            const lightTheme = createTheme({ palette: { mode: 'light' } });
+            renderWithTheme(lightTheme);
+            expect(screen.getByText('close')).toBeInTheDocument();
+        });
     });
 });

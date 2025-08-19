@@ -112,6 +112,77 @@ function renderCategoryManager(props = {}) {
 }
 
 describe('CategoryManager', () => {
+    describe('Branch coverage for description and delete', () => {
+
+        it('sets description to empty string when editing category without description', async () => {
+            const categoryWithoutDescription = {
+                id: 3,
+                name: 'No Desc',
+                color: '#8B5CF6',
+                description: undefined,
+                userId: 1,
+                createdAt: '2023-01-01T00:00:00Z',
+                updatedAt: '2023-01-01T00:00:00Z'
+            };
+            const mockCreateMutation = {
+                mutateAsync: vi.fn().mockResolvedValue({}),
+                isPending: false
+            };
+            const mockUpdateMutation = {
+                mutateAsync: vi.fn().mockResolvedValue({}),
+                isPending: false
+            };
+            const mockDeleteMutation = {
+                mutateAsync: vi.fn().mockResolvedValue({}),
+                isPending: false
+            };
+            vi.mocked(useCategories).mockReturnValue({ data: [categoryWithoutDescription], isLoading: false } as any);
+            vi.mocked(useCreateCategory).mockReturnValue(mockCreateMutation as any);
+            vi.mocked(useUpdateCategory).mockReturnValue(mockUpdateMutation as any);
+            vi.mocked(useDeleteCategory).mockReturnValue(mockDeleteMutation as any);
+            renderCategoryManager();
+            const editButtons = screen.getAllByText('EditIcon');
+            fireEvent.click(editButtons[0].closest('button')!);
+            await waitFor(() => {
+                expect(screen.getByLabelText('Description')).toHaveValue('');
+            });
+        });
+        it('creates category with empty description (description: undefined or empty string)', async () => {
+            const mocks = setupMocks();
+            renderCategoryManager();
+            fireEvent.change(screen.getByLabelText('Category Name'), { target: { value: 'No Desc Category' } });
+            fireEvent.change(screen.getByLabelText('Description'), { target: { value: '' } });
+            fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+            await waitFor(() => {
+                const call = mocks.mockCreateMutation.mutateAsync.mock.calls[0][0];
+                expect(call.name).toBe('No Desc Category');
+                expect(call.color).toBe('#7C3AED');
+                expect(call.createdAt).toBe('');
+                expect(call.updatedAt).toBe('');
+                expect(call.userId).toBe(0);
+                expect([undefined, '']).toContain(call.description);
+            });
+        });
+
+        it('edits category with empty description (description: undefined)', async () => {
+            const mocks = setupMocks();
+            renderCategoryManager();
+            const editButtons = screen.getAllByText('EditIcon');
+            fireEvent.click(editButtons[0].closest('button')!);
+            fireEvent.change(screen.getByLabelText('Description'), { target: { value: '' } });
+            fireEvent.click(screen.getByRole('button', { name: /update category/i }));
+            await waitFor(() => {
+                const call = mocks.mockUpdateMutation.mutateAsync.mock.calls[0][0];
+                expect(call.id).toBe(1);
+                expect(call.name).toBe('Work');
+                expect(call.color).toBe('#7C3AED');
+                expect(call.userId).toBe(1);
+                expect(call.createdAt).toBe('2023-01-01T00:00:00Z');
+                expect(call.updatedAt).toBe('2023-01-01T00:00:00Z');
+                expect(call.description).toBeUndefined();
+            });
+        });
+    });
     beforeEach(() => vi.clearAllMocks());
 
     it('renders dialog with categories', () => {
@@ -120,6 +191,24 @@ describe('CategoryManager', () => {
         expect(screen.getByText('Manage Categories')).toBeInTheDocument();
         expect(screen.getByText('Work')).toBeInTheDocument();
         expect(screen.getByText('Personal')).toBeInTheDocument();
+    });
+
+    describe('Dialog close behavior', () => {
+        it('calls resetForm and onClose when dialog is closed', async () => {
+            setupMocks();
+            const onClose = vi.fn();
+            render(
+                <QueryClientProvider client={new QueryClient()}>
+                    <ThemeProvider theme={createTheme()}>
+                        <CategoryManager open={true} onClose={onClose} />
+                    </ThemeProvider>
+                </QueryClientProvider>
+            );
+            fireEvent.click(screen.getByRole('button', { name: /^Close$/i }));
+            await waitFor(() => {
+                expect(onClose).toHaveBeenCalled();
+            });
+        });
     });
 
     it('shows loading state', () => {

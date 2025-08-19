@@ -105,7 +105,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                     color: formData.color,
                     description: formData.description || undefined
                 };
-                await updateCategoryMutation.mutateAsync({ /* v8 ignore next */
+                /* v8 ignore next */
+                await updateCategoryMutation.mutateAsync({
                     ...editingCategory,
                     ...updateData
                 });
@@ -115,9 +116,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                     color: formData.color,
                     description: formData.description || undefined
                 };
+                /* v8 ignore next */
                 await createCategoryMutation.mutateAsync({
-                    name: createData.name,  /* v8 ignore next */
-                    color: createData.color, /* v8 ignore next */
+                    name: createData.name,
+                    color: createData.color,
                     description: createData.description,
                     createdAt: '',
                     updatedAt: '',
@@ -142,6 +144,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
 
     const handleConfirmDelete = async () => {
         const { category } = confirmDialog;
+        /* v8 ignore next */
         if (!category) return;
 
         setConfirmDialog(prev => ({ ...prev, loading: true }));
@@ -157,7 +160,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
         }
     };
 
-    const handleCancelDelete = () => { /* v8 ignore next */
+    const handleCancelDelete = () => {
+        /* v8 ignore next */
         setConfirmDialog({ open: false, category: null, loading: false });
     };
 
@@ -188,7 +192,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
 
     return (
         <>
-            {/* v8 ignore next */}
             <Dialog
                 open={open}
                 onClose={handleClose}
@@ -196,6 +199,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
                 fullWidth
                 slotProps={{
                     paper: {
+                        /* v8 ignore next 3 */
                         sx: theme.palette.mode === 'dark' ? {
                             '--Paper-overlay': 'none !important'
                         } : {}

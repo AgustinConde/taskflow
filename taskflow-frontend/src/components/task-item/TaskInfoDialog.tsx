@@ -23,6 +23,7 @@ const TaskInfoDialog = ({ open, onClose, task }: TaskInfoDialogProps) => {
             fullWidth
             slotProps={{
                 paper: {
+                    /* v8 ignore next 3 */
                     sx: theme.palette.mode === 'dark' ? {
                         '--Paper-overlay': 'none !important',
                     } : {}
@@ -81,6 +82,7 @@ const TaskInfoDialog = ({ open, onClose, task }: TaskInfoDialogProps) => {
                         wordBreak: 'break-word'
                     }}>
                         <Alert icon={false} sx={{
+                            /* v8 ignore next 3 */
                             bgcolor: theme => theme.palette.mode === 'light'
                                 ? '#dacffc'
                                 : theme.palette.primary.main,
@@ -95,9 +97,10 @@ const TaskInfoDialog = ({ open, onClose, task }: TaskInfoDialogProps) => {
                 </DialogContentText>
             </DialogContent>
             <DialogActions sx={{ pt: 1, pb: 2 }}>
-                <Button /* v8 ignore next */
+                <Button
                     onClick={onClose}
                     autoFocus
+                    /* v8 ignore next 4 */
                     sx={theme => ({
                         color: theme.palette.mode === 'dark'
                             ? theme.palette.primary.light

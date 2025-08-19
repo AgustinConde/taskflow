@@ -48,6 +48,7 @@ const TaskEditDialog = ({
                 paper: {
                     sx: {
                         borderRadius: 3,
+                        /* v8 ignore next 3 */
                         background: theme => theme.palette.mode === 'dark'
                             ? `linear-gradient(145deg, ${theme.palette.background.paper})`
                             : `linear-gradient(145deg, ${theme.palette.background.paper})`,
@@ -55,18 +56,18 @@ const TaskEditDialog = ({
                         minHeight: 400,
                         overflow: 'visible',
                         position: 'relative',
+                        /* v8 ignore next 3 */
                         ...(theme => theme.palette.mode === 'dark' ? {
                             '--Paper-overlay': 'none !important',
                         } : {})
                     }
-                } /* v8 ignore next 2*/
+                }
             }}
         >
             <DialogTitle
                 sx={{
                     textAlign: 'center',
                     background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    /* v8 ignore next */
                     color: 'white',
                     fontWeight: 700,
                     fontSize: '1.4rem',

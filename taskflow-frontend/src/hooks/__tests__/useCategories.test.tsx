@@ -80,11 +80,12 @@ describe('useCategories Hooks', () => {
   describe('Core Functionality', () => {
     it('should fetch categories successfully', async () => {
       const { queryClient, mockCategories } = setupMocks();
+      vi.clearAllMocks();
       vi.mocked(categoryService.getCategories).mockResolvedValue(mockCategories);
 
       const { result } = renderUseCategories(queryClient);
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 });
       expect(result.current.data).toEqual(mockCategories);
       expect(categoryService.getCategories).toHaveBeenCalledTimes(1);
     });

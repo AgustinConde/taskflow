@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTasks, useTask, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskCompletion } from '../useTasks';
 import { taskService } from '../../services/taskService';
@@ -28,6 +28,12 @@ describe('useTasks Hooks', () => {
     beforeEach(() => {
         queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
         vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllTimers();
     });
 
     describe('Core Functionality', () => {

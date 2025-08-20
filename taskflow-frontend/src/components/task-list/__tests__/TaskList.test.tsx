@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material';
 import TaskList from '../TaskList';
@@ -119,6 +119,12 @@ const renderTaskList = () => render(<TestWrapper><TaskList /></TestWrapper>);
 
 describe('TaskList', () => {
     beforeEach(() => { vi.clearAllMocks(); setupMocks(); });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllTimers();
+    });
 
     describe('Core Functionality', () => {
         it('should render all components with correct data', async () => {

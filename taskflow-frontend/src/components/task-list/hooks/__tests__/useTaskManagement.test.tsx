@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTaskManagement } from '../useTaskManagement';
 import type { ReactNode } from 'react';
@@ -103,6 +103,12 @@ describe('useTaskManagement', () => {
         mockT.mockReturnValue('mocked-translation');
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllTimers();
+    });
+
     describe('Core State Management', () => {
         it('should initialize with default state', () => {
             setupMocks();
@@ -121,7 +127,7 @@ describe('useTaskManagement', () => {
 
             await waitFor(() => {
                 expect(result.current.loading).toBe(false);
-            }, { timeout: 1000 });
+            });
 
             expect(mockGetTasks).toHaveBeenCalled();
             expect(result.current.tasks).toEqual(mockTasks);
@@ -135,7 +141,7 @@ describe('useTaskManagement', () => {
 
             await waitFor(() => {
                 expect(result.current.loading).toBe(false);
-            }, { timeout: 1000 });
+            });
 
             expect(mockShowError).toHaveBeenCalledWith('Network error');
             expect(result.current.tasks).toEqual([]);
@@ -275,7 +281,7 @@ describe('useTaskManagement', () => {
 
             await waitFor(() => {
                 expect(result.current.loading).toBe(false);
-            }, { timeout: 1000 });
+            });
 
             expect(result.current.tasks).toEqual([]);
         });

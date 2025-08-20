@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthenticatedApp from '../AuthenticatedApp';
@@ -114,6 +114,12 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 describe('AuthenticatedApp', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllTimers();
     });
 
     describe('Rendering', () => {

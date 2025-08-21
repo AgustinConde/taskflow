@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAppLanguage } from '../useAppLanguage';
 
-const mockChangeLanguage = vi.fn();
+const mockChangeLanguage = vi.fn((lang: string) => {
+    mockI18n.language = lang;
+    localStorage.setItem('selectedLanguage', lang);
+});
 const mockI18n = { language: 'en', changeLanguage: mockChangeLanguage };
 
 vi.mock('react-i18next', () => ({
@@ -28,6 +31,7 @@ describe('useAppLanguage', () => {
             result.current.handleLanguageChange();
         });
         expect(mockChangeLanguage).toHaveBeenCalledWith('es');
+        expect(mockI18n.language).toBe('es');
         expect(localStorage.getItem('selectedLanguage')).toBe('es');
     });
 
@@ -38,18 +42,23 @@ describe('useAppLanguage', () => {
             result.current.handleLanguageChange();
         });
         expect(mockChangeLanguage).toHaveBeenCalledWith('en');
+        expect(mockI18n.language).toBe('en');
         expect(localStorage.getItem('selectedLanguage')).toBe('en');
     });
 
     it('should set language from localStorage on mount (en)', () => {
         localStorage.setItem('selectedLanguage', 'en');
-        renderHook(() => useAppLanguage());
+        act(() => {
+            renderHook(() => useAppLanguage());
+        });
         expect(mockChangeLanguage).toHaveBeenCalledWith('en');
     });
 
     it('should set language from localStorage on mount (es)', () => {
         localStorage.setItem('selectedLanguage', 'es');
-        renderHook(() => useAppLanguage());
+        act(() => {
+            renderHook(() => useAppLanguage());
+        });
         expect(mockChangeLanguage).toHaveBeenCalledWith('es');
     });
 

@@ -48,6 +48,7 @@ describe('useAppLanguage', () => {
 
     it('should set language from localStorage on mount (en)', () => {
         localStorage.setItem('selectedLanguage', 'en');
+        mockI18n.language = 'es';
         act(() => {
             renderHook(() => useAppLanguage());
         });
@@ -56,6 +57,7 @@ describe('useAppLanguage', () => {
 
     it('should set language from localStorage on mount (es)', () => {
         localStorage.setItem('selectedLanguage', 'es');
+        mockI18n.language = 'en';
         act(() => {
             renderHook(() => useAppLanguage());
         });

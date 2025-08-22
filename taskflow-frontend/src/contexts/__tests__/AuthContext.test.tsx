@@ -303,17 +303,18 @@ describe('AuthContext', () => {
                 expect(screen.getByRole('button')).toBeInTheDocument();
             });
 
+            screen.getByRole('button').click();
+            await waitFor(() => {
+                expect(consoleSpy).toHaveBeenCalledWith('Login error:', expect.any(Error));
+            });
             consoleSpy.mockRestore();
         });
 
-        it('should handle register error with detailed console logging', async () => {
-
+        it('should handle register error with instanceof Error logging', async () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-            const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
-
             vi.mocked(authService.getToken).mockReturnValue(null);
-            const registerError = new Error('Registration failed');
-            vi.mocked(authService.register).mockRejectedValue(registerError);
+            const error = new Error('Registration failed');
+            vi.mocked(authService.register).mockRejectedValue(error);
 
             const TestRegisterErrorComponent = () => {
                 const auth = useAuth();
@@ -339,36 +340,27 @@ describe('AuthContext', () => {
                 expect(screen.getByRole('button')).toBeInTheDocument();
             });
 
+            screen.getByRole('button').click();
+            await waitFor(() => {
+                expect(consoleSpy).toHaveBeenCalledWith('Registration error details:', error);
+                expect(consoleSpy).toHaveBeenCalledWith('Error message:', error.message);
+            });
             consoleSpy.mockRestore();
-            consoleLogSpy.mockRestore();
         });
 
-        it('should handle successful login flow', async () => {
-
-            const mockUser = {
-                id: 1,
-                username: 'testuser',
-                email: 'test@test.com',
-                createdAt: '2025-01-01T00:00:00Z'
-            };
-
+        it('should handle login error with thrown non-Error', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
             vi.mocked(authService.getToken).mockReturnValue(null);
-            vi.mocked(authService.login).mockResolvedValue({
-                token: 'new-token',
-                username: 'testuser',
-                email: 'test@test.com',
-                expiresAt: '2025-01-02T00:00:00Z'
-            });
-            vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
+            vi.mocked(authService.login).mockRejectedValue('string error');
 
-            const TestLoginSuccessComponent = () => {
+            const TestLoginErrorComponent = () => {
                 const auth = useAuth();
                 return (
                     <button onClick={async () => {
-                        const result = await auth.login({ username: 'testuser', password: 'correct' });
-                        expect(result).toBe(true);
+                        const result = await auth.login({ username: 'testuser', password: 'wrong' });
+                        expect(result).toBe(false);
                     }}>
-                        Login Success
+                        Login
                     </button>
                 );
             };
@@ -376,43 +368,39 @@ describe('AuthContext', () => {
             const Wrapper = createWrapper();
             render(
                 <Wrapper>
-                    <TestLoginSuccessComponent />
+                    <TestLoginErrorComponent />
                 </Wrapper>
             );
 
             await waitFor(() => {
                 expect(screen.getByRole('button')).toBeInTheDocument();
             });
-        });
 
-        it('should handle successful register flow with console logging', async () => {
-
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
-            const mockUser = {
-                id: 1,
-                username: 'newuser',
-                email: 'new@test.com',
-                createdAt: '2025-01-01T00:00:00Z'
-            };
-
-            vi.mocked(authService.getToken).mockReturnValue(null);
-            vi.mocked(authService.register).mockResolvedValue({
-                token: 'new-token',
-                username: 'newuser',
-                email: 'new@test.com',
-                expiresAt: '2025-01-02T00:00:00Z'
+            screen.getByRole('button').click();
+            await waitFor(() => {
+                expect(consoleSpy).toHaveBeenCalledWith('Login error:', 'string error');
             });
+            consoleSpy.mockRestore();
+        });
+    });
+
+    describe('success flows', () => {
+        it('should call authService.login and set user/token on success', async () => {
+            const mockUser = { id: 1, username: 'testuser', email: 'test@test.com', createdAt: '2025-01-01T00:00:00Z' };
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.login).mockResolvedValue({ token: 'mock-token', username: 'testuser', email: 'test@test.com', expiresAt: '2025-01-02T00:00:00Z' });
             vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
 
-            const TestRegisterSuccessComponent = () => {
+            const TestLoginComponent = () => {
                 const auth = useAuth();
                 return (
                     <button onClick={async () => {
-                        const registerData = { username: 'newuser', email: 'new@test.com', password: 'password' };
-                        const result = await auth.register(registerData);
+                        const result = await auth.login({ username: 'testuser', password: '123' });
                         expect(result).toBe(true);
+                        expect(authService.login).toHaveBeenCalledWith({ username: 'testuser', password: '123' });
+                        expect(authService.getCurrentUser).toHaveBeenCalled();
                     }}>
-                        Register Success
+                        Login
                     </button>
                 );
             };
@@ -420,15 +408,87 @@ describe('AuthContext', () => {
             const Wrapper = createWrapper();
             render(
                 <Wrapper>
-                    <TestRegisterSuccessComponent />
+                    <TestLoginComponent />
                 </Wrapper>
             );
 
             await waitFor(() => {
                 expect(screen.getByRole('button')).toBeInTheDocument();
             });
+            screen.getByRole('button').click();
+            await waitFor(() => {
+                expect(authService.login).toHaveBeenCalled();
+                expect(authService.getCurrentUser).toHaveBeenCalled();
+            });
+        });
 
-            consoleSpy.mockRestore();
+        it('should call authService.register and set user/token on success', async () => {
+            const mockUser = { id: 2, username: 'newuser', email: 'new@test.com', createdAt: '2025-01-01T00:00:00Z' };
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.register).mockResolvedValue({ token: 'mock-token', username: 'newuser', email: 'new@test.com', expiresAt: '2025-01-02T00:00:00Z' });
+            vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
+
+            const TestRegisterComponent = () => {
+                const auth = useAuth();
+                return (
+                    <button onClick={async () => {
+                        const result = await auth.register({ username: 'newuser', email: 'new@test.com', password: '123' });
+                        expect(result).toBe(true);
+                        expect(authService.register).toHaveBeenCalledWith({ username: 'newuser', email: 'new@test.com', password: '123' });
+                        expect(authService.getCurrentUser).toHaveBeenCalled();
+                    }}>
+                        Register
+                    </button>
+                );
+            };
+
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestRegisterComponent />
+                </Wrapper>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByRole('button')).toBeInTheDocument();
+            });
+            screen.getByRole('button').click();
+            await waitFor(() => {
+                expect(authService.register).toHaveBeenCalled();
+                expect(authService.getCurrentUser).toHaveBeenCalled();
+            });
+        });
+
+        it('should call authService.logout and clear user/token', async () => {
+            vi.mocked(authService.getToken).mockReturnValue('mock-token');
+            vi.mocked(authService.logout).mockImplementation(() => { });
+
+            const TestLogoutComponent = () => {
+                const auth = useAuth();
+                return (
+                    <button onClick={() => {
+                        auth.logout();
+                        expect(authService.logout).toHaveBeenCalled();
+                    }}>
+                        Logout
+                    </button>
+                );
+            };
+
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestLogoutComponent />
+                </Wrapper>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByRole('button')).toBeInTheDocument();
+            });
+            screen.getByRole('button').click();
+            await waitFor(() => {
+                expect(authService.logout).toHaveBeenCalled();
+            });
         });
     });
 });

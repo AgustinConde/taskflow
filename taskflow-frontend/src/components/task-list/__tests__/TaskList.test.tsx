@@ -302,6 +302,16 @@ describe('TaskList', () => {
             consoleSpy.mockRestore();
         });
 
+        it('should call mutateAsync and handle error when task creation fails', async () => {
+            const user = userEvent.setup();
+            const mutateAsync = vi.fn().mockRejectedValue(new Error('fail'));
+            setupMocks({ createMutation: { mutateAsync, isPending: false } });
+            renderTaskList();
+            await waitFor(() => expect(screen.getByTestId('create-task-btn')).toBeInTheDocument());
+            await user.click(screen.getByTestId('create-task-btn'));
+            expect(mutateAsync).toHaveBeenCalled();
+        });
+
         it('should handle successful toggle completion', async () => {
             const user = userEvent.setup();
             const toggleMutateAsync = vi.fn().mockResolvedValue({});

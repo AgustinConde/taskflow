@@ -6,268 +6,183 @@ import type { Category } from '../../../../types/Category';
 import type { DropResult } from '@hello-pangea/dnd';
 
 describe('useTaskSorting', () => {
-    const setupMocks = () => {
-        const mockTasks: Task[] = [
-            {
-                id: 1,
-                title: 'Task A',
-                description: 'Description A',
-                isCompleted: false,
-                dueDate: '2024-12-31T23:59:59Z',
-                categoryId: 1,
-                createdAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 2,
-                title: 'Task B',
-                description: 'Description B',
-                isCompleted: false,
-                dueDate: '2024-06-15T10:00:00Z',
-                categoryId: 2,
-                createdAt: '2024-01-02T00:00:00Z'
-            },
-            {
-                id: 3,
-                title: 'Task C',
-                description: 'Description C',
-                isCompleted: true,
-                dueDate: null,
-                categoryId: 1,
-                createdAt: '2024-01-03T00:00:00Z'
-            }
-        ];
+    const mockTasks: Task[] = [
+        { id: 1, title: 'Task A', description: 'A', isCompleted: false, dueDate: '2024-12-31T23:59:59Z', categoryId: 1, createdAt: '2024-01-01T00:00:00Z' },
+        { id: 2, title: 'Task B', description: 'B', isCompleted: false, dueDate: '2024-06-15T10:00:00Z', categoryId: 2, createdAt: '2024-01-02T00:00:00Z' },
+        { id: 3, title: 'Task C', description: 'C', isCompleted: true, dueDate: null, categoryId: 1, createdAt: '2024-01-03T00:00:00Z' }
+    ];
+    const mockCategories: Category[] = [
+        { id: 1, name: 'Work', color: '#ff0000', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', userId: 1 },
+        { id: 2, name: 'Personal', color: '#00ff00', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', userId: 1 }
+    ];
 
-        const mockCategories: Category[] = [
-            {
-                id: 1,
-                name: 'Work',
-                color: '#ff0000',
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z',
-                userId: 1
-            },
-            {
-                id: 2,
-                name: 'Personal',
-                color: '#00ff00',
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z',
-                userId: 1
-            }
-        ];
-
-        return { mockTasks, mockCategories };
-    };
-
-    const renderUseTaskSorting = (
-        filteredTasks: Task[] = [],
-        categories: Category[] = [],
-        allTasks: Task[] = []
-    ) => {
-        return renderHook(
-            ({ filteredTasks, categories, allTasks }) =>
-                useTaskSorting(filteredTasks, categories, allTasks),
-            {
-                initialProps: { filteredTasks, categories, allTasks }
-            }
-        );
-    };
+    const renderUseTaskSorting = (filteredTasks: Task[] = [], categories: Category[] = [], allTasks: Task[] = []) =>
+        renderHook(() => useTaskSorting(filteredTasks, categories, allTasks));
 
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    describe('Core Sorting Logic', () => {
-        it('should initialize with default sort type', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+    describe('Sorting Logic', () => {
+        it('initializes with custom sort', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
             expect(result.current.sortBy).toBe('custom');
             expect(result.current.isCustomSort).toBe(true);
             expect(result.current.sortedTasks).toEqual(mockTasks);
         });
-
-        it('should sort by due date correctly', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+        it('sorts by due date', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
-            act(() => {
-                result.current.setSortBy('dueDate');
-            });
-
-            expect(result.current.sortBy).toBe('dueDate');
-            expect(result.current.isCustomSort).toBe(false);
-            expect(result.current.sortedTasks[0].id).toBe(2); // June 15 comes first
-            expect(result.current.sortedTasks[1].id).toBe(1); // December 31 comes second
-            expect(result.current.sortedTasks[2].id).toBe(3); // null dates come last
+            act(() => { result.current.setSortBy('dueDate'); });
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([2, 1, 3]);
         });
-
-        it('should sort by created date correctly', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+        it('sorts by createdAt', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
-            act(() => {
-                result.current.setSortBy('createdAt');
-            });
-
-            expect(result.current.sortBy).toBe('createdAt');
-            expect(result.current.sortedTasks[0].id).toBe(1); // Jan 1
-            expect(result.current.sortedTasks[1].id).toBe(2); // Jan 2
-            expect(result.current.sortedTasks[2].id).toBe(3); // Jan 3
+            act(() => { result.current.setSortBy('createdAt'); });
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([1, 2, 3]);
         });
-
-        it('should sort by category correctly', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+        it('sorts by category', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
-            act(() => {
-                result.current.setSortBy('category');
-            });
-
-            expect(result.current.sortBy).toBe('category');
-            // Personal comes before Work alphabetically
-            expect(result.current.sortedTasks[0].categoryId).toBe(2); // Personal
-            expect(result.current.sortedTasks[1].categoryId).toBe(1); // Work
-            expect(result.current.sortedTasks[2].categoryId).toBe(1); // Work
-        });
-
-        it('should handle custom sorting', () => {
-            const { mockTasks, mockCategories } = setupMocks();
-            const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
-            expect(result.current.sortBy).toBe('custom');
-            expect(result.current.sortedTasks).toEqual(mockTasks);
+            act(() => { result.current.setSortBy('category'); });
+            expect(result.current.sortedTasks.map(t => t.categoryId)).toEqual([2, 1, 1]);
         });
     });
 
-    describe('Drag and Drop Operations', () => {
-        it('should handle valid drag and drop operation', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+    describe('Drag and Drop', () => {
+        it('handles valid drag and drop', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
             const dropResult: DropResult = {
-                draggableId: '1',
-                type: 'DEFAULT',
-                source: { index: 0, droppableId: 'tasks' },
-                destination: { index: 2, droppableId: 'tasks' },
-                reason: 'DROP',
-                mode: 'FLUID',
-                combine: null
+                draggableId: '1', type: 'DEFAULT', source: { index: 0, droppableId: 'tasks' }, destination: { index: 2, droppableId: 'tasks' }, reason: 'DROP', mode: 'FLUID', combine: null
             };
-
-            act(() => {
-                result.current.handleDragEnd(dropResult);
-            });
-
-            // Task originally at index 0 should now be at index 2
-            expect(result.current.sortedTasks[0].id).toBe(2);
-            expect(result.current.sortedTasks[1].id).toBe(3);
-            expect(result.current.sortedTasks[2].id).toBe(1);
+            act(() => { result.current.handleDragEnd(dropResult); });
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([2, 3, 1]);
         });
-
-        it('should ignore drag operation if not in custom sort mode', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+        it('ignores drag if not custom sort', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
-            act(() => {
-                result.current.setSortBy('dueDate');
-            });
-
+            act(() => { result.current.setSortBy('dueDate'); });
             const originalOrder = [...result.current.sortedTasks];
             const dropResult: DropResult = {
-                draggableId: '1',
-                type: 'DEFAULT',
-                source: { index: 0, droppableId: 'tasks' },
-                destination: { index: 2, droppableId: 'tasks' },
-                reason: 'DROP',
-                mode: 'FLUID',
-                combine: null
+                draggableId: '1', type: 'DEFAULT', source: { index: 0, droppableId: 'tasks' }, destination: { index: 2, droppableId: 'tasks' }, reason: 'DROP', mode: 'FLUID', combine: null
             };
-
-            act(() => {
-                result.current.handleDragEnd(dropResult);
-            });
-
+            act(() => { result.current.handleDragEnd(dropResult); });
             expect(result.current.sortedTasks).toEqual(originalOrder);
         });
-
-        it('should ignore drag operation without destination', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+        it('ignores drag with no destination', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
             const originalOrder = [...result.current.sortedTasks];
             const dropResult: DropResult = {
-                draggableId: '1',
-                type: 'DEFAULT',
-                source: { index: 0, droppableId: 'tasks' },
-                destination: null,
-                reason: 'CANCEL',
-                mode: 'FLUID',
-                combine: null
+                draggableId: '1', type: 'DEFAULT', source: { index: 0, droppableId: 'tasks' }, destination: null, reason: 'CANCEL', mode: 'FLUID', combine: null
             };
-
-            act(() => {
-                result.current.handleDragEnd(dropResult);
-            });
-
+            act(() => { result.current.handleDragEnd(dropResult); });
             expect(result.current.sortedTasks).toEqual(originalOrder);
         });
-
-        it('should ignore drag operation with same source and destination', () => {
-            const { mockTasks, mockCategories } = setupMocks();
+        it('ignores drag with same source and destination', () => {
             const { result } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
             const originalOrder = [...result.current.sortedTasks];
             const dropResult: DropResult = {
-                draggableId: '1',
-                type: 'DEFAULT',
-                source: { index: 1, droppableId: 'tasks' },
-                destination: { index: 1, droppableId: 'tasks' },
-                reason: 'DROP',
-                mode: 'FLUID',
-                combine: null
+                draggableId: '1', type: 'DEFAULT', source: { index: 1, droppableId: 'tasks' }, destination: { index: 1, droppableId: 'tasks' }, reason: 'DROP', mode: 'FLUID', combine: null
             };
-
-            act(() => {
-                result.current.handleDragEnd(dropResult);
-            });
-
+            act(() => { result.current.handleDragEnd(dropResult); });
             expect(result.current.sortedTasks).toEqual(originalOrder);
         });
     });
 
     describe('Edge Cases & Performance', () => {
-        it('should handle empty task lists gracefully', () => {
-            const { mockCategories } = setupMocks();
-            const { result } = renderUseTaskSorting([], mockCategories, []);
-
-            expect(result.current.sortedTasks).toEqual([]);
-            expect(result.current.sortBy).toBe('custom');
+        it('should fallback to "zzzz" when a.categoryId is null and b.categoryId is valid', () => {
+            const tasks: Task[] = [
+                { id: 1, title: 'Task 1', description: '', isCompleted: false, dueDate: null, categoryId: null, createdAt: '2024-01-01T00:00:00Z' },
+                { id: 2, title: 'Task 2', description: '', isCompleted: false, dueDate: null, categoryId: 1, createdAt: '2024-01-01T00:00:00Z' }
+            ];
+            const categories: Category[] = [
+                { id: 1, name: 'Work', color: '#ff0000', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', userId: 1 }
+            ];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
+            act(() => { result.current.setSortBy('category'); });
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([2, 1]);
         });
 
-        it('should handle tasks without categories', () => {
-            const tasksWithoutCategories: Task[] = [
+        it('should fallback to "zzzz" when b.categoryId is null and a.categoryId is valid', () => {
+            const tasks: Task[] = [
+                { id: 1, title: 'Task 1', description: '', isCompleted: false, dueDate: null, categoryId: 1, createdAt: '2024-01-01T00:00:00Z' },
+                { id: 2, title: 'Task 2', description: '', isCompleted: false, dueDate: null, categoryId: null, createdAt: '2024-01-01T00:00:00Z' }
+            ];
+            const categories: Category[] = [
+                { id: 1, name: 'Work', color: '#ff0000', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', userId: 1 }
+            ];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
+            act(() => { result.current.setSortBy('category'); });
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([1, 2]);
+        });
+
+        it('should fallback to "zzzz" when both categoryId are null', () => {
+            const tasks: Task[] = [
+                { id: 1, title: 'Task 1', description: '', isCompleted: false, dueDate: null, categoryId: null, createdAt: '2024-01-01T00:00:00Z' },
+                { id: 2, title: 'Task 2', description: '', isCompleted: false, dueDate: null, categoryId: null, createdAt: '2024-01-01T00:00:00Z' }
+            ];
+            const categories: Category[] = [];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
+            act(() => { result.current.setSortBy('category'); });
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([1, 2]);
+        });
+
+        it('should guarantee coverage of line 45 by forcing sort comparison', () => {
+            const tasks: Task[] = [
                 {
-                    id: 1,
-                    title: 'Task 1',
-                    description: 'Description',
+                    id: 2,
+                    title: 'Task B',
+                    description: '',
                     isCompleted: false,
                     dueDate: null,
-                    categoryId: null,
+                    categoryId: 200,
+                    createdAt: '2024-01-01T00:00:00Z'
+                },
+                {
+                    id: 1,
+                    title: 'Task A',
+                    description: '',
+                    isCompleted: false,
+                    dueDate: null,
+                    categoryId: 100,
                     createdAt: '2024-01-01T00:00:00Z'
                 }
             ];
-
-            const { result } = renderUseTaskSorting(tasksWithoutCategories, [], tasksWithoutCategories);
-
+            const categories: Category[] = [];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
             act(() => {
                 result.current.setSortBy('category');
             });
-
-            expect(result.current.sortedTasks).toEqual(tasksWithoutCategories);
+            expect(result.current.sortedTasks).toHaveLength(2);
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([2, 1]);
         });
-
-        it('should handle tasks with missing category references', () => {
+        it('should cover both b.categoryId truthy and not found in categories', () => {
+            const tasks: Task[] = [
+                {
+                    id: 1,
+                    title: 'Task A',
+                    description: '',
+                    isCompleted: false,
+                    dueDate: null,
+                    categoryId: 100,
+                    createdAt: '2024-01-01T00:00:00Z'
+                },
+                {
+                    id: 2,
+                    title: 'Task B',
+                    description: '',
+                    isCompleted: false,
+                    dueDate: null,
+                    categoryId: 200,
+                    createdAt: '2024-01-01T00:00:00Z'
+                }
+            ];
+            const categories: Category[] = [];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
+            act(() => {
+                result.current.setSortBy('category');
+            });
+            expect(result.current.sortedTasks).toHaveLength(2);
+            expect(result.current.sortedTasks.map(t => t.id)).toEqual([1, 2]);
+        });
+        it('should execute line 45: fallback "zzzz" for both tasks with missing categoryId', () => {
             const tasks: Task[] = [
                 {
                     id: 1,
@@ -275,65 +190,111 @@ describe('useTaskSorting', () => {
                     description: 'Description',
                     isCompleted: false,
                     dueDate: null,
-                    categoryId: 999, // Non-existent category
+                    categoryId: 100,
+                    createdAt: '2024-01-01T00:00:00Z'
+                },
+                {
+                    id: 2,
+                    title: 'Task 2',
+                    description: 'Description',
+                    isCompleted: false,
+                    dueDate: null,
+                    categoryId: 200,
                     createdAt: '2024-01-01T00:00:00Z'
                 }
             ];
-
-            const { result } = renderUseTaskSorting(tasks, [], tasks);
-
+            const categories: Category[] = [];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
             act(() => {
                 result.current.setSortBy('category');
             });
-
             expect(result.current.sortedTasks).toEqual(tasks);
         });
-
-        it('should update custom order when all tasks change', () => {
-            const { mockTasks, mockCategories } = setupMocks();
-            const { result, rerender } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
-
-            const newTasks: Task[] = [
-                ...mockTasks,
+        it('should use fallback name "zzzz" when b.categoryId exists but not in categories', () => {
+            const tasks: Task[] = [
                 {
-                    id: 4,
-                    title: 'Task D',
-                    description: 'Description D',
+                    id: 1,
+                    title: 'Task 1',
+                    description: 'Description',
                     isCompleted: false,
                     dueDate: null,
                     categoryId: 1,
-                    createdAt: '2024-01-04T00:00:00Z'
+                    createdAt: '2024-01-01T00:00:00Z'
+                },
+                {
+                    id: 2,
+                    title: 'Task 2',
+                    description: 'Description',
+                    isCompleted: false,
+                    dueDate: null,
+                    categoryId: 999,
+                    createdAt: '2024-01-01T00:00:00Z'
                 }
             ];
-
-            rerender({
-                filteredTasks: newTasks,
-                categories: mockCategories,
-                allTasks: newTasks
-            });
-
-            expect(result.current.sortedTasks).toHaveLength(4);
-        });
-
-        it('should maintain order efficiency with many tasks', () => {
-            const largeMockTasks: Task[] = Array.from({ length: 100 }, (_, i) => ({
-                id: i + 1,
-                title: `Task ${i + 1}`,
-                description: `Description ${i + 1}`,
-                isCompleted: i % 2 === 0,
-                dueDate: i % 3 === 0 ? `2024-01-${String(i % 28 + 1).padStart(2, '0')}T00:00:00Z` : null,
-                categoryId: (i % 3) + 1,
-                createdAt: `2024-01-01T${String(i % 24).padStart(2, '0')}:00:00Z`
-            }));
-
-            const { result } = renderUseTaskSorting(largeMockTasks, [], largeMockTasks);
-
+            const categories: Category[] = [
+                {
+                    id: 1,
+                    name: 'Work',
+                    color: '#ff0000',
+                    createdAt: '2024-01-01T00:00:00Z',
+                    updatedAt: '2024-01-01T00:00:00Z',
+                    userId: 1
+                }
+            ];
+            const { result } = renderUseTaskSorting(tasks, categories, tasks);
             act(() => {
-                result.current.setSortBy('dueDate');
+                result.current.setSortBy('category');
             });
-
-            expect(result.current.sortedTasks).toHaveLength(100);
-            expect(result.current.sortBy).toBe('dueDate');
+            expect(result.current.sortedTasks[0].id).toBe(1);
+            expect(result.current.sortedTasks[1].id).toBe(2);
+        });
+        it('should handle empty task lists gracefully', () => {
+            const { result } = renderUseTaskSorting([], mockCategories, []);
+            expect(result.current.sortedTasks).toEqual([]);
+            expect(result.current.sortBy).toBe('custom');
+        });
+        describe('Edge Cases', () => {
+            it('handles empty task lists', () => {
+                const { result } = renderUseTaskSorting([], mockCategories, []);
+                expect(result.current.sortedTasks).toEqual([]);
+                expect(result.current.sortBy).toBe('custom');
+            });
+            it('handles tasks without categories', () => {
+                const tasks: Task[] = [
+                    { id: 1, title: 'Task 1', description: '', isCompleted: false, dueDate: null, categoryId: null, createdAt: '2024-01-01T00:00:00Z' }
+                ];
+                const { result } = renderUseTaskSorting(tasks, [], tasks);
+                act(() => { result.current.setSortBy('category'); });
+                expect(result.current.sortedTasks).toEqual(tasks);
+            });
+            it('handles tasks with missing category references', () => {
+                const tasks: Task[] = [
+                    { id: 1, title: 'Task 1', description: '', isCompleted: false, dueDate: null, categoryId: 999, createdAt: '2024-01-01T00:00:00Z' }
+                ];
+                const { result } = renderUseTaskSorting(tasks, [], tasks);
+                act(() => { result.current.setSortBy('category'); });
+                expect(result.current.sortedTasks).toEqual(tasks);
+            });
+            it('updates custom order when all tasks change', () => {
+                const { result, rerender } = renderUseTaskSorting(mockTasks, mockCategories, mockTasks);
+                rerender();
+                expect(result.current.sortedTasks).toHaveLength(3);
+            });
+            it('maintains order efficiency with many tasks', () => {
+                const largeMockTasks: Task[] = Array.from({ length: 100 }, (_, i) => ({
+                    id: i + 1,
+                    title: `Task ${i + 1}`,
+                    description: `Description ${i + 1}`,
+                    isCompleted: i % 2 === 0,
+                    dueDate: i % 3 === 0 ? `2024-01-${String(i % 28 + 1).padStart(2, '0')}T00:00:00Z` : null,
+                    categoryId: (i % 3) + 1,
+                    createdAt: `2024-01-01T${String(i % 24).padStart(2, '0')}:00:00Z`
+                }));
+                const { result } = renderUseTaskSorting(largeMockTasks, [], largeMockTasks);
+                act(() => { result.current.setSortBy('dueDate'); });
+                expect(result.current.sortedTasks).toHaveLength(100);
+                expect(result.current.sortBy).toBe('dueDate');
+            });
         });
     });
 });

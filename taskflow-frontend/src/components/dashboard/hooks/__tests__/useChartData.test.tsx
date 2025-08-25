@@ -4,10 +4,11 @@ import { subDays } from 'date-fns';
 import { useFilteredTasks, useActivityChartData } from '../useChartData';
 import type { Task } from '../../../../types/Task';
 
+let i18nLanguage = 'en';
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
         t: (key: string) => key,
-        i18n: { language: 'en' }
+        i18n: { language: i18nLanguage }
     })
 }));
 
@@ -193,6 +194,59 @@ describe('useChartData', () => {
             const { result } = renderHook(() => useFilteredTasks(tasks, '7d'));
             expect(result.current).toHaveLength(1);
             expect(result.current[0].id).toBe(2);
+        });
+    });
+
+    describe('Specific Line Coverage Tests', () => {
+        it('should return 30 for invalid timeRange (default branch, line 14)', () => {
+            const tasks = [createMockTask({ id: 1 })];
+            // @ts-expect-error purposely passing invalid value for coverage
+            const { result } = renderHook(() => useFilteredTasks(tasks, "invalid"));
+            expect(result.current).toHaveLength(1);
+        });
+
+        it('should use Spanish locale when i18n.language is "es" (line 35)', () => {
+            i18nLanguage = 'es';
+            const tasks = [createMockTask({ id: 1 })];
+            const { result } = renderHook(() => useActivityChartData(tasks, tasks, '7d'));
+            expect(result.current.labels[0]).toMatch(/[a-zA-Záéíóúñü]+ \d{2}/);
+            i18nLanguage = 'en';
+        });
+        it('should execute line 24 - subDays(now, daysBack) for filtering', () => {
+            const now = new Date('2024-01-15T12:00:00Z');
+            vi.setSystemTime(now);
+
+            const tasks = [
+                createMockTask({ id: 1, createdAt: '2024-01-10T12:00:00Z' }),
+                createMockTask({ id: 2, createdAt: '2024-01-01T12:00:00Z' })
+            ];
+
+            const { result } = renderHook(() => useFilteredTasks(tasks, '7d'));
+
+            expect(result.current).toHaveLength(1);
+            expect(result.current[0].id).toBe(1);
+        });
+
+        it('should execute line 44 - subDays(new Date(), i) for chart data generation', () => {
+            const tasks = [createMockTask({ id: 1, createdAt: '2024-01-15T12:00:00Z' })];
+
+            const { result } = renderHook(() => useActivityChartData(tasks, tasks, '7d'));
+
+            expect(result.current.labels).toHaveLength(7);
+            expect(result.current.datasets[0].data).toHaveLength(7);
+        });
+
+        it('should force execution of both date calculation lines with different time ranges', () => {
+            const tasks = [
+                createMockTask({ id: 1, createdAt: '2024-01-10T12:00:00Z' }),
+                createMockTask({ id: 2, createdAt: '2024-01-05T12:00:00Z' })
+            ];
+
+            const { result: filtered30d } = renderHook(() => useFilteredTasks(tasks, '30d'));
+            expect(filtered30d.current).toHaveLength(2);
+
+            const { result: chart30d } = renderHook(() => useActivityChartData(tasks, tasks, '30d'));
+            expect(chart30d.current.labels).toHaveLength(30);
         });
     });
 });

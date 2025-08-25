@@ -193,6 +193,27 @@ describe('useCategories Hooks', () => {
   });
 
   describe('Edge Cases & State Management', () => {
+    it('should handle update when oldCategories is undefined', async () => {
+      const { queryClient, createCategory } = setupMocks();
+      const updatedCategory = createCategory({ id: 1, name: 'Updated Work' });
+      queryClient.setQueryData(categoryKeys.lists(), undefined);
+      vi.mocked(categoryService.updateCategory).mockResolvedValue(updatedCategory);
+      const { result } = renderUseUpdateCategory(queryClient);
+      result.current.mutate(updatedCategory);
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(queryClient.getQueryData(categoryKeys.lists())).toEqual([]);
+    });
+
+    it('should handle delete when oldCategories is undefined', async () => {
+      const { queryClient } = setupMocks();
+      queryClient.setQueryData(categoryKeys.lists(), undefined);
+      vi.mocked(categoryService.deleteCategory).mockResolvedValue(undefined);
+      const { result } = renderUseDeleteCategory(queryClient);
+      result.current.mutate(1);
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(queryClient.getQueryData(categoryKeys.lists())).toEqual([]);
+    });
+
     it('should handle empty list for create', async () => {
       const { queryClient, createCategory, createCategoryInput } = setupMocks();
       const newCategory = createCategoryInput({ name: 'First Category' });

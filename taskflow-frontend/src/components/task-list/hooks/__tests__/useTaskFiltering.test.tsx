@@ -193,6 +193,31 @@ describe('useTaskFiltering', () => {
     });
 
     describe('Edge Cases & Performance', () => {
+        it('should handle task with categoryId not present in categories', () => {
+            const taskWithMissingCategory = [{
+                id: 10,
+                title: 'Orphan task',
+                description: 'No matching category',
+                isCompleted: false,
+                dueDate: null,
+                categoryId: 999,
+                createdAt: '2024-01-01T00:00:00Z'
+            }];
+            const categories = [{
+                id: 1,
+                name: 'Development',
+                color: '#FF5722',
+                userId: 1,
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z'
+            }];
+            const { result } = renderHook(() => useTaskFiltering(taskWithMissingCategory, categories));
+            act(() => {
+                result.current.setSearch('Orphan');
+            });
+            expect(result.current.filteredTasks).toHaveLength(1);
+            expect(result.current.filteredTasks[0].title).toBe('Orphan task');
+        });
         it('should handle empty tasks array', () => {
             const { mockCategories } = setupMocks();
             const { result } = renderUseTaskFiltering([], mockCategories);

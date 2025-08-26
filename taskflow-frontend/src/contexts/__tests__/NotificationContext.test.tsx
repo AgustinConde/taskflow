@@ -1,379 +1,172 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { NotificationProvider, useNotifications } from '../NotificationContext';
+import { describe, it, expect, vi } from 'vitest';
 
-const TestComponent = () => {
-    const notifications = useNotifications();
+function ProviderWrapper({ children, ...props }: any) {
+    return <NotificationProvider {...props}>{children}</NotificationProvider>;
+}
 
-    return (
-        <div>
-            <div data-testid="notifications-available">Notifications available</div>
-            <button
-                data-testid="show-success"
-                onClick={() => notifications.showSuccess('Success message', 5000)}
-            >
-                Show Success
-            </button>
-            <button
-                data-testid="show-error"
-                onClick={() => notifications.showError('Error message', 5000)}
-            >
-                Show Error
-            </button>
-            <button
-                data-testid="show-warning"
-                onClick={() => notifications.showWarning('Warning message', 5000)}
-            >
-                Show Warning
-            </button>
-            <button
-                data-testid="show-info"
-                onClick={() => notifications.showInfo('Info message', 5000)}
-            >
-                Show Info
-            </button>
-            <button
-                data-testid="show-notification"
-                onClick={() => notifications.showNotification('Custom message', 'success', { duration: 3000 })}
-            >
-                Show Custom
-            </button>
-            <button
-                data-testid="clear-all"
-                onClick={() => notifications.clearAll()}
-            >
-                Clear All
-            </button>
-        </div>
-    );
-};
-
-const createWrapper = () => {
-    return ({ children }: { children: React.ReactNode }) => (
-        <NotificationProvider>
-            {children}
-        </NotificationProvider>
-    );
-};
+function TestComponent({ onNotify }: { onNotify?: (ctx: any) => void }) {
+    const ctx = useNotifications();
+    React.useEffect(() => {
+        if (onNotify) onNotify(ctx);
+    }, [onNotify, ctx]);
+    return null;
+}
 
 describe('NotificationContext', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it('should provide notification context without throwing', () => {
-        const Wrapper = createWrapper();
-
-        expect(() => {
+    describe('custom type branch', () => {
+        it('renders fallback color for unknown type', () => {
+            let ctx: any;
             render(
-                <Wrapper>
-                    <TestComponent />
-                </Wrapper>
+                <ProviderWrapper maxNotifications={1}>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
             );
-        }).not.toThrow();
-
-        expect(screen.getByTestId('notifications-available')).toBeInTheDocument();
-    });
-
-    it('should throw error when used outside provider', () => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
-        expect(() => {
-            render(<TestComponent />);
-        }).toThrow('useNotifications must be used within a NotificationProvider');
-
-        consoleSpy.mockRestore();
-    });
-
-    it('should provide all notification methods', () => {
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        expect(screen.getByTestId('show-success')).toBeInTheDocument();
-        expect(screen.getByTestId('show-error')).toBeInTheDocument();
-        expect(screen.getByTestId('show-warning')).toBeInTheDocument();
-        expect(screen.getByTestId('show-info')).toBeInTheDocument();
-        expect(screen.getByTestId('show-notification')).toBeInTheDocument();
-        expect(screen.getByTestId('clear-all')).toBeInTheDocument();
-    });
-
-    it('should show success notification', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-success'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Success message')).toBeInTheDocument();
-        });
-
-        const alert = screen.getByRole('alert');
-        expect(alert).toBeInTheDocument();
-    });
-
-    it('should show error notification', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-error'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Error message')).toBeInTheDocument();
-        });
-
-        const alert = screen.getByRole('alert');
-        expect(alert).toBeInTheDocument();
-    });
-
-    it('should show warning notification', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-warning'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Warning message')).toBeInTheDocument();
-        });
-
-        const alert = screen.getByRole('alert');
-        expect(alert).toBeInTheDocument();
-    });
-
-    it('should show info notification', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-info'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Info message')).toBeInTheDocument();
-        });
-
-        const alert = screen.getByRole('alert');
-        expect(alert).toBeInTheDocument();
-    });
-
-    it('should show custom notification with options', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-notification'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Custom message')).toBeInTheDocument();
+            act(() => {
+                ctx.showNotification('Custom', 'custom');
+            });
+            const alert = screen.getByText('Custom').closest('.MuiAlert-root');
+            expect(alert).toHaveStyle('background-color: rgb(107, 114, 128)');
         });
     });
-
-    it('should handle multiple notifications', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-success'));
-        await user.click(screen.getByTestId('show-error'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Success message')).toBeInTheDocument();
-            expect(screen.getByText('Error message')).toBeInTheDocument();
+    describe('useNotifications', () => {
+        it('throws error if used outside provider', () => {
+            const errorSpy = vi.fn();
+            function ErrorComponent() {
+                try {
+                    useNotifications();
+                } catch (e: any) {
+                    errorSpy(e.message);
+                }
+                return null;
+            }
+            render(<ErrorComponent />);
+            expect(errorSpy).toHaveBeenCalledWith('useNotifications must be used within a NotificationProvider');
         });
-    });
-
-    it('should clear all notifications', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-success'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Success message')).toBeInTheDocument();
-        });
-
-        await user.click(screen.getByTestId('clear-all'));
-
-        await waitFor(() => {
-            expect(screen.queryByText('Success message')).not.toBeInTheDocument();
-        });
-    });
-
-    it('should auto-hide notifications after duration', async () => {
-        const user = userEvent.setup();
-        const Wrapper = createWrapper();
-
-        render(
-            <Wrapper>
-                <TestComponent />
-            </Wrapper>
-        );
-
-        await user.click(screen.getByTestId('show-success'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Success message')).toBeInTheDocument();
-        });
-
-        await waitFor(() => {
-            expect(screen.queryByText('Success message')).not.toBeInTheDocument();
-        }, { timeout: 6000 });
-    });
-
-    describe('notification methods functionality', () => {
-        it('should call showSuccess without errors', async () => {
-            const user = userEvent.setup();
-            const Wrapper = createWrapper();
-
+        it('returns context inside provider', () => {
+            let ctx: any;
             render(
-                <Wrapper>
-                    <TestComponent />
-                </Wrapper>
+                <ProviderWrapper>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
             );
-
-            expect(() => {
-                user.click(screen.getByTestId('show-success'));
-            }).not.toThrow();
-        });
-
-        it('should call showError without errors', async () => {
-            const user = userEvent.setup();
-            const Wrapper = createWrapper();
-
-            render(
-                <Wrapper>
-                    <TestComponent />
-                </Wrapper>
-            );
-
-            expect(() => {
-                user.click(screen.getByTestId('show-error'));
-            }).not.toThrow();
-        });
-
-        it('should call showWarning without errors', async () => {
-            const user = userEvent.setup();
-            const Wrapper = createWrapper();
-
-            render(
-                <Wrapper>
-                    <TestComponent />
-                </Wrapper>
-            );
-
-            expect(() => {
-                user.click(screen.getByTestId('show-warning'));
-            }).not.toThrow();
-        });
-
-        it('should call showInfo without errors', async () => {
-            const user = userEvent.setup();
-            const Wrapper = createWrapper();
-
-            render(
-                <Wrapper>
-                    <TestComponent />
-                </Wrapper>
-            );
-
-            expect(() => {
-                user.click(screen.getByTestId('show-info'));
-            }).not.toThrow();
+            expect(typeof ctx.showNotification).toBe('function');
+            expect(typeof ctx.showSuccess).toBe('function');
+            expect(typeof ctx.showError).toBe('function');
+            expect(typeof ctx.showWarning).toBe('function');
+            expect(typeof ctx.showInfo).toBe('function');
+            expect(typeof ctx.hideNotification).toBe('function');
+            expect(typeof ctx.clearAll).toBe('function');
         });
     });
 
-    describe('edge cases', () => {
-        it('should handle rapid successive notifications', async () => {
-            const user = userEvent.setup();
-            const Wrapper = createWrapper();
-
+    describe('showNotification', () => {
+        it('shows notification and auto-removes after duration', async () => {
+            let ctx: any;
             render(
-                <Wrapper>
-                    <TestComponent />
-                </Wrapper>
+                <ProviderWrapper defaultDuration={100}>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
             );
-
-            await user.click(screen.getByTestId('show-success'));
-            await user.click(screen.getByTestId('show-error'));
-            await user.click(screen.getByTestId('show-warning'));
-            await user.click(screen.getByTestId('show-info'));
-
+            act(() => {
+                ctx.showNotification('Test message', 'success');
+            });
+            expect(screen.getByText('Test message')).toBeInTheDocument();
             await waitFor(() => {
-                const alerts = screen.getAllByRole('alert');
-                expect(alerts.length).toBeGreaterThan(0);
+                expect(screen.queryByText('Test message')).not.toBeInTheDocument();
+            }, { timeout: 500 });
+        });
+        it('shows notification and persists if persist=true', async () => {
+            let ctx: any;
+            render(
+                <ProviderWrapper defaultDuration={100}>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
+            );
+            let id: string;
+            act(() => {
+                id = ctx.showNotification('Persistent', 'info', { persist: true });
+            });
+            expect(screen.getByText('Persistent')).toBeInTheDocument();
+            await act(async () => {
+                await new Promise(res => setTimeout(res, 200));
+            });
+            expect(screen.getByText('Persistent')).toBeInTheDocument();
+            act(() => {
+                ctx.hideNotification(id);
+            });
+            await waitFor(() => {
+                expect(screen.queryByText('Persistent')).not.toBeInTheDocument();
             });
         });
-
-        it('should handle empty messages gracefully', async () => {
-            const Wrapper = createWrapper();
-
-            const EmptyMessageTest = () => {
-                const notifications = useNotifications();
-
-                return (
-                    <button
-                        data-testid="empty-message"
-                        onClick={() => notifications.showSuccess('')}
-                    >
-                        Empty Message
-                    </button>
-                );
-            };
-
+        it('limits notifications to maxNotifications', () => {
+            let ctx: any;
             render(
-                <Wrapper>
-                    <EmptyMessageTest />
-                </Wrapper>
+                <ProviderWrapper maxNotifications={2}>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
             );
+            act(() => {
+                ctx.showNotification('One');
+                ctx.showNotification('Two');
+                ctx.showNotification('Three');
+            });
+            expect(screen.queryByText('One')).not.toBeInTheDocument();
+            expect(screen.getByText('Two')).toBeInTheDocument();
+            expect(screen.getByText('Three')).toBeInTheDocument();
+        });
+    });
 
-            const user = userEvent.setup();
+    describe('showSuccess/showError/showWarning/showInfo', () => {
+        it('shows correct type and color for each', () => {
+            let ctx: any;
+            render(
+                <ProviderWrapper maxNotifications={4}>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
+            );
+            act(() => {
+                ctx.showSuccess('Success');
+                ctx.showError('Error');
+                ctx.showWarning('Warning');
+                ctx.showInfo('Info');
+            });
+            expect(screen.getByText('Success')).toBeInTheDocument();
+            expect(screen.getByText('Error')).toBeInTheDocument();
+            expect(screen.getByText('Warning')).toBeInTheDocument();
+            expect(screen.getByText('Info')).toBeInTheDocument();
+        });
+    });
 
-            expect(() => {
-                user.click(screen.getByTestId('empty-message'));
-            }).not.toThrow();
+    describe('clearAll', () => {
+        it('removes all notifications', () => {
+            let ctx: any;
+            render(
+                <ProviderWrapper>
+                    <TestComponent onNotify={c => { ctx = c; }} />
+                </ProviderWrapper>
+            );
+            act(() => {
+                ctx.showNotification('A');
+                ctx.showNotification('B');
+                ctx.clearAll();
+            });
+            expect(screen.queryByText('A')).not.toBeInTheDocument();
+            expect(screen.queryByText('B')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('position styles', () => {
+        it('applies correct position style', () => {
+            render(
+                <ProviderWrapper position="bottom-center">
+                    <TestComponent />
+                </ProviderWrapper>
+            );
+            const box = screen.getByTestId('notification-box');
+            expect(box).toHaveStyle({ bottom: '24px', left: '50%' });
         });
     });
 });

@@ -147,6 +147,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
             {children}
 
             <Box
+                data-testid="notification-box"
                 sx={{
                     position: 'fixed',
                     zIndex: 9999,

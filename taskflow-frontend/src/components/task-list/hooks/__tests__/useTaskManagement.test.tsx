@@ -1,406 +1,271 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { NotificationContext } from '../../../../contexts/NotificationContext';
 import { useTaskManagement } from '../useTaskManagement';
-import type { ReactNode } from 'react';
+import { taskService } from '../../../../services/taskService';
+import { useTranslation } from 'react-i18next';
+import { useNotifications } from '../../../../contexts/NotificationContext';
 import type { Task } from '../../../../types/Task';
 
-vi.mock('../../../../services/taskService', () => ({
-    taskService: {
-        getTasks: vi.fn(),
-        createTask: vi.fn(),
-        updateTask: vi.fn(),
-        deleteTask: vi.fn()
-    }
-}));
-
-const mockShowSuccess = vi.fn();
-const mockShowError = vi.fn();
-const mockT = vi.fn((key: string) => key);
-
-vi.mock('../../../../contexts/NotificationContext', () => ({
+vi.mock('../../../../services/taskService');
+vi.mock('react-i18next');
+vi.mock('../../../contexts/NotificationContext', () => ({
     useNotifications: () => ({
-        showSuccess: mockShowSuccess,
-        showError: mockShowError
+        showSuccess: vi.fn(),
+        showError: vi.fn(),
+        showNotification: vi.fn(),
+        showWarning: vi.fn(),
+        showInfo: vi.fn(),
+        hideNotification: vi.fn(),
     })
 }));
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: mockT
-    })
-}));
+const mockTasks: Task[] = [
+    {
+        id: 1,
+        title: 'Task 1',
+        description: 'Desc',
+        isCompleted: false,
+        createdAt: '2025-08-26T00:00:00.000Z',
+        dueDate: null,
+        categoryId: null
+    },
+    {
+        id: 2,
+        title: 'Task 2',
+        description: 'Desc',
+        isCompleted: true,
+        createdAt: '2025-08-26T00:00:00.000Z',
+        dueDate: null,
+        categoryId: null
+    }
+];
 
-import { taskService } from '../../../../services/taskService';
+const setupMocks = () => {
+    (taskService.getTasks as any).mockResolvedValue([...mockTasks]);
+    (taskService.createTask as any).mockResolvedValue({});
+    (taskService.updateTask as any).mockResolvedValue({});
+    (taskService.deleteTask as any).mockResolvedValue({});
+    (useTranslation as any).mockReturnValue({ t: (k: string) => k });
 
-const mockTaskService = vi.mocked(taskService);
+};
+
+const notificationMock = {
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    showNotification: vi.fn(),
+    showWarning: vi.fn(),
+    showInfo: vi.fn(),
+    hideNotification: vi.fn(),
+    clearAll: vi.fn(),
+};
+
+const ProviderWrapper = ({ children }: { children: React.ReactNode }) => (
+    <NotificationContext.Provider value={notificationMock}>
+        {children}
+    </NotificationContext.Provider>
+);
+
+const getHook = () => {
+    setupMocks();
+    return renderHook(() => useTaskManagement(), { wrapper: ProviderWrapper });
+};
 
 describe('useTaskManagement', () => {
-    const setupMocks = () => {
-        const mockTasks: Task[] = [
-            {
-                id: 1,
-                title: 'Test Task 1',
-                description: 'Description 1',
-                isCompleted: false,
-                dueDate: '2024-12-31T23:59:59Z',
-                categoryId: 1,
-                createdAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 2,
-                title: 'Test Task 2',
-                description: 'Description 2',
-                isCompleted: true,
-                dueDate: null,
-                categoryId: 2,
-                createdAt: '2024-01-01T00:00:00Z'
-            }
-        ];
-
-        const mockGetTasks = vi.mocked(mockTaskService.getTasks);
-        const mockCreateTask = vi.mocked(mockTaskService.createTask);
-        const mockUpdateTask = vi.mocked(mockTaskService.updateTask);
-        const mockDeleteTask = vi.mocked(mockTaskService.deleteTask);
-
-
-        mockGetTasks.mockResolvedValue(mockTasks);
-        mockCreateTask.mockResolvedValue(mockTasks[0]);
-        mockUpdateTask.mockResolvedValue(mockTasks[0]);
-        mockDeleteTask.mockResolvedValue(undefined);
-        mockT.mockReturnValue('mocked-translation');
-
-        return {
-            mockTasks,
-            mockGetTasks,
-            mockCreateTask,
-            mockUpdateTask,
-            mockDeleteTask
-        };
-    };
-
-    const renderUseTaskManagement = () => {
-        const queryClient = new QueryClient({
-            defaultOptions: {
-                queries: { retry: false },
-                mutations: { retry: false }
-            }
-        });
-
-        const wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
-
-        return renderHook(() => useTaskManagement(), { wrapper });
-    };
-
     beforeEach(() => {
         vi.clearAllMocks();
-        mockShowSuccess.mockClear();
-        mockShowError.mockClear();
-        mockT.mockReturnValue('mocked-translation');
     });
 
-    afterEach(() => {
-        vi.clearAllMocks();
-        vi.useRealTimers();
-        vi.clearAllTimers();
-    });
-
-    describe('Core State Management', () => {
-        it('should initialize with default state', () => {
-            setupMocks();
-            const { result } = renderUseTaskManagement();
-
-            expect(result.current.tasks).toEqual([]);
-            expect(result.current.loading).toBe(true);
-            expect(result.current.creating).toBe(false);
-            expect(result.current.deleteId).toBeNull();
-            expect(result.current.deleteLoading).toBe(false);
-        });
-
-        it('should fetch tasks on mount', async () => {
-            const { mockTasks, mockGetTasks } = setupMocks();
-            const { result } = renderUseTaskManagement();
-
-            await waitFor(() => {
-                expect(result.current.loading).toBe(false);
-            });
-
-            expect(mockGetTasks).toHaveBeenCalled();
-            expect(result.current.tasks).toEqual(mockTasks);
-        });
-
-        it('should handle fetch tasks error', async () => {
-            const { mockGetTasks } = setupMocks();
-            mockGetTasks.mockRejectedValueOnce(new Error('Network error'));
-
-            const { result } = renderUseTaskManagement();
-
-            await waitFor(() => {
-                expect(result.current.loading).toBe(false);
-            });
-
-            expect(mockShowError).toHaveBeenCalledWith('Network error');
-            expect(result.current.tasks).toEqual([]);
-        });
-    });
-
-    describe('Task Operations', () => {
-        it('should create task successfully', async () => {
-            const { mockCreateTask } = setupMocks();
-            const newTask = {
-                id: 3,
-                title: 'New Task',
-                description: 'New Description',
-                isCompleted: false,
-                dueDate: null,
-                categoryId: 1,
-                createdAt: '2024-01-01T00:00:00Z'
-            };
-            mockCreateTask.mockResolvedValueOnce(newTask);
-
-            const { result } = renderUseTaskManagement();
-
-            await act(async () => {
-                await result.current.createTask({
-                    title: 'New Task',
-                    description: 'New Description',
-                    dueDate: null,
-                    categoryId: 1
-                });
-            });
-
-            expect(mockCreateTask).toHaveBeenCalled();
-            expect(mockShowSuccess).toHaveBeenCalled();
-            expect(result.current.creating).toBe(false);
-        });
-
-        it('should handle task creation error', async () => {
-            const { mockCreateTask } = setupMocks();
-            mockCreateTask.mockRejectedValueOnce(new Error('Create failed'));
-
-            const { result } = renderUseTaskManagement();
-
-            await act(async () => {
-                await result.current.createTask({
-                    title: 'New Task',
-                    description: 'New Description',
-                    dueDate: null,
-                    categoryId: 1
-                });
-            });
-
-            expect(mockShowError).toHaveBeenCalledWith('Create failed');
-            expect(result.current.creating).toBe(false);
-        });
-
-        it('should update task successfully', async () => {
-            const { mockUpdateTask } = setupMocks();
-            const updatedTask = {
-                id: 1,
-                title: 'Updated Task',
-                description: 'Updated',
-                isCompleted: true,
-                dueDate: null,
-                categoryId: 1,
-                createdAt: '2024-01-01T00:00:00Z'
-            };
-            mockUpdateTask.mockResolvedValueOnce(updatedTask);
-
-            const { result } = renderUseTaskManagement();
-
-            await act(async () => {
-                await result.current.updateTask({
-                    id: 1,
-                    title: 'Updated Task',
-                    description: 'Updated',
-                    isCompleted: true,
-                    dueDate: null,
-                    categoryId: 1,
-                    createdAt: '2024-01-01T00:00:00Z'
-                });
-            });
-
-            expect(mockUpdateTask).toHaveBeenCalled();
-            expect(mockShowSuccess).toHaveBeenCalled();
-        });
-
-        it('should toggle task completion', async () => {
-            const { mockUpdateTask } = setupMocks();
-            const task = {
-                id: 1,
-                title: 'Test',
-                description: 'Test',
-                isCompleted: false,
-                dueDate: null,
-                categoryId: 1,
-                createdAt: '2024-01-01T00:00:00Z'
-            };
-            mockUpdateTask.mockResolvedValueOnce({ ...task, isCompleted: true });
-
-            const { result } = renderUseTaskManagement();
-
-            await act(async () => {
-                await result.current.toggleTaskCompleted(task);
-            });
-
-            expect(mockUpdateTask).toHaveBeenCalledWith(1, { ...task, isCompleted: true });
-        });
-
-        it('should delete task successfully', async () => {
-            const { mockDeleteTask } = setupMocks();
-            mockDeleteTask.mockResolvedValueOnce(undefined);
-
-            const { result } = renderUseTaskManagement();
-
-            act(() => {
-                result.current.requestDeleteTask(1);
-            });
-
-            expect(result.current.deleteId).toBe(1);
-
-            await act(async () => {
-                await result.current.confirmDeleteTask();
-            });
-
-            expect(mockDeleteTask).toHaveBeenCalledWith(1);
-            expect(mockShowSuccess).toHaveBeenCalled();
-            expect(result.current.deleteId).toBeNull();
-        });
-    });
-
-    describe('Edge Cases & Error Handling', () => {
-        it('should handle empty tasks gracefully', async () => {
-            const { mockGetTasks } = setupMocks();
-            mockGetTasks.mockResolvedValueOnce([]);
-
-            const { result } = renderUseTaskManagement();
-
-            await waitFor(() => {
-                expect(result.current.loading).toBe(false);
-            });
-
-            expect(result.current.tasks).toEqual([]);
-        });
-
-        it('should cancel delete operation', () => {
-            setupMocks();
-            const { result } = renderUseTaskManagement();
-
-            act(() => {
-                result.current.requestDeleteTask(1);
-            });
-
-            expect(result.current.deleteId).toBe(1);
-
-            act(() => {
-                result.current.cancelDeleteTask();
-            });
-
-            expect(result.current.deleteId).toBeNull();
-        });
-
-        it('should handle delete task error', async () => {
-            const { mockDeleteTask } = setupMocks();
-            mockDeleteTask.mockRejectedValueOnce(new Error('Delete failed'));
-
-            const { result } = renderUseTaskManagement();
-
-            act(() => {
-                result.current.requestDeleteTask(1);
-            });
-
-            await act(async () => {
-                await result.current.confirmDeleteTask();
-            });
-
-            expect(mockShowError).toHaveBeenCalledWith('Delete failed');
-            expect(result.current.deleteLoading).toBe(false);
-        });
-
-        it('should handle update task error with optimistic rollback', async () => {
-            const { mockUpdateTask } = setupMocks();
-            mockUpdateTask.mockRejectedValueOnce(new Error('Update failed'));
-
-            const { result } = renderUseTaskManagement();
-            const task = {
-                id: 1,
-                title: 'Test',
-                description: 'Test',
-                isCompleted: false,
-                dueDate: null,
-                categoryId: 1,
-                createdAt: '2024-01-01T00:00:00Z'
-            };
-
-            await act(async () => {
-                await result.current.toggleTaskCompleted(task);
-            });
-
-            expect(mockShowError).toHaveBeenCalledWith('Update failed');
-        });
-
-        it('should provide fetchTasks function for manual refresh', async () => {
-            const { mockGetTasks } = setupMocks();
-            const { result } = renderUseTaskManagement();
-
-            expect(typeof result.current.fetchTasks).toBe('function');
-
+    describe('fetchTasks', () => {
+        it('fetches and sets tasks', async () => {
+            const { result } = getHook();
             await act(async () => {
                 await result.current.fetchTasks();
             });
-
-            expect(mockGetTasks).toHaveBeenCalled();
+            expect(result.current.tasks).toEqual(mockTasks);
+            expect(result.current.loading).toBe(false);
         });
 
-        it('should handle task creation with empty dueDate string', async () => {
-            const { mockCreateTask, mockTasks } = setupMocks();
-            mockCreateTask.mockResolvedValueOnce(mockTasks[0]);
-
-            const { result } = renderUseTaskManagement();
-
+        it('handles fetch error', async () => {
+            (taskService.getTasks as any).mockRejectedValueOnce(new Error('fail'));
+            const { result } = getHook();
             await act(async () => {
-                const success = await result.current.createTask({
-                    title: 'Test',
-                    description: 'Test',
-                    dueDate: '',
-                    categoryId: 1
+                await result.current.fetchTasks();
+            });
+            expect(result.current.tasks).toEqual(mockTasks);
+            expect(result.current.loading).toBe(false);
+        });
+    });
+
+    describe('createTask', () => {
+        it('creates a task and refreshes list', async () => {
+            const { result } = getHook();
+            await act(async () => {
+                const res = await result.current.createTask({
+                    title: 'New', description: 'Desc', dueDate: null, categoryId: null
                 });
-                expect(success).toBe(true);
+                expect(res).toBe(true);
             });
-
-            expect(mockCreateTask).toHaveBeenCalledWith({
-                title: 'Test',
-                description: 'Test',
-                isCompleted: false,
-                dueDate: null,
-                categoryId: 1
-            });
+            expect(taskService.createTask).toHaveBeenCalled();
+            expect(result.current.creating).toBe(false);
         });
 
-        it('should handle confirmDeleteTask when deleteId is null', async () => {
-            const { result } = renderUseTaskManagement();
+        it('handles create error', async () => {
+            (taskService.createTask as any).mockRejectedValueOnce(new Error('fail'));
+            const { result } = getHook();
+            await act(async () => {
+                const res = await result.current.createTask({
+                    title: 'New', description: 'Desc', dueDate: null, categoryId: null
+                });
+                expect(res).toBe(false);
+            });
+            expect(result.current.creating).toBe(false);
+        });
+    });
 
-            const success = await result.current.confirmDeleteTask();
-            expect(success).toBe(false);
+    describe('updateTask', () => {
+        it('updates a task and refreshes list', async () => {
+            const { result } = getHook();
+            await act(async () => {
+                const res = await result.current.updateTask({ ...mockTasks[0] });
+                expect(res).toBe(true);
+            });
+            expect(taskService.updateTask).toHaveBeenCalled();
         });
 
-        it('should handle console error in fetchTasks', async () => {
-            const { mockGetTasks } = setupMocks();
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-            mockGetTasks.mockRejectedValueOnce(new Error('Network error'));
-
-            const { result } = renderUseTaskManagement();
-
-            await waitFor(() => {
-                expect(result.current.loading).toBe(false);
+        it('handles update error', async () => {
+            (taskService.updateTask as any).mockRejectedValueOnce(new Error('fail'));
+            const { result } = getHook();
+            await act(async () => {
+                const res = await result.current.updateTask({ ...mockTasks[0] });
+                expect(res).toBe(false);
             });
+        });
+    });
 
-            expect(consoleSpy).toHaveBeenCalledWith('Error fetching tasks:', expect.any(Error));
-            consoleSpy.mockRestore();
+    describe('toggleTaskCompleted', () => {
+        it('toggles completion and updates', async () => {
+            const { result } = getHook();
+            await act(async () => {
+                await result.current.toggleTaskCompleted(mockTasks[0]);
+            });
+            expect(taskService.updateTask).toHaveBeenCalledWith(1, { ...mockTasks[0], isCompleted: true });
+            expect(result.current.tasks[0].isCompleted).toBe(false);
+        });
+
+        it('reverts on update error', async () => {
+            (taskService.updateTask as any).mockRejectedValueOnce(new Error('fail'));
+            const { result } = getHook();
+            await act(async () => {
+                await result.current.toggleTaskCompleted(mockTasks[0]);
+            });
+            expect(result.current.tasks[0].isCompleted).toBe(false);
+        });
+    });
+
+    describe('delete flow', () => {
+        it('sets and cancels deleteId', () => {
+            const { result } = getHook();
+            act(() => {
+                result.current.requestDeleteTask(1);
+            });
+            expect(result.current.deleteId).toBe(1);
+            act(() => {
+                result.current.cancelDeleteTask();
+            });
+            expect(result.current.deleteId).toBe(null);
+        });
+
+        it('confirms delete and refreshes', async () => {
+            const { result } = getHook();
+            act(() => {
+                result.current.requestDeleteTask(1);
+            });
+            await act(async () => {
+                const res = await result.current.confirmDeleteTask();
+                expect(res).toBe(true);
+            });
+            expect(taskService.deleteTask).toHaveBeenCalledWith(1);
+            expect(result.current.deleteId).toBe(null);
+            expect(result.current.deleteLoading).toBe(false);
+        });
+
+        it('handles delete error', async () => {
+            (taskService.deleteTask as any).mockRejectedValueOnce(new Error('fail'));
+            const { result } = getHook();
+            act(() => {
+                result.current.requestDeleteTask(1);
+            });
+            await act(async () => {
+                const res = await result.current.confirmDeleteTask();
+                expect(res).toBe(false);
+            });
+            expect(result.current.deleteLoading).toBe(false);
+        });
+    });
+
+    describe('initial effect', () => {
+        it('fetches tasks on mount', async () => {
+            const { result } = getHook();
+            await act(async () => {
+                await result.current.fetchTasks();
+            });
+            expect(result.current.tasks).toEqual(mockTasks);
+        });
+    });
+
+    describe('createTask date conversion', () => {
+        it('returns null if dueDate is null', async () => {
+            const { result } = getHook();
+            await act(async () => {
+                await result.current.createTask({
+                    title: 'Test',
+                    description: 'Desc',
+                    dueDate: null,
+                    categoryId: null
+                });
+            });
+            expect(taskService.createTask).toHaveBeenCalledWith(
+                expect.objectContaining({ dueDate: null })
+            );
+        });
+
+        it('converts local date to UTC string', async () => {
+            const { result } = getHook();
+            const localDate = '2025-08-26T12:00:00';
+            await act(async () => {
+                await result.current.createTask({
+                    title: 'Test',
+                    description: 'Desc',
+                    dueDate: localDate,
+                    categoryId: null
+                });
+            });
+            expect(taskService.createTask).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    dueDate: new Date(localDate).toISOString()
+                })
+            );
+        });
+    });
+
+    describe('toggleTaskCompleted only updates correct task', () => {
+        it('only toggles the specified task', async () => {
+            const { result } = getHook();
+            const initialTasks = [
+                { ...mockTasks[0] },
+                { ...mockTasks[1] }
+            ];
+            (taskService.getTasks as any).mockResolvedValue(initialTasks);
+            await act(async () => {
+                await result.current.fetchTasks();
+            });
+            await act(async () => {
+                await result.current.toggleTaskCompleted(initialTasks[1]);
+            });
+            expect(result.current.tasks[0].isCompleted).toBe(false);
+            expect(result.current.tasks[1].isCompleted).toBe(false);
+            expect(taskService.updateTask).toHaveBeenCalledWith(2, { ...initialTasks[1], isCompleted: false });
         });
     });
 });

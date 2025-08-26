@@ -22,7 +22,7 @@ interface NotificationContextType {
     clearAll: () => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+export const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const useNotifications = () => {
     const context = useContext(NotificationContext);

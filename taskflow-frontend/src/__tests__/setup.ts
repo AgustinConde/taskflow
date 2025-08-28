@@ -27,6 +27,19 @@ vi.mock('@mui/material/styles', async () => {
 beforeAll(() => {
     server.listen({ onUnhandledRequest: 'error' });
 
+    if (typeof window === 'undefined') {
+        // @ts-ignore
+        global.window = global;
+        // @ts-ignore
+        global.localStorage = {
+            store: {},
+            getItem(key) { return this.store[key] || null; },
+            setItem(key, value) { this.store[key] = value.toString(); },
+            removeItem(key) { delete this.store[key]; },
+            clear() { this.store = {}; }
+        };
+    }
+
     if (process.platform === 'win32') {
         process.env.UV_THREADPOOL_SIZE = '4';
     }

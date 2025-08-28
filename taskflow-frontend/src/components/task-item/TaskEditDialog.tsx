@@ -143,7 +143,7 @@ const TaskEditDialog = ({
                         onChange={(e) => setLocalDueDate(e.target.value)}
                         fullWidth
                         variant="outlined"
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: 2,

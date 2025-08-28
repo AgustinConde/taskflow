@@ -93,11 +93,13 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                         value={currentTab}
                         onChange={onTabChange}
                         textColor="inherit"
-                        TabIndicatorProps={{
-                            style: {
-                                backgroundColor: 'white',
-                                height: 3,
-                                borderRadius: '2px 2px 0 0'
+                        slotProps={{
+                            indicator: {
+                                style: {
+                                    backgroundColor: 'white',
+                                    height: 3,
+                                    borderRadius: '2px 2px 0 0'
+                                }
                             }
                         }}
                         sx={{

@@ -12,14 +12,6 @@ vi.mock('react-i18next', () => ({
     useTranslation: () => ({ i18n: mockI18n })
 }));
 
-function setLocalStorage(key: string, value: string) {
-    window.localStorage.setItem(key, value);
-}
-
-function clearLocalStorage() {
-    window.localStorage.clear();
-}
-
 describe('useAppLanguage', () => {
     beforeEach(() => {
         window.localStorage.clear();

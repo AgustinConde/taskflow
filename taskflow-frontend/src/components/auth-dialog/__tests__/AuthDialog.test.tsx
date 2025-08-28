@@ -19,14 +19,10 @@ vi.mock('../AuthDialogActions', () => ({
     )
 }));
 
-const loginFormId = 'login-form';
-const registerFormId = 'register-form';
-
 vi.mock('../LoginForm', () => ({
     default: (props: any) => (
         <form data-testid="login-form" onSubmit={e => {
             props.onSubmit(e);
-            // Espía el evento recibido
             if (e && typeof e.preventDefault === 'function') e.preventDefault();
         }}>
             <button type="submit">Login</button>
@@ -45,7 +41,6 @@ vi.mock('../RegisterForm', () => ({
 }));
 
 describe('AuthDialog submit handlers', () => {
-    const onClose = vi.fn();
     beforeEach(() => {
         vi.clearAllMocks();
         mockState = {

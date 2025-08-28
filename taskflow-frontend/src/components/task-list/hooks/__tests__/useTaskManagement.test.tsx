@@ -4,7 +4,6 @@ import { NotificationContext } from '../../../../contexts/NotificationContext';
 import { useTaskManagement } from '../useTaskManagement';
 import { taskService } from '../../../../services/taskService';
 import { useTranslation } from 'react-i18next';
-import { useNotifications } from '../../../../contexts/NotificationContext';
 import type { Task } from '../../../../types/Task';
 
 vi.mock('../../../../services/taskService');

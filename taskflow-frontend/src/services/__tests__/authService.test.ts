@@ -2,90 +2,67 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { authService } from '../authService';
 import { server } from '../../__tests__/mocks/server';
 
-const mockLocalStorage = {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn(),
-};
-
-Object.defineProperty(window, 'localStorage', {
-    value: mockLocalStorage,
-    writable: true,
-});
-
 describe('AuthService', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
         server.resetHandlers();
+        window.localStorage.clear();
+    });
+
+    afterEach(() => {
+        window.localStorage.clear();
     });
 
     describe('token management', () => {
         it('should store token in localStorage', () => {
             const token = 'test-token';
-
             authService.setToken(token);
-
-            expect(mockLocalStorage.setItem).toHaveBeenCalledWith('taskflow_token', token);
+            expect(window.localStorage.getItem('taskflow_token')).toBe(token);
         });
 
         it('should retrieve token from localStorage', () => {
             const token = 'test-token';
-            mockLocalStorage.getItem.mockReturnValue(token);
-
+            window.localStorage.setItem('taskflow_token', token);
             const result = authService.getToken();
-
-            expect(mockLocalStorage.getItem).toHaveBeenCalledWith('taskflow_token');
             expect(result).toBe(token);
         });
 
         it('should return null when no token exists', () => {
-            mockLocalStorage.getItem.mockReturnValue(null);
-
+            window.localStorage.removeItem('taskflow_token');
             const result = authService.getToken();
-
             expect(result).toBeNull();
         });
 
         it('should remove token from localStorage', () => {
+            window.localStorage.setItem('taskflow_token', 'test-token');
             authService.removeToken();
-
-            expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('taskflow_token');
+            expect(window.localStorage.getItem('taskflow_token')).toBeNull();
         });
     });
 
     describe('token validation', () => {
-        it('should return true for valid token', () => {
+        it('should return false for valid token', () => {
             const validToken = createMockJWT({ exp: Math.floor(Date.now() / 1000) + 3600 }); // 1 hour from now
-            mockLocalStorage.getItem.mockReturnValue(validToken);
-
+            window.localStorage.setItem('taskflow_token', validToken);
             const result = authService.isTokenExpired();
-
             expect(result).toBe(false);
         });
 
         it('should return true for expired token', () => {
             const expiredToken = createMockJWT({ exp: Math.floor(Date.now() / 1000) - 3600 }); // 1 hour ago
-            mockLocalStorage.getItem.mockReturnValue(expiredToken);
-
+            window.localStorage.setItem('taskflow_token', expiredToken);
             const result = authService.isTokenExpired();
-
             expect(result).toBe(true);
         });
 
         it('should return true for invalid token format', () => {
-            mockLocalStorage.getItem.mockReturnValue('invalid-token');
-
+            window.localStorage.setItem('taskflow_token', 'invalid-token');
             const result = authService.isTokenExpired();
-
             expect(result).toBe(true);
         });
 
         it('should return true when no token exists', () => {
-            mockLocalStorage.getItem.mockReturnValue(null);
-
+            window.localStorage.removeItem('taskflow_token');
             const result = authService.isTokenExpired();
-
             expect(result).toBe(true);
         });
     });
@@ -118,10 +95,8 @@ describe('AuthService', () => {
 
         it('should validate token with server', async () => {
             const validToken = 'valid-token';
-            mockLocalStorage.getItem.mockReturnValue(validToken);
-
+            window.localStorage.setItem('taskflow_token', validToken);
             const result = await authService.validateToken();
-
             expect(result).toBe(true);
         });
 
@@ -179,20 +154,20 @@ describe('AuthService', () => {
 
     describe('logout', () => {
         it('should clear token and call removeToken', () => {
+            window.localStorage.setItem('taskflow_token', 'test-token');
             authService.logout();
-
-            expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('taskflow_token');
+            expect(window.localStorage.getItem('taskflow_token')).toBeNull();
         });
     });
 
     describe('getAuthHeaders', () => {
         it('should include Authorization header if token exists', () => {
-            mockLocalStorage.getItem.mockReturnValue('abc123');
+            window.localStorage.setItem('taskflow_token', 'abc123');
             const headers = (authService as any).getAuthHeaders();
             expect(headers).toHaveProperty('Authorization', 'Bearer abc123');
         });
         it('should not include Authorization header if no token', () => {
-            mockLocalStorage.getItem.mockReturnValue(null);
+            window.localStorage.removeItem('taskflow_token');
             const headers = (authService as any).getAuthHeaders();
             expect(headers).not.toHaveProperty('Authorization');
         });

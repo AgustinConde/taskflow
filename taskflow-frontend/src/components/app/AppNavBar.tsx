@@ -14,8 +14,7 @@ import {
     Avatar,
     Menu,
     MenuItem,
-    Divider,
-    Slider
+    Divider
 } from '@mui/material';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import DashboardIcon from '@mui/icons-material/Dashboard';

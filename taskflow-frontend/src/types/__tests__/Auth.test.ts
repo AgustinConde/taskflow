@@ -137,8 +137,11 @@ describe('Auth Types', () => {
             const mockLogout = (): void => {
             };
 
+            const mockSetUser = () => { };
+
             const mockContext: AuthContextType = {
                 user: null,
+                setUser: mockSetUser,
                 token: null,
                 login: mockLogin,
                 register: mockRegister,
@@ -157,6 +160,7 @@ describe('Auth Types', () => {
         it('should allow null user and token', () => {
             const mockContext: AuthContextType = {
                 user: null,
+                setUser: () => { },
                 token: null,
                 login: async () => true,
                 register: async () => true,
@@ -179,6 +183,7 @@ describe('Auth Types', () => {
 
             const mockContext: AuthContextType = {
                 user: mockUser,
+                setUser: () => { },
                 token: 'valid-token',
                 login: async () => true,
                 register: async () => true,

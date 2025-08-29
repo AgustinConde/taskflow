@@ -8,10 +8,14 @@ import {
     Typography,
     Tab,
     Tabs,
-    Button,
     IconButton,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Avatar,
+    Menu,
+    MenuItem,
+    Divider,
+    Slider
 } from '@mui/material';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -49,6 +53,14 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
     const currentTheme = useTheme();
     const isSmallScreen = useMediaQuery(currentTheme.breakpoints.down('sm'));
     const isMediumScreen = useMediaQuery(currentTheme.breakpoints.down('md'));
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const menuOpen = Boolean(anchorEl);
+    const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     return (
         <AppBar
@@ -137,11 +149,7 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                     </Tabs>
                 </Box>
 
-                <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: { xs: 0.5, sm: 1 }
-                }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {!isSmallScreen && (
                         <Typography
                             variant="body2"
@@ -155,99 +163,199 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                                 fontSize: '0.875rem'
                             }}
                         >
-                            {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}`}
+                            {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}! `}
                         </Typography>
                     )}
-
-                    <Button
-                        onClick={onEditProfile}
-                        variant="text"
-                        size="small"
-                        startIcon={!isSmallScreen ? <EditIcon sx={{ fontSize: 18 }} /> : undefined}
-                        sx={{
-                            color: 'white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: 2,
-                            '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,0.2)',
-                                border: '1px solid rgba(255,255,255,0.4)'
-                            },
-                            minHeight: 36,
-                            px: isSmallScreen ? 1 : 2,
-                            minWidth: isSmallScreen ? 36 : 'auto',
-                            fontSize: '0.875rem'
-                        }}
-                    >
-                        {isSmallScreen ? <EditIcon sx={{ fontSize: 18 }} /> : t('editProfile')}
-                    </Button>
-
-                    <Button
-                        onClick={onLogout}
-                        variant="text"
-                        size="small"
-                        startIcon={!isSmallScreen ? <LogoutIcon sx={{ fontSize: 18 }} /> : undefined}
-                        sx={{
-                            color: 'white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: 2,
-                            '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,0.2)',
-                                border: '1px solid rgba(255,255,255,0.4)'
-                            },
-                            minHeight: 36,
-                            px: isSmallScreen ? 1 : 2,
-                            minWidth: isSmallScreen ? 36 : 'auto',
-                            fontSize: '0.875rem'
-                        }}
-                    >
-                        {isSmallScreen ? <LogoutIcon sx={{ fontSize: 18 }} /> : t('logout')}
-                    </Button>
-
                     <IconButton
-                        onClick={onToggleTheme}
-                        size="small"
-                        sx={{
-                            color: 'white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: 2,
-                            '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,0.2)',
-                                border: '1px solid rgba(255,255,255,0.4)'
-                            },
-                            width: 36,
-                            height: 36
-                        }}
+                        onClick={handleAvatarClick}
+                        sx={{ p: 0 }}
                     >
-                        {mode === 'dark' ? <Brightness7Icon sx={{ fontSize: 18 }} /> : <Brightness4Icon sx={{ fontSize: 18 }} />}
+                        <Avatar
+                            src={user?.avatarUrl}
+                            sx={{
+                                width: 36,
+                                height: 36,
+                                bgcolor: !user?.avatarUrl
+                                    ? (theme) => theme.palette.mode === 'dark'
+                                        ? theme.palette.primary.dark
+                                        : theme.palette.primary.light
+                                    : undefined,
+                                color: 'white',
+                                fontSize: 18,
+                                fontWeight: 400,
+                                letterSpacing: 0.5
+                            }}
+                        >
+                            {!user?.avatarUrl && user?.username
+                                ? user.username.slice(0, 2).toUpperCase()
+                                : null}
+                        </Avatar>
                     </IconButton>
-
-                    <Button
-                        onClick={onLanguageChange}
-                        variant="text"
-                        size="small"
-                        sx={{
-                            minWidth: 36,
-                            minHeight: 36,
-                            px: 1,
-                            color: 'white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: 2,
-                            '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,0.2)',
-                                border: '1px solid rgba(255,255,255,0.4)'
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={menuOpen}
+                        onClose={handleMenuClose}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    mt: 1.5,
+                                    minWidth: 260,
+                                    borderRadius: 3,
+                                    boxShadow: 8,
+                                    background: (theme) => theme.palette.mode === 'dark'
+                                        ? theme.palette.background.paper
+                                        : theme.palette.background.default,
+                                    p: 0,
+                                    overflow: 'visible',
+                                }
+                            },
+                            list: {
+                                autoFocusItem: false
                             }
                         }}
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                     >
-                        {currentLanguage === 'en' ? (
-                            <CountryFlag countryCode="US" svg style={{ width: 20, height: 15 }} title="English" />
-                        ) : (
-                            <CountryFlag countryCode="AR" svg style={{ width: 20, height: 15 }} title="Español" />
-                        )}
-                    </Button>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            py: 2,
+                            px: 2,
+                            gap: 0.5,
+                        }}>
+                            <Avatar
+                                src={user?.avatarUrl}
+                                sx={{
+                                    width: 56,
+                                    height: 56,
+                                    bgcolor: !user?.avatarUrl
+                                        ? (theme) => theme.palette.primary.main
+                                        : undefined,
+                                    color: 'white',
+                                    fontSize: 24,
+                                    fontWeight: 400,
+                                    letterSpacing: 0.5,
+                                    mb: 1
+                                }}
+                            >
+                                {!user?.avatarUrl && user?.username
+                                    ? user.username.slice(0, 2).toUpperCase()
+                                    : null}
+                            </Avatar>
+                            <Typography variant="subtitle1" fontWeight={600} sx={{ color: 'text.primary', fontSize: '1.08rem', textAlign: 'center', maxWidth: 180 }}>
+                                {user?.username}
+                            </Typography>
+                        </Box>
+                        <Divider sx={{ mx: 2, my: 0.5 }} />
+                        <MenuItem
+                            onClick={onEditProfile}
+                            sx={{
+                                borderRadius: 2,
+                                px: 2.5,
+                                py: 1.3,
+                                fontWeight: 500,
+                                fontSize: '1rem',
+                                color: 'text.primary',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2,
+                                transition: 'background 0.2s',
+                                '&:hover, &.Mui-focusVisible': {
+                                    background: (theme) => theme.palette.primary.light,
+                                    color: (theme) => theme.palette.primary.contrastText
+                                }
+                            }}
+                        >
+                            <EditIcon sx={{ fontSize: 22, color: 'primary.main' }} />
+                            {t('editProfile')}
+                        </MenuItem>
+                        <Divider sx={{ mx: 2, my: 0.5 }} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2.5, px: 2.5, py: 1.3 }}>
+                            <Box
+                                component="button"
+                                onClick={onLanguageChange}
+                                sx={{
+                                    border: 'none',
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    borderRadius: 999,
+                                    px: 1.2,
+                                    py: 0.5,
+                                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.07)',
+                                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    transition: 'background 0.2s',
+                                    borderColor: (theme) => theme.palette.primary.main,
+                                    borderWidth: 1,
+                                    borderStyle: 'solid',
+                                    '&:hover': {
+                                        bgcolor: (theme) => theme.palette.primary.light,
+                                        boxShadow: '0 2px 8px rgba(124,58,237,0.10)'
+                                    }
+                                }}
+                            >
+                                {currentLanguage === 'en'
+                                    ? <CountryFlag countryCode="US" svg style={{ width: 28, height: 20 }} title="English" />
+                                    : <CountryFlag countryCode="AR" svg style={{ width: 28, height: 20 }} title="Español" />}
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box
+                                    component="button"
+                                    onClick={onToggleTheme}
+                                    sx={{
+                                        border: 'none',
+                                        outline: 'none',
+                                        cursor: 'pointer',
+                                        borderRadius: 999,
+                                        px: 1.2,
+                                        py: 0.5,
+                                        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.07)',
+                                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        transition: 'background 0.2s',
+                                        borderColor: (theme) => theme.palette.primary.main,
+                                        borderWidth: 1,
+                                        borderStyle: 'solid',
+                                        '&:hover': {
+                                            bgcolor: (theme) => theme.palette.primary.light,
+                                            boxShadow: '0 2px 8px rgba(124,58,237,0.10)'
+                                        }
+                                    }}
+                                >
+                                    {mode === 'dark'
+                                        ? <Brightness7Icon sx={{ fontSize: 22, color: 'primary.main' }} />
+                                        : <Brightness4Icon sx={{ fontSize: 22, color: 'primary.main' }} />}
+                                </Box>
+                            </Box>
+                        </Box>
+                        <Divider sx={{ mx: 2, my: 0.5 }} />
+                        <MenuItem
+                            onClick={onLogout}
+                            sx={{
+                                borderRadius: 2,
+                                px: 2.5,
+                                py: 1.3,
+                                fontWeight: 500,
+                                fontSize: '1rem',
+                                color: 'text.primary',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2,
+                                transition: 'background 0.2s',
+                                '&:hover, &.Mui-focusVisible': {
+                                    background: (theme) => theme.palette.error.light,
+                                    color: (theme) => theme.palette.error.contrastText
+                                }
+                            }}
+                        >
+                            <LogoutIcon sx={{ fontSize: 22, color: 'error.main' }} />
+                            {t('logout')}
+                        </MenuItem>
+                        <Box sx={{ height: 8 }} />
+                    </Menu>
                 </Box>
             </Toolbar>
         </AppBar>

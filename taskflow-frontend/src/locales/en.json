@@ -102,5 +102,6 @@
     "uncategorized": "Uncategorized",
     "noDataAvailable": "No data available",
     "noCategoriesFound": "No categories found. Create your first category!",
-    "editProfile": "Edit Profile"
+    "editProfile": "Edit Profile",
+    "uploadPhoto": "Upload Photo"
 }

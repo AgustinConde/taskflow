@@ -4,6 +4,12 @@ export interface User {
     email: string;
     createdAt: string;
     lastLoginAt?: string;
+    avatarUrl?: string;
+}
+
+export interface UserProfileFormData extends Partial<User> {
+    password?: string;
+    avatarFile?: File | null;
 }
 
 export interface LoginRequest {

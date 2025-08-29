@@ -32,6 +32,7 @@ export interface AuthResponse {
 
 export interface AuthContextType {
     user: User | null;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
     token: string | null;
     login: (credentials: LoginRequest) => Promise<boolean>;
     register: (data: RegisterRequest) => Promise<boolean>;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -14,6 +14,8 @@ import { alpha } from '@mui/material/styles';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { useTranslation } from 'react-i18next';
 import type { User, UserProfileFormData } from '../../types/Auth';
+import { useAuth } from '../../contexts/AuthContext';
+import type { User } from '../../types/Auth';
 
 interface UserProfileDialogProps {
     open: boolean;
@@ -24,11 +26,14 @@ interface UserProfileDialogProps {
 
 const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClose, onSave }) => {
     const { t } = useTranslation();
+    const { setUser } = useAuth() as { setUser: React.Dispatch<React.SetStateAction<User | null>> };
     const [localUsername, setLocalUsername] = React.useState(user?.username || '');
     const [localEmail, setLocalEmail] = React.useState(user?.email || '');
     const [localPassword, setLocalPassword] = React.useState('');
     const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = React.useState<string | undefined>(user?.avatarUrl);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     React.useEffect(() => {
         setLocalUsername(user?.username || '');
@@ -36,27 +41,72 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
         setAvatarPreview(user?.avatarUrl);
     }, [user]);
 
+    const validateImage = (file: File) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        if (!allowedTypes.includes(file.type)) {
+            setError(t('invalidImageType'));
+            return false;
+        }
+        if (file.size > maxSize) {
+            setError(t('imageTooLarge'));
+            return false;
+        }
+        return true;
+    };
+
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setError(null);
         const file = e.target.files?.[0];
-        setAvatarFile(file || null);
-        if (file) {
+        if (file && validateImage(file)) {
+            setAvatarFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAvatarPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
         } else {
+            setAvatarFile(null);
             setAvatarPreview(user?.avatarUrl);
         }
     };
 
-    const handleSave = () => {
-        onSave({
-            username: localUsername,
-            email: localEmail,
-            password: localPassword,
-            avatarFile
-        });
+    const handleSave = async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('username', localUsername);
+            formData.append('email', localEmail);
+            if (localPassword) formData.append('password', localPassword);
+            if (avatarFile) formData.append('avatar', avatarFile);
+
+            const response = await fetch('/api/users/photo', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setError(result.message || t('saveError'));
+                setLoading(false);
+                return;
+            }
+            if (result.url) {
+                setAvatarPreview(result.url);
+                setUser((prev: User | null) => prev ? { ...prev, avatarUrl: result.url } : prev);
+            }
+            onSave({
+                username: localUsername,
+                email: localEmail,
+                password: localPassword,
+                avatarFile
+            });
+        } catch (err) {
+            setError(t('saveError'));
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -110,6 +160,9 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
             </DialogTitle>
 
             <DialogContent sx={{ px: 3, py: 3 }}>
+                {error && (
+                    <Box sx={{ color: 'error.main', mb: 2, textAlign: 'center', fontWeight: 500 }}>{error}</Box>
+                )}
                 <Stack spacing={3} sx={{ mt: 2 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                         <Avatar src={avatarPreview} sx={{ width: 72, height: 72, mb: 1 }} />
@@ -117,6 +170,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                             variant="outlined"
                             component="label"
                             sx={{ borderRadius: 2, fontWeight: 500 }}
+                            disabled={loading}
                         >
                             {t('uploadPhoto')}
                             <input
@@ -126,6 +180,9 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                                 onChange={handleAvatarChange}
                             />
                         </Button>
+                        {loading && (
+                            <Box sx={{ mt: 1, color: 'primary.main', fontWeight: 500 }}>{t('uploading')}...</Box>
+                        )}
                     </Box>
                     <TextField
                         label={t('username')}
@@ -227,8 +284,9 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                             transform: 'translateY(-1px)'
                         }
                     }}
+                    disabled={loading}
                 >
-                    {t('save')}
+                    {loading ? t('saving') : t('save')}
                 </Button>
             </DialogActions>
         </Dialog>

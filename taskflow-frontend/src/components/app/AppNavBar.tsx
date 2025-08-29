@@ -31,6 +31,7 @@ interface AppNavBarProps {
     onToggleTheme: () => void;
     onLanguageChange: () => void;
     onLogout: () => void;
+    onEditProfile: () => void;
 }
 
 const AppNavBar: React.FC<AppNavBarProps> = ({
@@ -41,7 +42,8 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
     onTabChange,
     onToggleTheme,
     onLanguageChange,
-    onLogout
+    onLogout,
+    onEditProfile
 }) => {
     const { t } = useTranslation();
     const currentTheme = useTheme();
@@ -158,6 +160,7 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                     )}
 
                     <Button
+                        onClick={onEditProfile}
                         variant="text"
                         size="small"
                         startIcon={!isSmallScreen ? <EditIcon sx={{ fontSize: 18 }} /> : undefined}

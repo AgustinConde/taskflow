@@ -6,6 +6,7 @@ import { Box, CircularProgress } from '@mui/material';
 import TaskList from '../task-list/TaskList';
 import { LazyDashboard } from '../dashboard';
 import AppNavBar from './AppNavBar';
+import UserProfileDialog from '../user/UserProfileDialog';
 import type { Task } from '../../types/Task';
 import type { Category } from '../../types/Category';
 
@@ -36,6 +37,15 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
     const { user, logout } = useAuth();
     const { showInfo } = useNotifications();
 
+    const [profileDialogOpen, setProfileDialogOpen] = React.useState(false);
+
+    const handleOpenProfileDialog = () => setProfileDialogOpen(true);
+    const handleCloseProfileDialog = () => setProfileDialogOpen(false);
+    const handleSaveProfile = (data: Partial<typeof user>) => {
+        setProfileDialogOpen(false);
+        showInfo(t('profileUpdated'));
+    };
+
     const handleLogout = () => {
         logout();
         showInfo(t('logoutSuccessful'));
@@ -52,6 +62,14 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
                 onToggleTheme={onToggleTheme}
                 onLanguageChange={onLanguageChange}
                 onLogout={handleLogout}
+                onEditProfile={handleOpenProfileDialog}
+            />
+
+            <UserProfileDialog
+                open={profileDialogOpen}
+                user={user}
+                onClose={handleCloseProfileDialog}
+                onSave={handleSaveProfile}
             />
 
             <Box sx={{

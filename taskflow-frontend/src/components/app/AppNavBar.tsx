@@ -17,6 +17,7 @@ import ChecklistIcon from '@mui/icons-material/Checklist';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TaskIcon from '@mui/icons-material/Task';
 import LogoutIcon from '@mui/icons-material/Logout';
+import EditIcon from '@mui/icons-material/Edit';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import type { User } from '../../types/Auth';
@@ -155,6 +156,28 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                             {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}`}
                         </Typography>
                     )}
+
+                    <Button
+                        variant="text"
+                        size="small"
+                        startIcon={!isSmallScreen ? <EditIcon sx={{ fontSize: 18 }} /> : undefined}
+                        sx={{
+                            color: 'white',
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: 2,
+                            '&:hover': {
+                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                border: '1px solid rgba(255,255,255,0.4)'
+                            },
+                            minHeight: 36,
+                            px: isSmallScreen ? 1 : 2,
+                            minWidth: isSmallScreen ? 36 : 'auto',
+                            fontSize: '0.875rem'
+                        }}
+                    >
+                        {isSmallScreen ? <EditIcon sx={{ fontSize: 18 }} /> : t('editProfile')}
+                    </Button>
 
                     <Button
                         onClick={onLogout}

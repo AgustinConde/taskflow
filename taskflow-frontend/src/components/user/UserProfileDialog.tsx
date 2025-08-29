@@ -15,7 +15,6 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { useTranslation } from 'react-i18next';
 import type { User, UserProfileFormData } from '../../types/Auth';
 import { useAuth } from '../../contexts/AuthContext';
-import type { User } from '../../types/Auth';
 
 interface UserProfileDialogProps {
     open: boolean;

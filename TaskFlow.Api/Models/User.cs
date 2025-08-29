@@ -21,6 +21,8 @@ namespace TaskFlow.Api.Models
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
 
+        public string? AvatarUrl { get; set; }
+
         public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();
         public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
     }

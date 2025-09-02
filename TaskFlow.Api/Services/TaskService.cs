@@ -7,14 +7,9 @@ using Microsoft.Data.SqlClient;
 
 namespace TaskFlow.Api.Services
 {
-    public class TaskService
+    public class TaskService(TaskFlowDbContext context)
     {
-        private readonly TaskFlowDbContext _context;
-
-        public TaskService(TaskFlowDbContext context)
-        {
-            _context = context;
-        }
+        private readonly TaskFlowDbContext _context = context;
 
         public List<TaskDto> GetAllByUser(int userId)
         {
@@ -74,7 +69,7 @@ namespace TaskFlow.Api.Services
             return true;
         }
 
-        // Legacy methods para compatibilidad con versiones anteriores
+        // Legacy methods for compatibility
         [Obsolete("Use GetAllByUser instead")]
         public List<TaskDto> GetAll()
         {
@@ -93,14 +88,12 @@ namespace TaskFlow.Api.Services
         public List<TaskDto> GetAllWithStoredProcedure()
         {
             var connectionString = _context.Database.GetDbConnection().ConnectionString;
-            using (var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
-            {
-                var tasks = connection.Query<TaskDto>(
-                    "GetAllTasks",
-                    commandType: System.Data.CommandType.StoredProcedure
-                ).ToList();
-                return tasks;
-            }
+            using var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+            var tasks = connection.Query<TaskDto>(
+                "GetAllTasks",
+                commandType: System.Data.CommandType.StoredProcedure
+            ).ToList();
+            return tasks;
         }
     }
 }

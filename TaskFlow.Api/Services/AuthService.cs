@@ -6,16 +6,10 @@ using TaskFlow.Api.Models;
 
 namespace TaskFlow.Api.Services
 {
-    public class AuthService
+    public class AuthService(TaskFlowDbContext context, JwtService jwtService)
     {
-        private readonly TaskFlowDbContext _context;
-        private readonly JwtService _jwtService;
-
-        public AuthService(TaskFlowDbContext context, JwtService jwtService)
-        {
-            _context = context;
-            _jwtService = jwtService;
-        }
+        private readonly TaskFlowDbContext _context = context;
+        private readonly JwtService _jwtService = jwtService;
 
         public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto)
         {

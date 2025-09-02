@@ -5,14 +5,9 @@ using TaskFlow.Api.Mappers;
 
 namespace TaskFlow.Api.Services
 {
-    public class CategoryService
+    public class CategoryService(TaskFlowDbContext context)
     {
-        private readonly TaskFlowDbContext _context;
-
-        public CategoryService(TaskFlowDbContext context)
-        {
-            _context = context;
-        }
+        private readonly TaskFlowDbContext _context = context;
 
         public async Task<List<CategoryDto>> GetAllByUserAsync(int userId)
         {

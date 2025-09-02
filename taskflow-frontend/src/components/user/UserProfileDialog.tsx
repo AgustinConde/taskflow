@@ -76,36 +76,35 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
         setError(null);
         setLoading(true);
         try {
-            const formData = new FormData();
-            formData.append('username', localUsername);
-            formData.append('email', localEmail);
-            if (localPassword) formData.append('password', localPassword);
-            if (avatarFile) formData.append('avatar', avatarFile);
-
-            const token = localStorage.getItem('taskflow_token');
-            const response = await fetch(`${ROOT_URL}/api/users/photo`, {
-                method: 'POST',
-                body: formData,
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                setError(result.message || t('saveError'));
-                setLoading(false);
-                return;
-            }
-            if (result.url) {
-                const fullUrl = result.url.startsWith('/uploads/')
-                    ? `${ROOT_URL}${result.url}`
-                    : result.url;
-                setAvatarPreview(fullUrl);
-                setUser((prev: User | null) => prev ? { ...prev, avatarUrl: fullUrl } : prev);
+            let avatarUrl = avatarPreview;
+            if (avatarFile) {
+                const formData = new FormData();
+                formData.append('avatar', avatarFile);
+                const token = localStorage.getItem('taskflow_token');
+                const response = await fetch(`${ROOT_URL}/api/users/photo`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    setError(result.message || t('saveError'));
+                    setLoading(false);
+                    return;
+                }
+                if (result.url) {
+                    avatarUrl = result.url.startsWith('/uploads/')
+                        ? `${ROOT_URL}${result.url}`
+                        : result.url;
+                    setAvatarPreview(avatarUrl);
+                    setUser((prev: User | null) => prev ? { ...prev, avatarUrl } : prev);
+                }
             }
             onSave({
                 username: localUsername,
                 email: localEmail,
                 password: localPassword,
-                avatarFile
+                avatarFile: avatarFile || undefined
             });
         } catch (err) {
             setError(t('saveError'));

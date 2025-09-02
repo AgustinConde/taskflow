@@ -41,16 +41,24 @@ namespace TaskFlow.Api.Controllers
             if (user == null)
                 return NotFound();
 
-            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
-            var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            Directory.CreateDirectory(uploadDir);
-            var filePath = Path.Combine(uploadDir, fileName);
+            var safeUsername = string.Concat(user.Username.ToLower().Select(c =>
+                (char.IsLetterOrDigit(c) || c == '-' || c == '_') ? c : '_'));
+            var ext = Path.GetExtension(avatar.FileName);
+            var avatarDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatar");
+            Directory.CreateDirectory(avatarDir);
+            var fileName = $"{safeUsername}{ext}";
+            var filePath = Path.Combine(avatarDir, fileName);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await avatar.CopyToAsync(stream);
             }
 
-            user.AvatarUrl = $"/uploads/{fileName}";
+            user.AvatarUrl = $"/uploads/avatar/{fileName}";
             await _dbContext.SaveChangesAsync();
 
             return Ok(new { url = user.AvatarUrl });

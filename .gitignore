@@ -44,6 +44,10 @@ Generated\ Files/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
+# Backend config and uploads
+TaskFlow.Api/appsettings*.json
+TaskFlow.Api/wwwroot/uploads/
+
 # NUnit
 *.VisualState.xml
 TestResult.xml

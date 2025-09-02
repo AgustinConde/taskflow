@@ -1,6 +1,6 @@
 import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../types/Auth';
-
-const API_URL = "http://localhost:5149/api";
+const ROOT_URL = import.meta.env.VITE_ROOT_URL;
+const API_URL = `${ROOT_URL}/api`;
 
 class AuthService {
     private getAuthHeaders(): HeadersInit {
@@ -36,6 +36,9 @@ class AuthService {
         }
 
         const authResponse: AuthResponse = await response.json();
+        if (authResponse.avatarUrl && authResponse.avatarUrl.startsWith('/uploads/')) {
+            authResponse.avatarUrl = `${ROOT_URL}${authResponse.avatarUrl}`;
+        }
         this.setToken(authResponse.token);
         return authResponse;
     }
@@ -59,6 +62,9 @@ class AuthService {
         }
 
         const authResponse: AuthResponse = await response.json();
+        if (authResponse.avatarUrl && authResponse.avatarUrl.startsWith('/uploads/')) {
+            authResponse.avatarUrl = `${ROOT_URL}${authResponse.avatarUrl}`;
+        }
         this.setToken(authResponse.token);
         return authResponse;
     }
@@ -72,7 +78,11 @@ class AuthService {
             throw new Error('Failed to get user data');
         }
 
-        return response.json();
+        const user: User = await response.json();
+        if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/')) {
+            user.avatarUrl = `${ROOT_URL}${user.avatarUrl}`;
+        }
+        return user;
     }
 
     async validateToken(): Promise<boolean> {

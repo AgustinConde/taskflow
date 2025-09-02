@@ -23,6 +23,8 @@ interface UserProfileDialogProps {
     onSave: (data: UserProfileFormData) => void;
 }
 
+const ROOT_URL = import.meta.env.VITE_ROOT_URL;
+
 const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClose, onSave }) => {
     const { t } = useTranslation();
     const { setUser } = useAuth() as { setUser: React.Dispatch<React.SetStateAction<User | null>> };
@@ -80,10 +82,11 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
             if (localPassword) formData.append('password', localPassword);
             if (avatarFile) formData.append('avatar', avatarFile);
 
-            const response = await fetch('/api/users/photo', {
+            const token = localStorage.getItem('taskflow_token');
+            const response = await fetch(`${ROOT_URL}/api/users/photo`, {
                 method: 'POST',
                 body: formData,
-                credentials: 'include'
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             });
             const result = await response.json();
             if (!response.ok) {
@@ -92,8 +95,11 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                 return;
             }
             if (result.url) {
-                setAvatarPreview(result.url);
-                setUser((prev: User | null) => prev ? { ...prev, avatarUrl: result.url } : prev);
+                const fullUrl = result.url.startsWith('/uploads/')
+                    ? `${ROOT_URL}${result.url}`
+                    : result.url;
+                setAvatarPreview(fullUrl);
+                setUser((prev: User | null) => prev ? { ...prev, avatarUrl: fullUrl } : prev);
             }
             onSave({
                 username: localUsername,

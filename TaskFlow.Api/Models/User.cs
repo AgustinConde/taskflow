@@ -17,6 +17,7 @@ namespace TaskFlow.Api.Models
 
         [Required]
         public required string PasswordHash { get; set; }
+        public required string Salt { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }

@@ -25,11 +25,13 @@ namespace TaskFlow.Api.Services
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
                 return null;
 
+            var salt = GenerateSalt();
             var user = new User
             {
                 Username = registerDto.Username,
                 Email = registerDto.Email,
-                PasswordHash = HashPassword(registerDto.Password),
+                Salt = salt,
+                PasswordHash = HashPassword(registerDto.Password, salt),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -52,7 +54,7 @@ namespace TaskFlow.Api.Services
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
 
-            if (user == null || !VerifyPassword(loginDto.Password, user.PasswordHash))
+            if (user == null || !VerifyPassword(loginDto.Password, user.PasswordHash, user.Salt))
                 return null;
 
             user.LastLoginAt = DateTime.UtcNow;
@@ -86,17 +88,24 @@ namespace TaskFlow.Api.Services
             };
         }
 
-        private static string HashPassword(string password)
+        private static string HashPassword(string password, string salt)
         {
-            using var sha256 = SHA256.Create();
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password + "TaskFlowSalt2024"));
+            var hashedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password + salt));
             return Convert.ToBase64String(hashedBytes);
         }
 
-        private static bool VerifyPassword(string password, string hash)
+        private static bool VerifyPassword(string password, string hash, string salt)
         {
-            var hashedInput = HashPassword(password);
+            var hashedInput = HashPassword(password, salt);
             return hashedInput == hash;
+        }
+
+        private static string GenerateSalt(int size = 16)
+        {
+            var bytes = new byte[size];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes);
         }
     }
 }

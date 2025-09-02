@@ -71,6 +71,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors();
 
+// Static files middleware for wwwroot
+app.UseStaticFiles();
+
 // Authentication & Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();

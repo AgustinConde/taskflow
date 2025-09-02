@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import { categoryService } from '../services/categoryService';
@@ -12,10 +13,12 @@ export const categoryKeys = {
 };
 
 export const useCategories = () => {
+    const { isAuthenticated } = useAuth();
     return useQuery({
         queryKey: categoryKeys.lists(),
         queryFn: () => categoryService.getCategories(),
         staleTime: 1000 * 60 * 5,
+        enabled: isAuthenticated,
     });
 };
 

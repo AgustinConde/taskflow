@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import { taskService } from '../services/taskService';
@@ -13,10 +14,12 @@ export const taskKeys = {
 };
 
 export const useTasks = () => {
+    const { isAuthenticated } = useAuth();
     return useQuery({
         queryKey: taskKeys.lists(),
         queryFn: () => taskService.getTasks(),
         staleTime: 1000 * 60 * 2,
+        enabled: isAuthenticated,
     });
 };
 

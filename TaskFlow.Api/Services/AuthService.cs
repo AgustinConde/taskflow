@@ -82,19 +82,19 @@ namespace TaskFlow.Api.Services
             };
         }
 
-        private static string HashPassword(string password, string salt)
+        public static string HashPassword(string password, string salt)
         {
             var hashedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password + salt));
             return Convert.ToBase64String(hashedBytes);
         }
 
-        private static bool VerifyPassword(string password, string hash, string salt)
+        public static bool VerifyPassword(string password, string hash, string salt)
         {
             var hashedInput = HashPassword(password, salt);
             return hashedInput == hash;
         }
 
-        private static string GenerateSalt(int size = 16)
+        public static string GenerateSalt(int size = 16)
         {
             var bytes = new byte[size];
             using var rng = RandomNumberGenerator.Create();

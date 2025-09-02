@@ -46,4 +46,18 @@ namespace TaskFlow.Api.DTOs
         public DateTime? LastLoginAt { get; set; }
         public string? AvatarUrl { get; set; }
     }
+
+    public class UpdateProfileDto
+    {
+        [StringLength(50, MinimumLength = 3)]
+        [RegularExpression("^[a-zA-Z0-9_-]+$", ErrorMessage = "Username can only contain letters, numbers, hyphens and underscores.")]
+        public string? Username { get; set; }
+
+        [EmailAddress]
+        [StringLength(100)]
+        public string? Email { get; set; }
+
+        public string? CurrentPassword { get; set; }
+        public string? NewPassword { get; set; }
+    }
 }

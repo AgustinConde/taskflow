@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Services;
+using TaskFlow.Api.DTOs;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -52,6 +54,58 @@ namespace TaskFlow.Api.Controllers
             await _dbContext.SaveChangesAsync();
 
             return Ok(new { url = user.AvatarUrl });
+        }
+        // PUT: api/users/profile
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null)
+                return Unauthorized();
+
+            var user = await _dbContext.Users.FindAsync(userId.Value);
+            if (user == null)
+                return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != user.Username)
+            {
+                if (await _dbContext.Users.AnyAsync(u => u.Username == dto.Username))
+                    return Conflict(new { message = "Username already exists" });
+
+                if (!string.IsNullOrEmpty(user.AvatarUrl))
+                {
+                    var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.AvatarUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                    var ext = Path.GetExtension(oldPath);
+                    var safeNewUsername = string.Concat(dto.Username.ToLower().Select(c => (char.IsLetterOrDigit(c) || c == '-' || c == '_') ? c : '_'));
+                    var newFileName = $"{safeNewUsername}{ext}";
+                    var newPath = Path.Combine(Path.GetDirectoryName(oldPath)!, newFileName);
+                    if (System.IO.File.Exists(oldPath))
+                    {
+                        System.IO.File.Move(oldPath, newPath, true);
+                        user.AvatarUrl = $"/uploads/avatar/{newFileName}";
+                    }
+                }
+                user.Username = dto.Username;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != user.Email)
+            {
+                if (await _dbContext.Users.AnyAsync(u => u.Email == dto.Email))
+                    return Conflict(new { message = "Email already exists" });
+                user.Email = dto.Email;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword) || !AuthService.VerifyPassword(dto.CurrentPassword, user.PasswordHash, user.Salt))
+                    return BadRequest(new { message = "Current password is incorrect" });
+                var newSalt = AuthService.GenerateSalt();
+                user.Salt = newSalt;
+                user.PasswordHash = AuthService.HashPassword(dto.NewPassword, newSalt);
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return Ok(new { message = "Profile updated", avatarUrl = user.AvatarUrl });
         }
     }
 }

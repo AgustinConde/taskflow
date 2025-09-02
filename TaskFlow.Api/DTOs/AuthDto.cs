@@ -6,6 +6,7 @@ namespace TaskFlow.Api.DTOs
     {
         [Required]
         [StringLength(50, MinimumLength = 3)]
+        [RegularExpression("^[a-zA-Z0-9_-]+$", ErrorMessage = "Username can only contain letters, numbers, hyphens and underscores.")]
         public required string Username { get; set; }
 
         [Required]

@@ -11,16 +11,10 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UsersController : ControllerBase
+    public class UsersController(TaskFlowDbContext dbContext, JwtService jwtService) : ControllerBase
     {
-        private readonly TaskFlowDbContext _dbContext;
-        private readonly JwtService _jwtService;
-
-        public UsersController(TaskFlowDbContext dbContext, JwtService jwtService)
-        {
-            _dbContext = dbContext;
-            _jwtService = jwtService;
-        }
+        private readonly TaskFlowDbContext _dbContext = dbContext;
+        private readonly JwtService _jwtService = jwtService;
 
         // POST: api/users/photo
         [HttpPost("photo")]

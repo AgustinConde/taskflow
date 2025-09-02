@@ -65,7 +65,8 @@ namespace TaskFlow.Api.Services
                 Token = token,
                 Username = user.Username,
                 Email = user.Email,
-                ExpiresAt = DateTime.UtcNow.AddDays(7)
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                AvatarUrl = user.AvatarUrl
             };
         }
 
@@ -80,7 +81,8 @@ namespace TaskFlow.Api.Services
                 Username = user.Username,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt
+                LastLoginAt = user.LastLoginAt,
+                AvatarUrl = user.AvatarUrl
             };
         }
 

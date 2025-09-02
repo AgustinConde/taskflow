@@ -33,6 +33,7 @@ namespace TaskFlow.Api.DTOs
         public required string Username { get; set; }
         public required string Email { get; set; }
         public DateTime ExpiresAt { get; set; }
+        public string? AvatarUrl { get; set; }
     }
 
     public class UserDto
@@ -42,5 +43,6 @@ namespace TaskFlow.Api.DTOs
         public required string Email { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
+        public string? AvatarUrl { get; set; }
     }
 }

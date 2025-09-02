@@ -28,6 +28,7 @@ export interface AuthResponse {
     username: string;
     email: string;
     expiresAt: string;
+    avatarUrl?: string;
 }
 
 export interface AuthContextType {

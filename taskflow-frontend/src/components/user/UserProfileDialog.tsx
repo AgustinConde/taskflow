@@ -35,6 +35,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
     const [avatarPreview, setAvatarPreview] = React.useState<string | undefined>(user?.avatarUrl);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
 
     React.useEffect(() => {
         setLocalUsername(user?.username || '');
@@ -74,6 +75,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
 
     const handleSave = async () => {
         setError(null);
+        setSuccess(null);
         setLoading(true);
         try {
             let avatarUrl = avatarPreview;
@@ -106,6 +108,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                 password: localPassword,
                 avatarFile: avatarFile || undefined
             });
+            setSuccess(t('profileUpdated'));
         } catch (err) {
             setError(t('saveError'));
         } finally {
@@ -166,6 +169,9 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
             <DialogContent sx={{ px: 3, py: 3 }}>
                 {error && (
                     <Box sx={{ color: 'error.main', mb: 2, textAlign: 'center', fontWeight: 500 }}>{error}</Box>
+                )}
+                {success && (
+                    <Box sx={{ color: 'success.main', mb: 2, textAlign: 'center', fontWeight: 500 }}>{success}</Box>
                 )}
                 <Stack spacing={3} sx={{ mt: 2 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>

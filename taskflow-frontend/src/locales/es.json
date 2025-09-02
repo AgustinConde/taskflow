@@ -103,5 +103,6 @@
     "noDataAvailable": "No hay datos disponibles",
     "noCategoriesFound": "No se encontraron categorías. ¡Crea tu primera categoría!",
     "editProfile": "Editar perfil",
-    "uploadPhoto": "Subir foto"
+    "uploadPhoto": "Subir foto",
+    "profileUpdated": "¡Perfil actualizado exitosamente!"
 }

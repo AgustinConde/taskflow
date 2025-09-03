@@ -31,6 +31,8 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
     const [localUsername, setLocalUsername] = React.useState(user?.username || '');
     const [localEmail, setLocalEmail] = React.useState(user?.email || '');
     const [localPassword, setLocalPassword] = React.useState('');
+    const [localNewPassword, setLocalNewPassword] = React.useState('');
+    const [localConfirmNewPassword, setLocalConfirmNewPassword] = React.useState('');
     const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = React.useState<string | undefined>(user?.avatarUrl);
     const [loading, setLoading] = useState(false);
@@ -232,26 +234,57 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                             }
                         }}
                     />
-                    <TextField
-                        label={t('password')}
-                        type="password"
-                        value={localPassword}
-                        onChange={e => setLocalPassword(e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: 2,
-                                background: theme => alpha(theme.palette.background.paper, 0.8),
-                                '&:hover': {
-                                    boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                                },
-                                '&.Mui-focused': {
-                                    boxShadow: theme => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`
+                    <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                        <Box sx={{ fontWeight: 600, mb: 2, fontSize: '1.05rem' }}>{t('changePassword', 'Change Password')}</Box>
+                        <TextField
+                            label={t('currentPassword', 'Current Password')}
+                            type="password"
+                            value={localPassword}
+                            onChange={e => setLocalPassword(e.target.value)}
+                            fullWidth
+                            variant="outlined"
+                            sx={{
+                                mb: 2,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    background: theme => alpha(theme.palette.background.paper, 0.8),
                                 }
-                            }
-                        }}
-                    />
+                            }}
+                        />
+                        <TextField
+                            label={t('newPassword', 'New Password')}
+                            type="password"
+                            value={localNewPassword}
+                            onChange={e => setLocalNewPassword(e.target.value)}
+                            fullWidth
+                            variant="outlined"
+                            sx={{
+                                mb: 2,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    background: theme => alpha(theme.palette.background.paper, 0.8),
+                                }
+                            }}
+                        />
+                        <TextField
+                            label={t('confirmNewPassword', 'Confirm New Password')}
+                            type="password"
+                            value={localConfirmNewPassword}
+                            onChange={e => setLocalConfirmNewPassword(e.target.value)}
+                            fullWidth
+                            variant="outlined"
+                            sx={{
+                                mb: 1,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    background: theme => alpha(theme.palette.background.paper, 0.8),
+                                }
+                            }}
+                        />
+                        <Box sx={{ color: 'text.secondary', fontSize: '0.95rem', mt: 1 }}>
+                            {t('passwordRequirements', 'Password must be at least 6 characters long and include letters and numbers.')}
+                        </Box>
+                    </Box>
                 </Stack>
             </DialogContent>
 

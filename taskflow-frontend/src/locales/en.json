@@ -104,5 +104,10 @@
     "noCategoriesFound": "No categories found. Create your first category!",
     "editProfile": "Edit Profile",
     "uploadPhoto": "Upload Photo",
-    "profileUpdated": "Profile updated successfully!"
+    "profileUpdated": "Profile updated successfully!",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "passwordRequirements": "Password must be at least 6 characters and include letters and numbers."
 }

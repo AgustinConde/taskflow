@@ -104,5 +104,10 @@
     "noCategoriesFound": "No se encontraron categorías. ¡Crea tu primera categoría!",
     "editProfile": "Editar perfil",
     "uploadPhoto": "Subir foto",
-    "profileUpdated": "¡Perfil actualizado exitosamente!"
+    "profileUpdated": "¡Perfil actualizado exitosamente!",
+    "changePassword": "Cambiar contraseña",
+    "currentPassword": "Vieja contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "passwordRequirements": "La contraseña debe tener al menos 6 caracteres e incluir letras y números."
 }

@@ -109,5 +109,9 @@
     "currentPassword": "Current password",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
-    "passwordRequirements": "Password must be at least 6 characters and include letters and numbers."
+    "passwordRequirements": "Password must be at least 6 characters and include letters and numbers.",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "currentPasswordIncorrect": "Current password is incorrect",
+    "currentPasswordRequired": "Current password is required",
+    "newPasswordRequired": "New password is required"
 }

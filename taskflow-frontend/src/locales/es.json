@@ -106,8 +106,12 @@
     "uploadPhoto": "Subir foto",
     "profileUpdated": "¡Perfil actualizado exitosamente!",
     "changePassword": "Cambiar contraseña",
-    "currentPassword": "Vieja contraseña",
-    "newPassword": "Nueva contraseña",
-    "confirmNewPassword": "Confirmar nueva contraseña",
-    "passwordRequirements": "La contraseña debe tener al menos 6 caracteres e incluir letras y números."
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Contraseña nueva",
+    "confirmNewPassword": "Confirmar contraseña nueva",
+    "passwordRequirements": "La contraseña debe tener al menos 6 caracteres e incluir letras y números.",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden",
+    "currentPasswordIncorrect": "La contraseña actual es incorrecta",
+    "currentPasswordRequired": "La contraseña actual es obligatoria",
+    "newPasswordRequired": "La nueva contraseña es obligatoria"
 }

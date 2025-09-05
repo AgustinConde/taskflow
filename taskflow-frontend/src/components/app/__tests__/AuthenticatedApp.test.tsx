@@ -35,13 +35,15 @@ vi.mock('../../../contexts/NotificationContext', () => ({
     })
 }));
 
+
 vi.mock('../AppNavBar', () => ({
     __esModule: true,
-    default: ({ onLogout, currentTab, onTabChange }: any) => (
+    default: ({ onLogout, currentTab, onTabChange, onEditProfile }: any) => (
         <div data-testid="app-navbar">
             <button onClick={onLogout}>Logout</button>
             <button onClick={(e) => onTabChange(e, 'tasks')}>Tasks Tab</button>
             <button onClick={(e) => onTabChange(e, 'dashboard')}>Dashboard Tab</button>
+            <button onClick={onEditProfile}>Edit Profile</button>
             <span>Current: {currentTab}</span>
         </div>
     )
@@ -58,6 +60,17 @@ vi.mock('../../dashboard', () => ({
             Dashboard Component - Tasks: {tasks.length}, Categories: {categories.length}
         </div>
     )
+}));
+
+vi.mock('../../user/UserProfileDialog', () => ({
+    __esModule: true,
+    default: ({ open, onClose, onSave }: any) =>
+        open ? (
+            <div data-testid="profile-dialog">
+                <button onClick={() => onSave({ username: 'updated' })}>Save</button>
+                <button onClick={onClose}>Close</button>
+            </div>
+        ) : null
 }));
 
 const mockTasks: Task[] = [
@@ -198,7 +211,7 @@ describe('AuthenticatedApp', () => {
 
     describe('Data Loading', () => {
         it('should render loading state with proper styling', () => {
-            const { container } = render(
+            render(
                 <TestWrapper>
                     <AuthenticatedApp {...defaultProps} dataLoading={true} />
                 </TestWrapper>
@@ -363,6 +376,23 @@ describe('AuthenticatedApp', () => {
             const progressbar = screen.getByRole('progressbar');
             expect(progressbar).toBeVisible();
             expect(progressbar).not.toHaveAttribute('aria-hidden');
+        });
+    });
+
+    describe('Profile Dialog', () => {
+        it('should close dialog and show info on save', async () => {
+            const { unmount } = render(
+                <TestWrapper>
+                    <AuthenticatedApp {...defaultProps} />
+                </TestWrapper>
+            );
+            const user = userEvent.setup();
+            await user.click(screen.getByText('Edit Profile'));
+            expect(screen.getByTestId('profile-dialog')).toBeInTheDocument();
+            await user.click(screen.getByText('Save'));
+            expect(screen.queryByTestId('profile-dialog')).not.toBeInTheDocument();
+            expect(mockShowInfo).toHaveBeenCalledWith('profileUpdated');
+            unmount();
         });
     });
 });

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, categoryKeys } from '../useCategories';
 import { categoryService } from '../../services/categoryService';
 import { NotificationProvider } from '../../contexts/NotificationContext';
+import { AuthProvider } from '../../contexts/AuthContext';
 import type { Category } from '../../types/Category';
 
 vi.mock('../../services/categoryService', () => ({
@@ -20,6 +21,14 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => fallback || key
   })
 }));
+
+vi.mock('../../contexts/AuthContext', async () => {
+  const actual = await vi.importActual<typeof import('../../contexts/AuthContext')>('../../contexts/AuthContext');
+  return {
+    ...actual,
+    useAuth: () => ({ isAuthenticated: true })
+  };
+});
 
 describe('useCategories Hooks', () => {
   const setupMocks = () => {
@@ -45,25 +54,41 @@ describe('useCategories Hooks', () => {
 
   const renderUseCategories = (queryClient: QueryClient) => renderHook(() => useCategories(), {
     wrapper: ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}><NotificationProvider>{children}</NotificationProvider></QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     )
   });
 
   const renderUseCreateCategory = (queryClient: QueryClient) => renderHook(() => useCreateCategory(), {
     wrapper: ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}><NotificationProvider>{children}</NotificationProvider></QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     )
   });
 
   const renderUseUpdateCategory = (queryClient: QueryClient) => renderHook(() => useUpdateCategory(), {
     wrapper: ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}><NotificationProvider>{children}</NotificationProvider></QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     )
   });
 
   const renderUseDeleteCategory = (queryClient: QueryClient) => renderHook(() => useDeleteCategory(), {
     wrapper: ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}><NotificationProvider>{children}</NotificationProvider></QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     )
   });
 

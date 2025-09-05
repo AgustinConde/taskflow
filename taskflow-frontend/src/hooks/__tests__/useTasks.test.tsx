@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTasks, useTask, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskCompletion } from '../useTasks';
 import { taskService } from '../../services/taskService';
 import { NotificationProvider } from '../../contexts/NotificationContext';
+import { AuthProvider } from '../../contexts/AuthContext';
 import type { Task } from '../../types/Task';
 
 vi.mock('../../services/taskService', () => ({
@@ -14,6 +15,14 @@ vi.mock('react-i18next', () => ({
     useTranslation: () => ({ t: (key: string) => key })
 }));
 
+vi.mock('../../contexts/AuthContext', async () => {
+    const actual = await vi.importActual<typeof import('../../contexts/AuthContext')>('../../contexts/AuthContext');
+    return {
+        ...actual,
+        useAuth: () => ({ isAuthenticated: true })
+    };
+});
+
 describe('useTasks hooks', () => {
     let queryClient: QueryClient;
     const mockTask: Task = { id: 1, title: 'Task 1', description: 'Desc 1', isCompleted: false, createdAt: '2024-01-01T00:00:00Z', categoryId: 1 };
@@ -21,7 +30,9 @@ describe('useTasks hooks', () => {
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
         <QueryClientProvider client={queryClient}>
-            <NotificationProvider>{children}</NotificationProvider>
+            <AuthProvider>
+                <NotificationProvider>{children}</NotificationProvider>
+            </AuthProvider>
         </QueryClientProvider>
     );
 

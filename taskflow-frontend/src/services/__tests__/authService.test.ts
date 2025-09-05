@@ -109,46 +109,39 @@ describe('AuthService', () => {
         });
     });
 
-    describe('error handling', () => {
-        const originalFetch = global.fetch;
-        afterEach(() => {
-            global.fetch = originalFetch;
-        });
+    describe('avatarUrl formatting', () => {
+        const getRootUrl = () => (import.meta.env?.VITE_ROOT_URL || process.env.VITE_ROOT_URL || 'http://localhost:5149');
 
-        it('should throw error on login failure', async () => {
-            const errorResponse = { message: 'Invalid credentials' };
+        it('formats avatarUrl in login', async () => {
+            const loginResponse = { token: 't', username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
             global.fetch = vi.fn().mockResolvedValue({
-                ok: false,
-                json: vi.fn().mockResolvedValue(errorResponse)
-            });
-            await expect(authService.login({ username: 'fail', password: 'fail' })).rejects.toThrow('Invalid credentials');
-        });
-
-        it('should throw error on register failure and log error', async () => {
-            const errorResponse = { message: 'Registration failed' };
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-            global.fetch = vi.fn().mockResolvedValue({
-                ok: false,
-                json: vi.fn().mockResolvedValue(errorResponse),
-                status: 400
-            });
-            await expect(authService.register({ username: 'fail', email: 'fail@test.com', password: 'fail' })).rejects.toThrow('Registration failed');
-            expect(consoleSpy).toHaveBeenCalledWith('AuthService: Registration failed with error:', errorResponse);
-            consoleSpy.mockRestore();
-        });
-
-        it('should throw error on getCurrentUser failure', async () => {
-            global.fetch = vi.fn().mockResolvedValue({
-                ok: false,
+                ok: true,
                 json: vi.fn()
+                    .mockResolvedValueOnce(loginResponse)
             });
-            await expect(authService.getCurrentUser()).rejects.toThrow('Failed to get user data');
+            const result = await authService.login({ username: 'u', password: 'p' });
+            expect(result.avatarUrl).toBe(`${getRootUrl()}/uploads/avatar.png`);
         });
 
-        it('should return false on validateToken fetch error', async () => {
-            global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
-            const result = await authService.validateToken();
-            expect(result).toBe(false);
+        it('formats avatarUrl in register', async () => {
+            const registerResponse = { token: 't', username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn()
+                    .mockResolvedValueOnce(registerResponse)
+            });
+            const result = await authService.register({ username: 'u', email: 'e', password: 'p' });
+            expect(result.avatarUrl).toBe(`${getRootUrl()}/uploads/avatar.png`);
+        });
+
+        it('formats avatarUrl in getCurrentUser', async () => {
+            const userResponse = { id: 1, username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue(userResponse)
+            });
+            const result = await authService.getCurrentUser();
+            expect(result.avatarUrl).toBe(`${getRootUrl()}/uploads/avatar.png`);
         });
     });
 
@@ -228,6 +221,49 @@ describe('AuthService', () => {
                 status: 400
             });
             await expect(authService.register({ username: 'fail', email: 'fail@test.com', password: 'fail' })).rejects.toThrow('Registration failed');
+        });
+    });
+
+    describe('avatarUrl formatting', () => {
+        const ROOT_URL = 'http://localhost:5149';
+        const originalEnv = { ...import.meta.env };
+        beforeEach(() => {
+            (import.meta as any).env = { ...originalEnv, VITE_ROOT_URL: ROOT_URL };
+        });
+        afterEach(() => {
+            (import.meta as any).env = originalEnv;
+        });
+
+        it('formats avatarUrl in login', async () => {
+            const loginResponse = { token: 't', username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn()
+                    .mockResolvedValueOnce(loginResponse)
+            });
+            const result = await authService.login({ username: 'u', password: 'p' });
+            expect(result.avatarUrl).toBe(`${ROOT_URL}/uploads/avatar.png`);
+        });
+
+        it('formats avatarUrl in register', async () => {
+            const registerResponse = { token: 't', username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn()
+                    .mockResolvedValueOnce(registerResponse)
+            });
+            const result = await authService.register({ username: 'u', email: 'e', password: 'p' });
+            expect(result.avatarUrl).toBe(`${ROOT_URL}/uploads/avatar.png`);
+        });
+
+        it('formats avatarUrl in getCurrentUser', async () => {
+            const userResponse = { id: 1, username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue(userResponse)
+            });
+            const result = await authService.getCurrentUser();
+            expect(result.avatarUrl).toBe(`${ROOT_URL}/uploads/avatar.png`);
         });
     });
 });

@@ -93,6 +93,7 @@ describe('AuthService', () => {
             expect(response).toHaveProperty('email', userData.email);
         });
 
+
         it('should validate token with server', async () => {
             const validToken = 'valid-token';
             window.localStorage.setItem('taskflow_token', validToken);
@@ -100,12 +101,38 @@ describe('AuthService', () => {
             expect(result).toBe(true);
         });
 
-        it('should get current user data', async () => {
-            const userData = await authService.getCurrentUser();
+        describe('validateToken error branch', () => {
+            const originalFetch = global.fetch;
+            afterEach(() => {
+                global.fetch = originalFetch;
+            });
+            it('should return false if validateToken throws', async () => {
+                global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+                const result = await authService.validateToken();
+                expect(result).toBe(false);
+            });
+        });
 
-            expect(userData).toHaveProperty('id');
-            expect(userData).toHaveProperty('username');
-            expect(userData).toHaveProperty('email');
+        it('should get current user data', async () => {
+            const originalFetch = global.fetch;
+            const mockUser = { id: 1, username: 'mockuser', email: 'mock@test.com' };
+            global.fetch = vi.fn().mockResolvedValue({ ok: true, json: vi.fn().mockResolvedValue(mockUser) });
+            const userData = await authService.getCurrentUser();
+            expect(userData).toHaveProperty('id', 1);
+            expect(userData).toHaveProperty('username', 'mockuser');
+            expect(userData).toHaveProperty('email', 'mock@test.com');
+            global.fetch = originalFetch;
+        });
+
+        describe('getCurrentUser error branch', () => {
+            const originalFetch = global.fetch;
+            afterEach(() => {
+                global.fetch = originalFetch;
+            });
+            it('should throw error if getCurrentUser response is not ok', async () => {
+                global.fetch = vi.fn().mockResolvedValue({ ok: false, json: vi.fn() });
+                await expect(authService.getCurrentUser()).rejects.toThrow('Failed to get user data');
+            });
         });
     });
 

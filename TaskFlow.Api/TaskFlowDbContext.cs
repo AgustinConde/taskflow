@@ -10,6 +10,7 @@ namespace TaskFlow.Api
         public DbSet<TaskFlow.Api.Models.Task> Tasks { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<UserToken> UserTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

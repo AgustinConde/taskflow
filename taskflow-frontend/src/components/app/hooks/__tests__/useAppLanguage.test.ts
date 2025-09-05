@@ -3,26 +3,36 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useAppLanguage } from '../useAppLanguage';
 
 
-const mockChangeLanguage = vi.fn((lang: string) => {
-    mockI18n.language = lang;
-});
-const mockI18n = { language: 'en', changeLanguage: mockChangeLanguage };
+
+import type { Mock } from 'vitest';
+interface MockI18n {
+    language: string;
+    changeLanguage: Mock;
+}
+const mockI18n: MockI18n = {
+    language: 'en',
+    changeLanguage: vi.fn(function (this: MockI18n, lang: string) {
+        this.language = lang;
+        window.dispatchEvent(new Event('i18n-language-changed'));
+    }) as Mock
+};
 
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({ i18n: mockI18n })
 }));
 
 describe('useAppLanguage', () => {
+
     beforeEach(() => {
         window.localStorage.clear();
         mockI18n.language = 'en';
-        mockChangeLanguage.mockReset();
+        mockI18n.changeLanguage.mockClear();
     });
 
     afterEach(() => {
         window.localStorage.clear();
         mockI18n.language = 'en';
-        mockChangeLanguage.mockReset();
+        mockI18n.changeLanguage.mockClear();
     });
 
     describe('initialization', () => {
@@ -30,7 +40,7 @@ describe('useAppLanguage', () => {
             window.localStorage.setItem('selectedLanguage', 'es');
             renderHook(() => useAppLanguage());
             await waitFor(() => {
-                expect(mockChangeLanguage).toHaveBeenCalledWith('es');
+                expect(mockI18n.changeLanguage).toHaveBeenCalledWith('es');
             }, { timeout: 1000 });
         });
 
@@ -38,7 +48,7 @@ describe('useAppLanguage', () => {
             window.localStorage.setItem('selectedLanguage', 'fr');
             renderHook(() => useAppLanguage());
             await waitFor(() => {
-                expect(mockChangeLanguage).not.toHaveBeenCalled();
+                expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
             }, { timeout: 1000 });
         });
 
@@ -46,7 +56,7 @@ describe('useAppLanguage', () => {
             window.localStorage.removeItem('selectedLanguage');
             renderHook(() => useAppLanguage());
             await waitFor(() => {
-                expect(mockChangeLanguage).not.toHaveBeenCalled();
+                expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
             }, { timeout: 1000 });
         });
     });
@@ -58,7 +68,7 @@ describe('useAppLanguage', () => {
                 result.current.handleLanguageChange();
             });
             await waitFor(() => {
-                expect(mockChangeLanguage).toHaveBeenCalledWith('es');
+                expect(mockI18n.changeLanguage).toHaveBeenCalledWith('es');
             }, { timeout: 1000 });
             expect(window.localStorage.getItem('selectedLanguage')).toBe('es');
         });
@@ -71,7 +81,7 @@ describe('useAppLanguage', () => {
                 result.current.handleLanguageChange();
             });
             await waitFor(() => {
-                expect(mockChangeLanguage).toHaveBeenCalledWith('en');
+                expect(mockI18n.changeLanguage).toHaveBeenCalledWith('en');
             }, { timeout: 1000 });
             expect(window.localStorage.getItem('selectedLanguage')).toBe('en');
         });

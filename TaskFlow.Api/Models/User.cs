@@ -24,6 +24,8 @@ namespace TaskFlow.Api.Models
 
         public string? AvatarUrl { get; set; }
 
+        public bool EmailConfirmed { get; set; } = false;
+
         public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();
         public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
     }

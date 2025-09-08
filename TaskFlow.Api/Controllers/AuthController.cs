@@ -64,5 +64,29 @@ namespace TaskFlow.Api.Controllers
 
             return Ok(new { valid = true, userId });
         }
+
+        [HttpGet("confirm")]
+        public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
+        {
+            var ok = await _authService.ConfirmEmailAsync(token);
+            if (!ok) return BadRequest(new { message = "Invalid or expired confirmation token" });
+            return Ok(new { message = "Email confirmed successfully" });
+        }
+
+        [HttpPost("forgot")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, [FromServices] IEmailService emailService)
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            await _authService.RequestPasswordResetAsync(dto.Email, emailService, baseUrl);
+            return Ok(new { message = "If the email exists, a reset link was sent" });
+        }
+
+        [HttpPost("reset")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var ok = await _authService.ResetPasswordAsync(dto.Token, dto.NewPassword);
+            if (!ok) return BadRequest(new { message = "Invalid or expired reset token" });
+            return Ok(new { message = "Password updated successfully" });
+        }
     }
 }

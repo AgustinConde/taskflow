@@ -134,7 +134,7 @@ namespace TaskFlow.Api.Services
             await _context.SaveChangesAsync();
 
             var resetLink = $"{baseUrl}/reset-password?token={token}";
-            await emailService.SendEmailAsync(user.Email, "Recupera tu contraseña", $"Haz click aquí para resetear tu contraseña: {resetLink}");
+            await emailService.SendEmailAsync(user.Email, "Reset your password", $"Click here to reset your password: {resetLink}");
         }
 
         public async Task<bool> ResetPasswordAsync(string token, string newPassword)

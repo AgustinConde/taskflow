@@ -60,4 +60,15 @@ namespace TaskFlow.Api.DTOs
         public string? CurrentPassword { get; set; }
         public string? NewPassword { get; set; }
     }
+
+    public class ForgotPasswordDto
+    {
+        public required string Email { get; set; }
+    }
+
+    public class ResetPasswordDto
+    {
+        public required string Token { get; set; }
+        public required string NewPassword { get; set; }
+    }
 }

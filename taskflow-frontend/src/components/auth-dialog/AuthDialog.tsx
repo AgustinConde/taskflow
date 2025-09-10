@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -11,6 +11,8 @@ import AuthTabs from './AuthTabs';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import AuthDialogActions from './AuthDialogActions';
+import ForgotPasswordDialog from './ForgotPasswordDialog';
+import { authService } from '../../services/authService';
 
 interface AuthDialogProps {
     open: boolean;
@@ -65,6 +67,17 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
         }
     };
 
+    const [forgotOpen, setForgotOpen] = useState(false);
+
+    const handleForgotSubmit = async (email: string) => {
+        try {
+            await authService.forgotPassword(email);
+            return null;
+        } catch (err: any) {
+            return err.message || 'Error';
+        }
+    };
+
     return (
         <Dialog
             open={open}
@@ -86,6 +99,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                 </Typography>
             </DialogTitle>
 
+
             <DialogContent sx={{ px: 3, py: 2 }}>
                 <AuthTabs
                     activeTab={activeTab}
@@ -105,6 +119,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                         showPassword={showLoginPassword}
                         onTogglePassword={() => setShowLoginPassword(!showLoginPassword)}
                         onSubmit={handleLoginSubmit}
+                        onForgotPassword={() => setForgotOpen(true)}
                     />
                 ) : (
                     <RegisterForm
@@ -116,6 +131,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                     />
                 )}
             </DialogContent>
+
+            <ForgotPasswordDialog
+                open={forgotOpen}
+                onClose={() => setForgotOpen(false)}
+                onSubmit={handleForgotSubmit}
+            />
 
             <AuthDialogActions
                 loading={loading}

@@ -16,7 +16,9 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _authService.RegisterAsync(registerDto);
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var emailService = HttpContext.RequestServices.GetService(typeof(IEmailService)) as IEmailService;
+            var result = await _authService.RegisterAsync(registerDto, emailService!, baseUrl);
             if (result == null)
                 return Conflict(new { message = "auth.register.exists" });
 
@@ -66,8 +68,8 @@ namespace TaskFlow.Api.Controllers
         public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
         {
             var ok = await _authService.ConfirmEmailAsync(token);
-            if (!ok) return BadRequest(new { message = "Invalid or expired confirmation token" });
-            return Ok(new { message = "Email confirmed successfully" });
+            if (!ok) return BadRequest(new { message = "auth.confirm.invalid_token" });
+            return Ok(new { message = "auth.confirm.success" });
         }
 
         [HttpPost("forgot")]
@@ -75,15 +77,15 @@ namespace TaskFlow.Api.Controllers
         {
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             await _authService.RequestPasswordResetAsync(dto.Email, emailService, baseUrl);
-            return Ok(new { message = "If the email exists, a reset link was sent" });
+            return Ok(new { message = "auth.forgot.sent" });
         }
 
         [HttpPost("reset")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
             var ok = await _authService.ResetPasswordAsync(dto.Token, dto.NewPassword);
-            if (!ok) return BadRequest(new { message = "Invalid or expired reset token" });
-            return Ok(new { message = "Password updated successfully" });
+            if (!ok) return BadRequest(new { message = "auth.reset.invalid_token" });
+            return Ok(new { message = "auth.reset.success" });
         }
     }
 }

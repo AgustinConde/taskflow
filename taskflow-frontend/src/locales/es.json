@@ -113,5 +113,17 @@
     "passwordsDoNotMatch": "Las contraseñas no coinciden",
     "currentPasswordIncorrect": "La contraseña actual es incorrecta",
     "currentPasswordRequired": "La contraseña actual es obligatoria",
-    "newPasswordRequired": "La nueva contraseña es obligatoria"
+    "newPasswordRequired": "La nueva contraseña es obligatoria",
+    "auth.register.exists": "El usuario o email ya existen",
+    "auth.login.invalid": "Usuario o contraseña incorrectos",
+    "category.get.error": "Error al obtener las categorías.",
+    "category.create.exists": "Ya existe una categoría con ese nombre.",
+    "category.update.exists": "Ya existe una categoría con ese nombre.",
+    "task.get.error": "Error al obtener las tareas.",
+    "user.photo.no_file": "No se subió ningún archivo.",
+    "user.photo.invalid_type": "Tipo de archivo inválido.",
+    "user.profile.username_exists": "El nombre de usuario ya existe.",
+    "user.profile.email_exists": "El email ya existe.",
+    "user.profile.current_password_incorrect": "La contraseña actual es incorrecta.",
+    "user.profile.updated": "¡Perfil actualizado exitosamente!"
 }

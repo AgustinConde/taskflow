@@ -113,5 +113,17 @@
     "passwordsDoNotMatch": "Passwords do not match",
     "currentPasswordIncorrect": "Current password is incorrect",
     "currentPasswordRequired": "Current password is required",
-    "newPasswordRequired": "New password is required"
+    "newPasswordRequired": "New password is required",
+    "auth.register.exists": "Username or email already exists",
+    "auth.login.invalid": "Invalid username or password",
+    "category.get.error": "Error retrieving categories.",
+    "category.create.exists": "A category with this name already exists.",
+    "category.update.exists": "A category with this name already exists.",
+    "task.get.error": "Error retrieving tasks.",
+    "user.photo.no_file": "No file uploaded.",
+    "user.photo.invalid_type": "Invalid file type.",
+    "user.profile.username_exists": "Username already exists.",
+    "user.profile.email_exists": "Email already exists.",
+    "user.profile.current_password_incorrect": "Current password is incorrect.",
+    "user.profile.updated": "Profile updated successfully!"
 }

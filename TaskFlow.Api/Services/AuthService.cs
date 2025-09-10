@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Models;
+using System.Threading.Tasks;
 
 namespace TaskFlow.Api.Services
 {
@@ -11,7 +12,7 @@ namespace TaskFlow.Api.Services
         private readonly TaskFlowDbContext _context = context;
         private readonly JwtService _jwtService = jwtService;
 
-        public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto)
+        public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto, IEmailService emailService, string baseUrl)
         {
             if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
                 return null;
@@ -31,6 +32,19 @@ namespace TaskFlow.Api.Services
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            var confirmationToken = Guid.NewGuid().ToString();
+            _context.UserTokens.Add(new UserToken
+            {
+                UserId = user.Id.ToString(),
+                Token = confirmationToken,
+                Expiration = DateTime.UtcNow.AddDays(1),
+                Type = TokenType.Confirmation
+            });
+            await _context.SaveChangesAsync();
+
+            var confirmLink = $"{baseUrl}/confirm-email?token={confirmationToken}";
+            await emailService.SendEmailAsync(user.Email, "Confirm your account", $"Click here to confirm: {confirmLink}");
 
             var token = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
 
@@ -106,12 +120,9 @@ namespace TaskFlow.Api.Services
         {
             var userToken = await _context.UserTokens
                 .FirstOrDefaultAsync(t => t.Token == token && t.Type == TokenType.Confirmation && t.Expiration > DateTime.UtcNow);
-
             if (userToken == null) return false;
-
             var user = await _context.Users.FindAsync(int.Parse(userToken.UserId));
             if (user == null) return false;
-
             user.EmailConfirmed = true;
             _context.UserTokens.Remove(userToken);
             await _context.SaveChangesAsync();
@@ -122,7 +133,6 @@ namespace TaskFlow.Api.Services
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null) return;
-
             var token = Guid.NewGuid().ToString();
             _context.UserTokens.Add(new UserToken
             {
@@ -132,25 +142,21 @@ namespace TaskFlow.Api.Services
                 Type = TokenType.PasswordReset
             });
             await _context.SaveChangesAsync();
-
             var resetLink = $"{baseUrl}/reset-password?token={token}";
             await emailService.SendEmailAsync(user.Email, "Reset your password", $"Click here to reset your password: {resetLink}");
+            return;
         }
 
         public async Task<bool> ResetPasswordAsync(string token, string newPassword)
         {
             var userToken = await _context.UserTokens
                 .FirstOrDefaultAsync(t => t.Token == token && t.Type == TokenType.PasswordReset && t.Expiration > DateTime.UtcNow);
-
             if (userToken == null) return false;
-
             var user = await _context.Users.FindAsync(int.Parse(userToken.UserId));
             if (user == null) return false;
-
             var newSalt = GenerateSalt();
             user.Salt = newSalt;
             user.PasswordHash = HashPassword(newPassword, newSalt);
-
             _context.UserTokens.Remove(userToken);
             await _context.SaveChangesAsync();
             return true;

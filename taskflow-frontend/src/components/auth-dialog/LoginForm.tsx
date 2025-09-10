@@ -15,6 +15,7 @@ interface LoginFormProps {
     showPassword: boolean;
     onTogglePassword: () => void;
     onSubmit: (e: React.FormEvent) => void;
+    onForgotPassword?: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -22,7 +23,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
     onLoginDataChange,
     showPassword,
     onTogglePassword,
-    onSubmit
+    onSubmit,
+    onForgotPassword
 }) => {
     const { t } = useTranslation();
 
@@ -75,6 +77,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 }}
             />
             <button type="submit" style={{ display: 'none' }} />
+            <Box sx={{ mt: 1, textAlign: 'right' }}>
+                <span
+                    style={{ color: '#1976d2', cursor: 'pointer', fontSize: 14, textDecoration: 'underline' }}
+                    onClick={onForgotPassword}
+                >
+                    {t('forgotPasswordLink', 'Forgot your password?')}
+                </span>
+            </Box>
         </Box>
     );
 };

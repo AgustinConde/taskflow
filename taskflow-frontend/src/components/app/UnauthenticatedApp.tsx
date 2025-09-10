@@ -103,6 +103,21 @@ const UnauthenticatedApp: React.FC<UnauthenticatedAppProps> = ({
                     >
                         {t('login')}
                     </Button>
+                    <Typography variant="body2" sx={{ mt: 3 }}>
+                        {t('noAccount')}{' '}
+                        <span
+                            style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline', fontWeight: 500 }}
+                            onClick={() => {
+                                onOpenAuthDialog();
+                                setTimeout(() => {
+                                    const tab = document.querySelector('[role="tab"][aria-label="register"]') as HTMLElement;
+                                    if (tab) tab.click();
+                                }, 100);
+                            }}
+                        >
+                            {t('register')}
+                        </span>
+                    </Typography>
                 </Paper>
             </Box>
         </>

@@ -7,11 +7,8 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-
-    public class AuthController(AuthService authService, JwtService jwtService) : ControllerBase
+    public class AuthController(AuthService _authService, JwtService _jwtService) : ControllerBase
     {
-        private readonly AuthService _authService = authService;
-        private readonly JwtService _jwtService = jwtService;
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)

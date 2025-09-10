@@ -8,16 +8,8 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class TasksController : ControllerBase
+    public class TasksController(TaskService _taskService, JwtService _jwtService) : ControllerBase
     {
-        private readonly TaskService _taskService;
-        private readonly JwtService _jwtService;
-
-        public TasksController(TaskService taskService, JwtService jwtService)
-        {
-            _taskService = taskService;
-            _jwtService = jwtService;
-        }
 
         // GET: api/tasks
         [HttpGet]

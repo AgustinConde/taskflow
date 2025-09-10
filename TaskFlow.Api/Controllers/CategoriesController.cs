@@ -8,16 +8,8 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class CategoriesController : ControllerBase
+    public class CategoriesController(CategoryService _categoryService, JwtService _jwtService) : ControllerBase
     {
-        private readonly CategoryService _categoryService;
-        private readonly JwtService _jwtService;
-
-        public CategoriesController(CategoryService categoryService, JwtService jwtService)
-        {
-            _categoryService = categoryService;
-            _jwtService = jwtService;
-        }
 
         // GET: api/categories
         [HttpGet]

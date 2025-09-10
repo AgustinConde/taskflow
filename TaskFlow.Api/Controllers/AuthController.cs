@@ -18,7 +18,7 @@ namespace TaskFlow.Api.Controllers
 
             var result = await _authService.RegisterAsync(registerDto);
             if (result == null)
-                return Conflict(new { message = "Username or email already exists" });
+                return Conflict(new { message = "auth.register.exists" });
 
             return Ok(result);
         }
@@ -31,7 +31,7 @@ namespace TaskFlow.Api.Controllers
 
             var result = await _authService.LoginAsync(loginDto);
             if (result == null)
-                return Unauthorized(new { message = "Invalid username or password" });
+                return Unauthorized(new { message = "auth.login.invalid" });
 
             return Ok(result);
         }

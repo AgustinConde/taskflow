@@ -26,7 +26,7 @@ namespace TaskFlow.Api.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetTasks: {ex.Message}");
-                return StatusCode(500, new { message = "Error retrieving tasks" });
+                return StatusCode(500, new { message = "task.get.error" });
             }
         }
 

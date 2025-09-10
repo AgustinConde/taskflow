@@ -26,7 +26,7 @@ namespace TaskFlow.Api.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetCategories: {ex.Message}");
-                return StatusCode(500, new { message = "Error retrieving categories" });
+                return StatusCode(500, new { message = "category.get.error" });
             }
         }
 
@@ -42,7 +42,9 @@ namespace TaskFlow.Api.Controllers
                 return NotFound();
 
             return Ok(category);
-        }        // POST: api/categories
+        }
+
+        // POST: api/categories
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> CreateCategory([FromBody] CreateCategoryDto dto)
         {
@@ -56,7 +58,7 @@ namespace TaskFlow.Api.Controllers
             var nameExists = await _categoryService.NameExistsAsync(dto.Name, userId.Value);
             if (nameExists)
             {
-                return BadRequest(new { message = "A category with this name already exists" });
+                return BadRequest(new { message = "category.create.exists" });
             }
 
             var created = await _categoryService.CreateAsync(dto, userId.Value);
@@ -82,7 +84,7 @@ namespace TaskFlow.Api.Controllers
                 var nameExists = await _categoryService.NameExistsAsync(dto.Name, userId.Value, id);
                 if (nameExists)
                 {
-                    return BadRequest(new { message = "A category with this name already exists" });
+                    return BadRequest(new { message = "category.update.exists" });
                 }
             }
 

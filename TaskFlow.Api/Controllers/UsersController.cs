@@ -19,11 +19,11 @@ namespace TaskFlow.Api.Controllers
         public async Task<IActionResult> UploadPhoto([FromForm] IFormFile avatar)
         {
             if (avatar == null || avatar.Length == 0)
-                return BadRequest(new { message = "No file uploaded." });
+                return BadRequest(new { message = "user.photo.no_file" });
 
             var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
             if (!allowedTypes.Contains(avatar.ContentType))
-                return BadRequest(new { message = "Invalid file type." });
+                return BadRequest(new { message = "user.photo.invalid_type" });
 
             var userId = _jwtService.GetUserIdFromToken(User);
             if (userId == null)
@@ -70,7 +70,7 @@ namespace TaskFlow.Api.Controllers
             if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != user.Username)
             {
                 if (await _dbContext.Users.AnyAsync(u => u.Username == dto.Username))
-                    return Conflict(new { message = "Username already exists" });
+                    return Conflict(new { message = "user.profile.username_exists" });
 
                 if (!string.IsNullOrEmpty(user.AvatarUrl))
                 {
@@ -91,21 +91,21 @@ namespace TaskFlow.Api.Controllers
             if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != user.Email)
             {
                 if (await _dbContext.Users.AnyAsync(u => u.Email == dto.Email))
-                    return Conflict(new { message = "Email already exists" });
+                    return Conflict(new { message = "user.profile.email_exists" });
                 user.Email = dto.Email;
             }
 
             if (!string.IsNullOrWhiteSpace(dto.NewPassword))
             {
                 if (string.IsNullOrWhiteSpace(dto.CurrentPassword) || !AuthService.VerifyPassword(dto.CurrentPassword, user.PasswordHash, user.Salt))
-                    return BadRequest(new { message = "Current password is incorrect" });
+                    return BadRequest(new { message = "user.profile.current_password_incorrect" });
                 var newSalt = AuthService.GenerateSalt();
                 user.Salt = newSalt;
                 user.PasswordHash = AuthService.HashPassword(dto.NewPassword, newSalt);
             }
 
             await _dbContext.SaveChangesAsync();
-            return Ok(new { message = "Profile updated", avatarUrl = user.AvatarUrl });
+            return Ok(new { message = "user.profile.updated", avatarUrl = user.AvatarUrl });
         }
     }
 }

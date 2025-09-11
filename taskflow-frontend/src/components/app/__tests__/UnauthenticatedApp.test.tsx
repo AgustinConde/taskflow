@@ -26,7 +26,8 @@ const defaultProps = {
     currentLanguage: 'en',
     onToggleTheme: vi.fn(),
     onLanguageChange: vi.fn(),
-    onOpenAuthDialog: vi.fn()
+    onOpenAuthDialog: vi.fn(),
+    onOpenRegisterDialog: vi.fn()
 };
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (

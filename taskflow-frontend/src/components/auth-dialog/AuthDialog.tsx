@@ -17,11 +17,14 @@ import { authService } from '../../services/authService';
 interface AuthDialogProps {
     open: boolean;
     onClose: () => void;
+    initialTab?: number;
 }
 
-const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
+
+const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, initialTab = 0 }) => {
     const {
         activeTab,
+        setActiveTab,
         loading,
         setLoading,
         error,
@@ -37,6 +40,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
         resetForms,
         handleTabChange
     } = useAuthState();
+
+    React.useEffect(() => {
+        if (open) setActiveTab(initialTab);
+        // eslint-disable-next-line
+    }, [open, initialTab]);
 
     const handleClose = () => {
         resetForms();

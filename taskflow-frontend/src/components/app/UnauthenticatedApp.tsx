@@ -19,6 +19,7 @@ interface UnauthenticatedAppProps {
     onToggleTheme: () => void;
     onLanguageChange: () => void;
     onOpenAuthDialog: () => void;
+    onOpenRegisterDialog: () => void;
 }
 
 const UnauthenticatedApp: React.FC<UnauthenticatedAppProps> = ({
@@ -26,7 +27,8 @@ const UnauthenticatedApp: React.FC<UnauthenticatedAppProps> = ({
     currentLanguage,
     onToggleTheme,
     onLanguageChange,
-    onOpenAuthDialog
+    onOpenAuthDialog,
+    onOpenRegisterDialog
 }) => {
     const { t } = useTranslation();
     const theme = useTheme();
@@ -107,13 +109,7 @@ const UnauthenticatedApp: React.FC<UnauthenticatedAppProps> = ({
                         {t('noAccount')}{' '}
                         <Box
                             component="span"
-                            onClick={() => {
-                                onOpenAuthDialog();
-                                setTimeout(() => {
-                                    const tab = document.querySelector('[role="tab"][aria-label="register"]') as HTMLElement;
-                                    if (tab) tab.click();
-                                }, 100);
-                            }}
+                            onClick={onOpenRegisterDialog}
                             sx={{
                                 cursor: 'pointer',
                                 textDecoration: 'underline',

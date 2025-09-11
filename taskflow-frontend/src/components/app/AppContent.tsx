@@ -17,6 +17,7 @@ const AppContent: React.FC = () => {
         openAuthDialog,
         closeAuthDialog
     } = useAppNavigation();
+    const [authDialogTab, setAuthDialogTab] = React.useState(0);
     const { tasks, categories, dataLoading } = useAppData();
     const { currentLanguage, handleLanguageChange } = useAppLanguage();
 
@@ -32,11 +33,13 @@ const AppContent: React.FC = () => {
                         currentLanguage={currentLanguage}
                         onToggleTheme={toggleTheme}
                         onLanguageChange={handleLanguageChange}
-                        onOpenAuthDialog={openAuthDialog}
+                        onOpenAuthDialog={() => { setAuthDialogTab(0); openAuthDialog(); }}
+                        onOpenRegisterDialog={() => { setAuthDialogTab(1); openAuthDialog(); }}
                     />
                     <AuthDialog
                         open={authDialogOpen}
                         onClose={closeAuthDialog}
+                        initialTab={authDialogTab}
                     />
                 </>
             ) : (

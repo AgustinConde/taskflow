@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ResendConfirmationButton from './ResendConfirmationButton';
 import {
     Dialog,
     DialogTitle,
@@ -51,9 +52,17 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, initialTab = 0 }
         onClose();
     };
 
+    const [pendingEmail, setPendingEmail] = useState<string | null>(null);
     const { handleLogin, handleRegister } = useAuthOperations({
         setLoading,
-        setError,
+        setError: (err) => {
+            setError(err);
+            if (err && err.toLowerCase().includes('confirm your email')) {
+                setPendingEmail(loginData.username);
+            } else {
+                setPendingEmail(null);
+            }
+        },
         onSuccess: handleClose
     });
 
@@ -117,6 +126,12 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, initialTab = 0 }
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
+                        {pendingEmail && (
+                            <>
+                                <br />
+                                <ResendConfirmationButton email={pendingEmail} setError={setError} />
+                            </>
+                        )}
                     </Alert>
                 )}
 

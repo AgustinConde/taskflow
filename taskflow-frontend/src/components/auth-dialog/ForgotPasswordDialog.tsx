@@ -56,7 +56,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({ open, onClo
                     />
                     <DialogActions>
                         <Button onClick={handleClose} disabled={loading}>{t('cancel')}</Button>
-                        <Button type="submit" variant="contained" disabled={loading || !!success}>{t('send')}</Button>
+                        <Button type="submit" variant="contained" disabled={loading || !!success} sx={{ bgcolor: theme => theme.palette.primary.main }}>{t('send')}</Button>
                     </DialogActions>
                 </form>
             </DialogContent>

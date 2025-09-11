@@ -105,8 +105,8 @@ const UnauthenticatedApp: React.FC<UnauthenticatedAppProps> = ({
                     </Button>
                     <Typography variant="body2" sx={{ mt: 3 }}>
                         {t('noAccount')}{' '}
-                        <span
-                            style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline', fontWeight: 500 }}
+                        <Box
+                            component="span"
                             onClick={() => {
                                 onOpenAuthDialog();
                                 setTimeout(() => {
@@ -114,9 +114,15 @@ const UnauthenticatedApp: React.FC<UnauthenticatedAppProps> = ({
                                     if (tab) tab.click();
                                 }, 100);
                             }}
+                            sx={{
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                fontWeight: 500,
+                                color: theme => theme.palette.primary.main
+                            }}
                         >
                             {t('register')}
-                        </span>
+                        </Box>
                     </Typography>
                 </Paper>
             </Box>

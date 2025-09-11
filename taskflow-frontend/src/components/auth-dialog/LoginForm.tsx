@@ -78,12 +78,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
             />
             <button type="submit" style={{ display: 'none' }} />
             <Box sx={{ mt: 1, textAlign: 'right' }}>
-                <span
-                    style={{ color: '#1976d2', cursor: 'pointer', fontSize: 14, textDecoration: 'underline' }}
+                <Box
+                    component="span"
                     onClick={onForgotPassword}
+                    sx={{
+                        cursor: 'pointer',
+                        fontSize: 14,
+                        textDecoration: 'underline',
+                        fontWeight: 500,
+                        color: theme => theme.palette.primary.main
+                    }}
                 >
                     {t('forgotPasswordLink', 'Forgot your password?')}
-                </span>
+                </Box>
             </Box>
         </Box>
     );

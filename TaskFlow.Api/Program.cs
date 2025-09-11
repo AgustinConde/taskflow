@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+// Load environment variables from .env if it exists
+try { DotNetEnv.Env.Load(); } catch { /* Ignore if .env file is not found */ }
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()

@@ -34,17 +34,28 @@ namespace TaskFlow.Api.Services
             await _context.SaveChangesAsync();
 
             var confirmationToken = Guid.NewGuid().ToString();
-            _context.UserTokens.Add(new UserToken
+            var userToken = new UserToken
             {
                 UserId = user.Id.ToString(),
                 Token = confirmationToken,
                 Expiration = DateTime.UtcNow.AddDays(1),
                 Type = TokenType.Confirmation
-            });
+            };
+            _context.UserTokens.Add(userToken);
             await _context.SaveChangesAsync();
 
             var confirmLink = $"{baseUrl}/confirm-email?token={confirmationToken}";
-            await emailService.SendEmailAsync(user.Email, "Confirm your account", $"Click here to confirm: {confirmLink}");
+            try
+            {
+                await emailService.SendEmailAsync(user.Email, "Confirm your account", $"Click here to confirm: {confirmLink}");
+            }
+            catch
+            {
+                _context.UserTokens.Remove(userToken);
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+                return null;
+            }
 
             var token = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
 
@@ -64,6 +75,9 @@ namespace TaskFlow.Api.Services
 
             if (user == null || !VerifyPassword(loginDto.Password, user.PasswordHash, user.Salt))
                 return null;
+
+            if (!user.EmailConfirmed)
+                throw new InvalidOperationException("EMAIL_NOT_CONFIRMED");
 
             user.LastLoginAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();

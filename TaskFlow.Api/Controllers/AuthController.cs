@@ -31,11 +31,18 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _authService.LoginAsync(loginDto);
-            if (result == null)
-                return Unauthorized(new { message = "auth.login.invalid" });
+            try
+            {
+                var result = await _authService.LoginAsync(loginDto);
+                if (result == null)
+                    return Unauthorized(new { message = "auth.login.invalid" });
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "EMAIL_NOT_CONFIRMED")
+            {
+                return Unauthorized(new { message = "auth.login.emailNotConfirmed" });
+            }
         }
 
         [HttpGet("me")]

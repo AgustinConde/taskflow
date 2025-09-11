@@ -44,6 +44,9 @@ class AuthService {
 
         if (!response.ok) {
             const error = await response.json();
+            if (error.message === 'auth.login.emailNotConfirmed') {
+                throw { code: 'emailNotConfirmed', email: credentials.username, message: error.message };
+            }
             throw new Error(error.message || 'Login failed');
         }
 

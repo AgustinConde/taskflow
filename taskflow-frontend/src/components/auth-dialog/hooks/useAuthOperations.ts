@@ -18,10 +18,12 @@ export const useAuthOperations = ({ setLoading, setError, onSuccess }: UseAuthOp
         setLoading(true);
         setError(null);
 
-        const success = await login(loginData);
-        if (success) {
+        const result = await login(loginData);
+        if (result === true) {
             showSuccess(t('loginSuccessful'));
             onSuccess();
+        } else if (result && typeof result === 'object' && 'emailNotConfirmed' in result) {
+            setError(t('emailNotConfirmed', 'You must confirm your email before logging in.'));
         } else {
             showError(t('loginError'));
         }

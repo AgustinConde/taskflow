@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         initializeAuth();
     }, []);
 
-    const login = async (credentials: LoginRequest): Promise<boolean> => {
+    const login = async (credentials: LoginRequest): Promise<boolean | { emailNotConfirmed: true, email: string }> => {
         try {
             const authResponse = await authService.login(credentials);
             const userData = await authService.getCurrentUser();
@@ -54,7 +54,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(userData);
             setToken(authResponse.token);
             return true;
-        } catch (error) {
+        } catch (error: any) {
+            if (error && error.code === 'emailNotConfirmed') {
+                return { emailNotConfirmed: true, email: credentials.username };
+            }
             console.error('Login error:', error);
             return false;
         }

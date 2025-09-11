@@ -26,7 +26,7 @@ namespace TaskFlow.Api.Models
 
         public bool EmailConfirmed { get; set; } = false;
 
-        public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();
-        public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
+        public virtual ICollection<Task> Tasks { get; set; } = [];
+        public virtual ICollection<Category> Categories { get; set; } = [];
     }
 }

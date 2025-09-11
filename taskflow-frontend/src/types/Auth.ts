@@ -35,7 +35,7 @@ export interface AuthContextType {
     user: User | null;
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
     token: string | null;
-    login: (credentials: LoginRequest) => Promise<boolean>;
+    login: (credentials: LoginRequest) => Promise<boolean | { emailNotConfirmed: true; email: string }>;
     register: (data: RegisterRequest) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: boolean;

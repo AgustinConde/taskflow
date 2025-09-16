@@ -2,13 +2,27 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Services;
+using static TaskFlow.Api.Services.AuthService;
 
 namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(AuthService _authService, JwtService _jwtService) : ControllerBase
+    public class AuthController(AuthService authService, JwtService jwtService) : ControllerBase
     {
+        private readonly AuthService _authService = authService;
+        private readonly JwtService _jwtService = jwtService;
+
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation([FromBody] string email)
+        {
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+            var emailService = HttpContext.RequestServices.GetService(typeof(IEmailService)) as IEmailService;
+            var result = await _authService.ResendConfirmationEmailAsync(email, emailService!, frontendUrl);
+            if (!result)
+                return BadRequest(new { message = "auth.resend.not_eligible" });
+            return Ok(new { message = "auth.resend.success" });
+        }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
@@ -16,13 +30,13 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
             var emailService = HttpContext.RequestServices.GetService(typeof(IEmailService)) as IEmailService;
-            var result = await _authService.RegisterAsync(registerDto, emailService!, baseUrl);
+            var result = await _authService.RegisterAsync(registerDto, emailService!, frontendUrl);
             if (result == null)
                 return Conflict(new { message = "auth.register.exists" });
 
-            return Ok(result);
+            return Ok(new { message = "auth.register.success" });
         }
 
         [HttpPost("login")]
@@ -74,9 +88,38 @@ namespace TaskFlow.Api.Controllers
         [HttpGet("confirm")]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
         {
-            var ok = await _authService.ConfirmEmailAsync(token);
-            if (!ok) return BadRequest(new { message = "auth.confirm.invalid_token" });
-            return Ok(new { message = "auth.confirm.success" });
+            var result = await _authService.ConfirmEmailAsync(token);
+            var userToken = await _authService.GetUserTokenByTokenAsync(token);
+            var user = userToken != null ? await _authService.GetUserByIdAsync(int.Parse(userToken.UserId)) : null;
+            if (result == ConfirmEmailResult.Success && user != null)
+            {
+                var jwt = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
+                var response = new AuthResponseDto
+                {
+                    Token = jwt,
+                    Username = user.Username,
+                    Email = user.Email,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    AvatarUrl = user.AvatarUrl
+                };
+                return Ok(response);
+            }
+            if (result == ConfirmEmailResult.AlreadyConfirmed && user != null)
+            {
+                var jwt = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
+                var response = new AuthResponseDto
+                {
+                    Token = jwt,
+                    Username = user.Username,
+                    Email = user.Email,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    AvatarUrl = user.AvatarUrl
+                };
+                return Ok(response);
+            }
+            if (result == ConfirmEmailResult.Expired)
+                return BadRequest(new { message = "auth.confirm.expired" });
+            return BadRequest(new { message = "auth.confirm.invalid_token" });
         }
 
         [HttpPost("forgot")]

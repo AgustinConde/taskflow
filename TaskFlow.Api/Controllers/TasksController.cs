@@ -78,7 +78,7 @@ namespace TaskFlow.Api.Controllers
             var updated = _taskService.Update(id, dto, userId.Value);
             if (!updated)
                 return NotFound();
-            return NoContent();
+            return Ok(new { success = true });
         }
 
         // DELETE: api/tasks/{id}

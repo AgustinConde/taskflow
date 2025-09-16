@@ -19,41 +19,53 @@ namespace TaskFlow.Api.Controllers
         public async Task<IActionResult> UploadPhoto([FromForm] IFormFile avatar)
         {
             if (avatar == null || avatar.Length == 0)
+            {
                 return BadRequest(new { message = "user.photo.no_file" });
+            }
 
             var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
             if (!allowedTypes.Contains(avatar.ContentType))
+            {
                 return BadRequest(new { message = "user.photo.invalid_type" });
+            }
 
             var userId = _jwtService.GetUserIdFromToken(User);
             if (userId == null)
+            {
                 return Unauthorized();
+            }
 
             var user = await _dbContext.Users.FindAsync(userId.Value);
             if (user == null)
+            {
                 return NotFound();
+            }
 
-            var safeUsername = string.Concat(user.Username.ToLower().Select(c =>
-                (char.IsLetterOrDigit(c) || c == '-' || c == '_') ? c : '_'));
+            var safeUsername = string.Concat(user.Username.ToLower().Select(c => (char.IsLetterOrDigit(c) || c == '-' || c == '_') ? c : '_'));
             var ext = Path.GetExtension(avatar.FileName);
             var avatarDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatar");
             Directory.CreateDirectory(avatarDir);
             var fileName = $"{safeUsername}{ext}";
             var filePath = Path.Combine(avatarDir, fileName);
 
-            if (System.IO.File.Exists(filePath))
+            try
             {
-                System.IO.File.Delete(filePath);
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await avatar.CopyToAsync(stream);
+                }
+                user.AvatarUrl = $"/uploads/avatar/{fileName}";
+                await _dbContext.SaveChangesAsync();
+                return Ok(new { url = user.AvatarUrl });
             }
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            catch (Exception ex)
             {
-                await avatar.CopyToAsync(stream);
+                return StatusCode(500, new { message = "Error saving image", detail = ex.Message });
             }
-
-            user.AvatarUrl = $"/uploads/avatar/{fileName}";
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(new { url = user.AvatarUrl });
         }
         // PUT: api/users/profile
         [HttpPut("profile")]

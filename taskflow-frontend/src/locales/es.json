@@ -148,5 +148,6 @@
     "invalidResetLink": "Enlace de recuperación inválido o expirado.",
     "passwordMinimumLength": "La contraseña debe tener al menos 6 caracteres.",
     "passwordsDoNotMatchError": "Las contraseñas no coinciden.",
-    "failedToResetPassword": "Error al restablecer la contraseña."
+    "failedToResetPassword": "Error al restablecer la contraseña.",
+    "goToHome": "Ir al inicio"
 }

@@ -134,18 +134,45 @@ const ConfirmEmailPage: React.FC = () => {
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                                 {t('emailConfirmedRedirecting')}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                                 {t('emailConfirmationRedirectMessage')}
                             </Typography>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={() => navigate('/', { replace: true })}
+                                sx={{
+                                    px: 4,
+                                    py: 1.5,
+                                    borderRadius: 3,
+                                    fontWeight: 600,
+                                    boxShadow: 4
+                                }}
+                            >
+                                {t('goToHome')}
+                            </Button>
                         </>
                     )}
 
                     {status === 'error' && (
                         <>
                             <ErrorIcon sx={{ fontSize: 60, mb: 2, color: 'error.main' }} />
-                            <Typography variant="h6" color="error.main" sx={{ mb: 2 }}>
+                            <Typography variant="h6" color="error.main" sx={{ mb: 3 }}>
                                 {t('invalidConfirmationLink')}
                             </Typography>
+                            <Button
+                                variant="outlined"
+                                size="large"
+                                onClick={() => navigate('/', { replace: true })}
+                                sx={{
+                                    px: 4,
+                                    py: 1.5,
+                                    borderRadius: 3,
+                                    fontWeight: 600
+                                }}
+                            >
+                                {t('goToHome')}
+                            </Button>
                         </>
                     )}
                 </Paper>

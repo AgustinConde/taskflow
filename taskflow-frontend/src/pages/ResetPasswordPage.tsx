@@ -137,9 +137,23 @@ const ResetPasswordPage: React.FC = () => {
                             <Alert severity="success" sx={{ mb: 2 }}>
                                 {t('passwordResetSuccess')}
                             </Alert>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                                 {t('passwordResetRedirecting')}
                             </Typography>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={() => navigate('/', { replace: true })}
+                                sx={{
+                                    px: 4,
+                                    py: 1.5,
+                                    borderRadius: 3,
+                                    fontWeight: 600,
+                                    boxShadow: 4
+                                }}
+                            >
+                                {t('goToHome')}
+                            </Button>
                         </>
                     ) : (
                         <form onSubmit={handleSubmit}>

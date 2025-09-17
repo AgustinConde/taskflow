@@ -15,17 +15,14 @@ namespace TaskFlow.Api.Services
         {
             var confirmLink = $"{baseUrl}/confirm-email?token={token}";
             var subject = "Confirm your TaskFlow account";
-            var body = $@"Hello {user.Username},
-
-Thank you for registering with TaskFlow!
-
-To complete your registration and activate your account, please click the link below:
-{confirmLink}
-
-If you did not create this account, please ignore this email.
-
-Best regards,
-TaskFlow Team";
+            var body =
+                $"Hello {user.Username},\r\n\r\n" +
+                "Thank you for registering in TaskFlow!\r\n\r\n" +
+                "To complete your registration and activate your account, please click the following link:\r\n" +
+                $"{confirmLink}\r\n\r\n" +
+                "If you did not create this account, please ignore this email.\r\n\r\n" +
+                "Best regards,\r\n" +
+                "TaskFlow Team";
 
             try
             {
@@ -232,19 +229,15 @@ TaskFlow Team";
             await _context.SaveChangesAsync();
             var resetLink = $"{baseUrl}/reset-password?token={token}";
             var subject = "Reset your TaskFlow password";
-            var body = $@"Hello {user.Username},
-
-We received a request to reset your TaskFlow account password.
-
-To reset your password, please click the link below:
-{resetLink}
-
-This link will expire in 1 hour for security reasons.
-
-If you did not request this password reset, please ignore this email.
-
-Best regards,
-TaskFlow Team";
+            var body =
+                $"Hello {user.Username},\r\n\r\n" +
+                "We received a request to reset your TaskFlow account password.\r\n\r\n" +
+                "To reset your password, please click the link below:\r\n" +
+                $"{resetLink}\r\n\r\n" +
+                "This link will expire in 1 hour for security reasons.\r\n\r\n" +
+                "If you did not request this password reset, please ignore this email.\r\n\r\n" +
+                "Best regards,\r\n" +
+                "TaskFlow Team";
             await emailService.SendEmailAsync(user.Email, subject, body);
             return;
         }

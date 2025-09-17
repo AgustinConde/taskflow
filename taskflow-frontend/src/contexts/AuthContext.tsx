@@ -65,14 +65,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const register = async (data: RegisterRequest): Promise<boolean> => {
         try {
-            console.log('Attempting registration with:', { username: data.username, email: data.email });
-            const authResponse = await authService.register(data);
-            console.log('Registration successful:', authResponse);
-            const userData = await authService.getCurrentUser();
+            const success = await authService.register(data);
+            if (success) {
 
-            setUser(userData);
-            setToken(authResponse.token);
-            return true;
+                return true;
+            }
+            return false;
         } catch (error) {
             if (error instanceof Error) {
             }

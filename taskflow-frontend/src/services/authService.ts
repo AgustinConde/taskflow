@@ -3,6 +3,17 @@ const ROOT_URL = import.meta.env.VITE_ROOT_URL;
 const API_URL = `${ROOT_URL}/api`;
 
 class AuthService {
+    async resendConfirmationEmail(email: string): Promise<void> {
+        const response = await fetch(`${API_URL}/auth/resend-confirmation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(email)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to resend confirmation email');
+        }
+    }
 
     async forgotPassword(email: string): Promise<void> {
         const response = await fetch(`${API_URL}/auth/forgot`, {
@@ -53,12 +64,13 @@ class AuthService {
         const authResponse: AuthResponse = await response.json();
         if (authResponse.avatarUrl && authResponse.avatarUrl.startsWith('/uploads/')) {
             authResponse.avatarUrl = `${ROOT_URL}${authResponse.avatarUrl}`;
+            authResponse.avatarUrl = `${authResponse.avatarUrl}?t=${Date.now()}`;
         }
         this.setToken(authResponse.token);
         return authResponse;
     }
 
-    async register(data: RegisterRequest): Promise<AuthResponse> {
+    async register(data: RegisterRequest): Promise<boolean> {
 
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
@@ -72,12 +84,7 @@ class AuthService {
             throw new Error(error.message || 'Registration failed');
         }
 
-        const authResponse: AuthResponse = await response.json();
-        if (authResponse.avatarUrl && authResponse.avatarUrl.startsWith('/uploads/')) {
-            authResponse.avatarUrl = `${ROOT_URL}${authResponse.avatarUrl}`;
-        }
-        this.setToken(authResponse.token);
-        return authResponse;
+        return true;
     }
 
     async getCurrentUser(): Promise<User> {
@@ -92,6 +99,7 @@ class AuthService {
         const user: User = await response.json();
         if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/')) {
             user.avatarUrl = `${ROOT_URL}${user.avatarUrl}`;
+            user.avatarUrl = `${user.avatarUrl}?t=${Date.now()}`;
         }
         return user;
     }

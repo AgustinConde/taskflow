@@ -126,13 +126,13 @@ describe('Auth Types', () => {
 
     describe('AuthContextType interface', () => {
         it('should have correct method signatures', () => {
-            const mockLogin = async (credentials: LoginRequest): Promise<boolean> => {
-                return true;
-            };
+            // const mockLogin = async (credentials: LoginRequest): Promise<boolean> => {
+            //     return true;
+            // };
 
-            const mockRegister = async (data: RegisterRequest): Promise<boolean> => {
-                return true;
-            };
+            // const mockRegister = async (data: RegisterRequest): Promise<boolean> => {
+            //     return true;
+            // };
 
             const mockLogout = (): void => {
             };
@@ -143,8 +143,8 @@ describe('Auth Types', () => {
                 user: null,
                 setUser: mockSetUser,
                 token: null,
-                login: mockLogin,
-                register: mockRegister,
+                login: async () => true,
+                register: async () => true,
                 logout: mockLogout,
                 isAuthenticated: false,
                 loading: false

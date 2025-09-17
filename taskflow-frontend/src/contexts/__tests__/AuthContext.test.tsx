@@ -422,11 +422,9 @@ describe('AuthContext', () => {
             });
         });
 
-        it('should call authService.register and set user/token on success', async () => {
-            const mockUser = { id: 2, username: 'newuser', email: 'new@test.com', createdAt: '2025-01-01T00:00:00Z' };
+        it('should call authService.register and show success on true', async () => {
             vi.mocked(authService.getToken).mockReturnValue(null);
-            vi.mocked(authService.register).mockResolvedValue({ token: 'mock-token', username: 'newuser', email: 'new@test.com', expiresAt: '2025-01-02T00:00:00Z' });
-            vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
+            vi.mocked(authService.register).mockResolvedValue(true);
 
             const TestRegisterComponent = () => {
                 const auth = useAuth();
@@ -435,7 +433,6 @@ describe('AuthContext', () => {
                         const result = await auth.register({ username: 'newuser', email: 'new@test.com', password: '123' });
                         expect(result).toBe(true);
                         expect(authService.register).toHaveBeenCalledWith({ username: 'newuser', email: 'new@test.com', password: '123' });
-                        expect(authService.getCurrentUser).toHaveBeenCalled();
                     }}>
                         Register
                     </button>
@@ -455,7 +452,6 @@ describe('AuthContext', () => {
             screen.getByRole('button').click();
             await waitFor(() => {
                 expect(authService.register).toHaveBeenCalled();
-                expect(authService.getCurrentUser).toHaveBeenCalled();
             });
         });
 

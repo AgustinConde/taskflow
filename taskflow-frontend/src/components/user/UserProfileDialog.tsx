@@ -80,8 +80,8 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
     const validateImage = (file: File): string | null => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
         const maxSize = 2 * 1024 * 1024; // 2MB
-        if (!allowedTypes.includes(file.type)) return t('invalidImageType');
-        if (file.size > maxSize) return t('imageTooLarge');
+        if (!allowedTypes.includes(file.type)) return t('invalidImageType', 'Invalid image type. Only JPG, PNG or WEBP allowed.');
+        if (file.size > maxSize) return t('imageTooLarge', 'Image is too large (max 2MB).');
         return null;
     };
 
@@ -114,6 +114,8 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
         try {
             let avatarUrl = avatarPreview;
             if (avatarFile) {
+                setError(null);
+                setSuccess(t('uploading', 'Uploading photo...'));
                 const formData = new FormData();
                 formData.append('avatar', avatarFile);
                 const token = localStorage.getItem('taskflow_token');
@@ -123,8 +125,9 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
                 });
                 const result = await response.json();
+                setSuccess(null);
                 if (!response.ok) {
-                    setError(result.message || t('saveError'));
+                    setError(result.message ? t(result.message) : t('user.photo.no_file'));
                     setLoading(false);
                     return;
                 }
@@ -132,8 +135,10 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                     avatarUrl = result.url.startsWith('/uploads/')
                         ? `${ROOT_URL}${result.url}`
                         : result.url;
-                    setAvatarPreview(avatarUrl);
-                    setUser((prev: User | null) => prev ? { ...prev, avatarUrl } : prev);
+                    const cacheBustingUrl = `${avatarUrl}?t=${Date.now()}`;
+
+                    setAvatarPreview(cacheBustingUrl);
+                    setUser((prev: User | null) => prev ? { ...prev, avatarUrl: cacheBustingUrl } : prev);
                 }
             }
 
@@ -305,7 +310,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                     <Box sx={{ color: 'error.main', mb: 2, textAlign: 'center', fontWeight: 500 }}>{error}</Box>
                 )}
                 {success && (
-                    <Box sx={{ color: 'success.main', mb: 2, textAlign: 'center', fontWeight: 500 }}>{success}</Box>
+                    <Box sx={{ color: success === t('uploading', 'Uploading photo...') ? 'info.main' : 'success.main', mb: 2, textAlign: 'center', fontWeight: 500 }}>{success}</Box>
                 )}
                 <Stack spacing={3.5} sx={{ mt: 2 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>

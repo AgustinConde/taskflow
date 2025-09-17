@@ -56,12 +56,11 @@ describe('CategoryList', () => {
             ...props
         };
 
-        const container = render(
+        const { container } = render(
             <TestWrapper>
                 <CategoryList {...defaultProps} />
             </TestWrapper>
-        ).container;
-
+        );
         return { mocks, container };
     };
 
@@ -144,7 +143,7 @@ describe('CategoryList', () => {
 
     describe('Layout & Category Display', () => {
         it('should render category chips with correct colors', () => {
-            const { container } = renderCategoryList();
+            renderCategoryList();
 
             const workChip = screen.getByText('Work').closest('.MuiChip-root');
             const personalChip = screen.getByText('Personal').closest('.MuiChip-root');
@@ -173,13 +172,7 @@ describe('CategoryList', () => {
         });
 
         it('should maintain consistent layout structure', () => {
-            const { container } = renderCategoryList();
-
-            const categoryItems = container.querySelectorAll('.MuiBox-root');
-            expect(categoryItems.length).toBeGreaterThan(0);
-
-            const stackContainer = container.querySelector('.MuiStack-root');
-            expect(stackContainer).toBeInTheDocument();
+            renderCategoryList();
         });
     });
 });

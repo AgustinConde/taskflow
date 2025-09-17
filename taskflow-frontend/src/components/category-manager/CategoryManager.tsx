@@ -130,7 +130,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
             resetForm();
             onCategoriesChange?.();
         } catch (error) {
-            console.error('Error saving category:', error);
         }
     };
 
@@ -155,7 +154,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose, onCate
             onCategoriesChange?.();
             setConfirmDialog({ open: false, category: null, loading: false });
         } catch (error) {
-            console.error('Error deleting category:', error);
             setConfirmDialog(prev => ({ ...prev, loading: false }));
         }
     };

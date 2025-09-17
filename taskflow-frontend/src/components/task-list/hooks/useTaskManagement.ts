@@ -21,7 +21,6 @@ export const useTaskManagement = () => {
             setTasks(data);
             return data;
         } catch (err: any) {
-            console.error("Error fetching tasks:", err);
             showError(err.message || 'Failed to fetch tasks');
             return [];
         } finally {

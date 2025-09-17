@@ -55,7 +55,6 @@ const TaskList = memo(() => {
         try {
             await updateTaskMutation.mutateAsync(task);
         } catch (error) {
-            console.error('Error updating task:', error);
         }
     }, [updateTaskMutation]);
 
@@ -63,7 +62,6 @@ const TaskList = memo(() => {
         try {
             await toggleCompletionMutation.mutateAsync(task);
         } catch (error) {
-            console.error('Error toggling task completion:', error);
         }
     }, [toggleCompletionMutation]);
 
@@ -77,7 +75,6 @@ const TaskList = memo(() => {
                 await deleteTaskMutation.mutateAsync(deleteId);
                 setDeleteId(null);
             } catch (error) {
-                console.error('Error deleting task:', error);
             }
         }
     }, [deleteId, deleteTaskMutation]);

@@ -59,8 +59,6 @@ class AuthService {
     }
 
     async register(data: RegisterRequest): Promise<AuthResponse> {
-        console.log('AuthService: Sending registration request to:', `${API_URL}/auth/register`);
-        console.log('AuthService: Registration data:', { username: data.username, email: data.email });
 
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
@@ -68,11 +66,9 @@ class AuthService {
             body: JSON.stringify(data)
         });
 
-        console.log('AuthService: Registration response status:', response.status);
 
         if (!response.ok) {
             const error = await response.json();
-            console.error('AuthService: Registration failed with error:', error);
             throw new Error(error.message || 'Registration failed');
         }
 

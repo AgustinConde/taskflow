@@ -21,6 +21,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+
+
     useEffect(() => {
         const initializeAuth = async () => {
             const savedToken = authService.getToken();
@@ -36,7 +38,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                         authService.removeToken();
                     }
                 } catch (error) {
-                    console.error('Auth initialization error:', error);
                     authService.removeToken();
                 }
             }
@@ -58,7 +59,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (error && error.code === 'emailNotConfirmed') {
                 return { emailNotConfirmed: true, email: credentials.username };
             }
-            console.error('Login error:', error);
             return false;
         }
     };
@@ -74,9 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setToken(authResponse.token);
             return true;
         } catch (error) {
-            console.error('Registration error details:', error);
             if (error instanceof Error) {
-                console.error('Error message:', error.message);
             }
             return false;
         }

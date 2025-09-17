@@ -15,7 +15,6 @@ export const useCategoryOperations = () => {
             setCategories(data);
         } catch (error) {
             showError(t('errorLoadingCategories'));
-            console.error('Error loading categories:', error);
         } finally {
             setLoading(false);
         }
@@ -63,7 +62,6 @@ export const useCategoryOperations = () => {
             onSuccess();
         } catch (error) {
             showError(editingCategory ? t('errorUpdatingCategory') : t('errorCreatingCategory'));
-            console.error('Error saving category:', error);
         } finally {
             setLoading(false);
         }
@@ -83,7 +81,6 @@ export const useCategoryOperations = () => {
             onSuccess();
         } catch (error) {
             showError(t('errorDeletingCategory'));
-            console.error('Error deleting category:', error);
         } finally {
             setLoading(false);
         }

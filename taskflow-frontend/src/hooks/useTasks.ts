@@ -49,7 +49,6 @@ export const useCreateTask = () => {
             showSuccess(t('taskCreatedSuccessfully', 'Task created successfully'));
         },
         onError: (error) => {
-            console.error('Error creating task:', error);
             showError(t('errorCreatingTask', 'Error creating task'));
         },
     });
@@ -79,7 +78,6 @@ export const useUpdateTask = () => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }
-            console.error('Error updating task:', error);
             showError(t('errorUpdatingTask', 'Error updating task'));
         },
         onSettled: () => {
@@ -113,7 +111,6 @@ export const useDeleteTask = () => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }
-            console.error('Error deleting task:', error);
             showError(t('errorDeletingTask', 'Error deleting task'));
         },
         onSettled: () => {
@@ -152,7 +149,6 @@ export const useToggleTaskCompletion = () => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }
-            console.error('Error toggling task completion:', error);
             showError(t('errorUpdatingTask', 'Error updating task'));
         },
         onSettled: () => {

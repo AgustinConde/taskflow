@@ -103,6 +103,21 @@ describe('useAuthOperations Hook', () => {
                 await result.current.handleLogin({ username: 'fail', password: 'fail' });
             });
         });
+
+        it('should call setError with emailNotConfirmed translation if login returns emailNotConfirmed object', async () => {
+            (useAuth as unknown as { mockImplementationOnce: Function }).mockImplementationOnce(() => ({
+                login: vi.fn().mockResolvedValue({ emailNotConfirmed: true, email: 'user' }),
+                register: vi.fn()
+            }));
+            const setError = vi.fn();
+            const { result } = renderHook(() => useAuthOperations({ ...mockProps, setError }), {
+                wrapper: createWrapper(),
+            });
+            await act(async () => {
+                await result.current.handleLogin({ username: 'user', password: 'pass' });
+            });
+            expect(setError).toHaveBeenCalledWith(expect.stringContaining('You must confirm your email before logging in.'));
+        });
     });
     describe('handleRegister', () => {
         it('should handle successful registration', async () => {

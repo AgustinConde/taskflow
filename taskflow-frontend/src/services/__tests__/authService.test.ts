@@ -134,8 +134,6 @@ describe('AuthService', () => {
     });
 
     describe('avatarUrl formatting', () => {
-        // const getRootUrl = () => (import.meta.env?.VITE_ROOT_URL || process.env.VITE_ROOT_URL || 'http://localhost:5149');
-
         it('formats avatarUrl in login', async () => {
             const loginResponse = { token: 't', username: 'u', email: 'e', avatarUrl: '/uploads/avatar.png' };
             global.fetch = vi.fn().mockResolvedValue({
@@ -143,8 +141,6 @@ describe('AuthService', () => {
                 json: vi.fn()
                     .mockResolvedValueOnce(loginResponse)
             });
-            // await authService.login({ username: 'u', password: 'p' });
-            // expect(result.avatarUrl).toBe(`${getRootUrl()}/uploads/avatar.png`);
         });
 
         it('register returns true on success', async () => {
@@ -162,8 +158,6 @@ describe('AuthService', () => {
                 ok: true,
                 json: vi.fn().mockResolvedValue(userResponse)
             });
-            // await authService.getCurrentUser();
-            // expect(result.avatarUrl).toBe(`${getRootUrl()}/uploads/avatar.png`);
         });
     });
 
@@ -223,6 +217,125 @@ describe('AuthService', () => {
         });
     });
 
+    describe('resendConfirmationEmail', () => {
+        const originalFetch = global.fetch;
+        afterEach(() => {
+            global.fetch = originalFetch;
+        });
+
+        it('should call fetch with correct parameters', async () => {
+            global.fetch = vi.fn().mockResolvedValue({ ok: true });
+            await authService.resendConfirmationEmail('test@test.com');
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_ROOT_URL}/api/auth/resend-confirmation`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test@test.com' })
+                }
+            );
+        });
+
+        it('should throw error with custom message', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: false,
+                json: vi.fn().mockResolvedValue({ message: 'Custom email error' })
+            });
+            await expect(authService.resendConfirmationEmail('test@test.com')).rejects.toThrow('Custom email error');
+        });
+
+        it('should throw default error message', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: false,
+                json: vi.fn().mockResolvedValue({})
+            });
+            await expect(authService.resendConfirmationEmail('test@test.com')).rejects.toThrow('Failed to resend confirmation email');
+        });
+    });
+
+    describe('forgotPassword', () => {
+        const originalFetch = global.fetch;
+        afterEach(() => {
+            global.fetch = originalFetch;
+        });
+
+        it('should call fetch with correct parameters', async () => {
+            global.fetch = vi.fn().mockResolvedValue({ ok: true });
+            await authService.forgotPassword('test@test.com');
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_ROOT_URL}/api/auth/forgot`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test@test.com' })
+                }
+            );
+        });
+
+        it('should throw error with custom message', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: false,
+                json: vi.fn().mockResolvedValue({ message: 'Custom forgot error' })
+            });
+            await expect(authService.forgotPassword('test@test.com')).rejects.toThrow('Custom forgot error');
+        });
+
+        it('should throw default error message', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: false,
+                json: vi.fn().mockResolvedValue({})
+            });
+            await expect(authService.forgotPassword('test@test.com')).rejects.toThrow('Failed to send reset email');
+        });
+    });
+
+    describe('login emailNotConfirmed error', () => {
+        const originalFetch = global.fetch;
+        afterEach(() => {
+            global.fetch = originalFetch;
+        });
+
+        it('should throw emailNotConfirmed error object', async () => {
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: false,
+                json: vi.fn().mockResolvedValue({ message: 'auth.login.emailNotConfirmed' })
+            });
+
+            try {
+                await authService.login({ username: 'test', password: 'test' });
+            } catch (error: any) {
+                expect(error.code).toBe('emailNotConfirmed');
+                expect(error.email).toBe('test');
+                expect(error.message).toBe('auth.login.emailNotConfirmed');
+            }
+        });
+    });
+
+    describe('avatarUrl formatting in login', () => {
+        const originalFetch = global.fetch;
+        afterEach(() => {
+            global.fetch = originalFetch;
+        });
+
+        it('should format avatarUrl with ROOT_URL and timestamp', async () => {
+            const mockResponse = {
+                token: 'token',
+                username: 'user',
+                email: 'user@test.com',
+                avatarUrl: '/uploads/avatar.png'
+            };
+
+            global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue(mockResponse)
+            });
+
+            const result = await authService.login({ username: 'user', password: 'pass' });
+            expect(result.avatarUrl).toContain(`${import.meta.env.VITE_ROOT_URL}/uploads/avatar.png?t=`);
+            expect(authService.getToken()).toBe('token');
+        });
+    });
+
     describe('register error branches', () => {
         const originalFetch = global.fetch;
         afterEach(() => {
@@ -263,7 +376,6 @@ describe('AuthService', () => {
                 json: vi.fn()
                     .mockResolvedValueOnce(loginResponse)
             });
-            // await authService.login({ username: 'u', password: 'p' });
         });
 
         it('formats avatarUrl in getCurrentUser', async () => {
@@ -272,8 +384,9 @@ describe('AuthService', () => {
                 ok: true,
                 json: vi.fn().mockResolvedValue(userResponse)
             });
-            // await authService.getCurrentUser();
-            // expect(result.avatarUrl).toBe(`${ROOT_URL}/uploads/avatar.png`);
+
+            const result = await authService.getCurrentUser();
+            expect(result.avatarUrl).toContain(`${import.meta.env.VITE_ROOT_URL}/uploads/avatar.png?t=`);
         });
     });
 });

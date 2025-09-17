@@ -3,7 +3,6 @@ using System.Security.Cryptography;
 using System.Text;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Models;
-using System.Threading.Tasks;
 
 namespace TaskFlow.Api.Services
 {
@@ -11,6 +10,61 @@ namespace TaskFlow.Api.Services
     {
         private readonly TaskFlowDbContext _context = context;
         private readonly JwtService _jwtService = jwtService;
+
+        private static async Task<bool> SendConfirmationEmailAsync(User user, string token, IEmailService emailService, string baseUrl)
+        {
+            var confirmLink = $"{baseUrl}/confirm-email?token={token}";
+            var subject = "Confirm your TaskFlow account";
+            var body = $@"Hello {user.Username},
+
+Thank you for registering with TaskFlow!
+
+To complete your registration and activate your account, please click the link below:
+{confirmLink}
+
+If you did not create this account, please ignore this email.
+
+Best regards,
+TaskFlow Team";
+
+            try
+            {
+                await emailService.SendEmailAsync(user.Email, subject, body);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<UserToken?> GetUserTokenByTokenAsync(string token)
+        {
+            return await _context.UserTokens.FirstOrDefaultAsync(t => t.Token == token && t.Type == TokenType.Confirmation);
+        }
+
+        public async Task<bool> ResendConfirmationEmailAsync(string email, IEmailService emailService, string baseUrl)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null || user.EmailConfirmed)
+                return false;
+
+            var userToken = await _context.UserTokens.FirstOrDefaultAsync(ut => ut.UserId == user.Id.ToString() && ut.Type == TokenType.Confirmation);
+            if (userToken == null)
+            {
+                userToken = new UserToken
+                {
+                    UserId = user.Id.ToString(),
+                    Token = Guid.NewGuid().ToString(),
+                    Expiration = DateTime.UtcNow.AddDays(1),
+                    Type = TokenType.Confirmation
+                };
+                _context.UserTokens.Add(userToken);
+                await _context.SaveChangesAsync();
+            }
+
+            return await SendConfirmationEmailAsync(user, userToken.Token, emailService, baseUrl);
+        }
 
         public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto, IEmailService emailService, string baseUrl)
         {
@@ -44,12 +98,8 @@ namespace TaskFlow.Api.Services
             _context.UserTokens.Add(userToken);
             await _context.SaveChangesAsync();
 
-            var confirmLink = $"{baseUrl}/confirm-email?token={confirmationToken}";
-            try
-            {
-                await emailService.SendEmailAsync(user.Email, "Confirm your account", $"Click here to confirm: {confirmLink}");
-            }
-            catch
+            var emailSent = await SendConfirmationEmailAsync(user, confirmationToken, emailService, baseUrl);
+            if (!emailSent)
             {
                 _context.UserTokens.Remove(userToken);
                 _context.Users.Remove(user);
@@ -57,14 +107,13 @@ namespace TaskFlow.Api.Services
                 return null;
             }
 
-            var token = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
-
             return new AuthResponseDto
             {
-                Token = token,
                 Username = user.Username,
                 Email = user.Email,
-                ExpiresAt = DateTime.UtcNow.AddDays(7)
+                Token = string.Empty,
+                ExpiresAt = DateTime.UtcNow.AddDays(1),
+                AvatarUrl = user.AvatarUrl
             };
         }
 
@@ -129,18 +178,43 @@ namespace TaskFlow.Api.Services
             rng.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
         }
+        public enum ConfirmEmailResult
+        {
+            Success,
+            AlreadyConfirmed,
+            Expired,
+            Invalid
+        }
 
-        public async Task<bool> ConfirmEmailAsync(string token)
+        public async Task<ConfirmEmailResult> ConfirmEmailAsync(string token)
         {
             var userToken = await _context.UserTokens
-                .FirstOrDefaultAsync(t => t.Token == token && t.Type == TokenType.Confirmation && t.Expiration > DateTime.UtcNow);
-            if (userToken == null) return false;
+                .FirstOrDefaultAsync(t => t.Token == token && t.Type == TokenType.Confirmation);
+            if (userToken == null)
+            {
+                return ConfirmEmailResult.Invalid;
+            }
+
+            if (userToken.Expiration < DateTime.UtcNow)
+            {
+                return ConfirmEmailResult.Expired;
+            }
+
             var user = await _context.Users.FindAsync(int.Parse(userToken.UserId));
-            if (user == null) return false;
+            if (user == null)
+            {
+                return ConfirmEmailResult.Invalid;
+            }
+
+            if (user.EmailConfirmed)
+            {
+                return ConfirmEmailResult.AlreadyConfirmed;
+            }
+
             user.EmailConfirmed = true;
             _context.UserTokens.Remove(userToken);
             await _context.SaveChangesAsync();
-            return true;
+            return ConfirmEmailResult.Success;
         }
 
         public async System.Threading.Tasks.Task RequestPasswordResetAsync(string email, IEmailService emailService, string baseUrl)
@@ -157,7 +231,21 @@ namespace TaskFlow.Api.Services
             });
             await _context.SaveChangesAsync();
             var resetLink = $"{baseUrl}/reset-password?token={token}";
-            await emailService.SendEmailAsync(user.Email, "Reset your password", $"Click here to reset your password: {resetLink}");
+            var subject = "Reset your TaskFlow password";
+            var body = $@"Hello {user.Username},
+
+We received a request to reset your TaskFlow account password.
+
+To reset your password, please click the link below:
+{resetLink}
+
+This link will expire in 1 hour for security reasons.
+
+If you did not request this password reset, please ignore this email.
+
+Best regards,
+TaskFlow Team";
+            await emailService.SendEmailAsync(user.Email, subject, body);
             return;
         }
 

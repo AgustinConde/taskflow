@@ -84,9 +84,14 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
-                    backgroundColor,
+                    position: 'relative',
+                    backgroundColor: 'background.paper',
                     flexWrap: 'nowrap',
-                    overflowX: 'auto'
+                    overflowX: 'auto',
+                    borderLeft: (theme) => `12px solid ${backgroundColor(theme)}`,
+                    '&:hover': {
+                        backgroundColor: 'action.hover'
+                    }
                 }}
             >
                 <TaskItemDisplay

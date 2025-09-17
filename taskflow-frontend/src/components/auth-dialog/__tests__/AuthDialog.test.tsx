@@ -45,6 +45,7 @@ describe('AuthDialog submit handlers', () => {
         vi.clearAllMocks();
         mockState = {
             activeTab: 0,
+            setActiveTab: vi.fn(),
             loading: false,
             setLoading: vi.fn(),
             error: null,
@@ -94,6 +95,7 @@ describe('AuthDialog logic and branches', () => {
         vi.clearAllMocks();
         mockState = {
             activeTab: 0,
+            setActiveTab: vi.fn(),
             loading: false,
             setLoading: vi.fn(),
             error: null,

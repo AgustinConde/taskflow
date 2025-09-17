@@ -133,5 +133,20 @@
     "user.profile.username_exists": "El nombre de usuario ya existe.",
     "user.profile.email_exists": "El email ya existe.",
     "user.profile.current_password_incorrect": "La contraseña actual es incorrecta.",
-    "user.profile.updated": "¡Perfil actualizado exitosamente!"
+    "user.profile.updated": "¡Perfil actualizado exitosamente!",
+    "confirmingEmail": "Confirmando tu email...",
+    "emailConfirmedSuccess": "¡Email confirmado exitosamente!",
+    "emailConfirmedRedirecting": "Redirigiendo al inicio de sesión...",
+    "invalidConfirmationLink": "Enlace de confirmación inválido o expirado.",
+    "emailConfirmationRedirectMessage": "Serás redirigido a la página de inicio de sesión en unos segundos.",
+    "resetPasswordTitle": "Restablecer contraseña",
+    "newPasswordLabel": "Nueva contraseña",
+    "confirmNewPasswordLabel": "Confirmar nueva contraseña",
+    "resetPasswordButton": "Restablecer contraseña",
+    "passwordResetSuccess": "¡Contraseña restablecida exitosamente!",
+    "passwordResetRedirecting": "Redirigiendo al inicio de sesión...",
+    "invalidResetLink": "Enlace de recuperación inválido o expirado.",
+    "passwordMinimumLength": "La contraseña debe tener al menos 6 caracteres.",
+    "passwordsDoNotMatchError": "Las contraseñas no coinciden.",
+    "failedToResetPassword": "Error al restablecer la contraseña."
 }

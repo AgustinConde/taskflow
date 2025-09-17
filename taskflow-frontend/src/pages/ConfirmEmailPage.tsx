@@ -1,10 +1,30 @@
 import React, { useEffect, useState } from 'react';
+import CountryFlag from 'react-country-flag';
+import { authService } from '../services/authService';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import {
+    Box,
+    Paper,
+    Typography,
+    CircularProgress,
+    IconButton,
+    Button,
+    ThemeProvider,
+    CssBaseline
+} from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import ChecklistIcon from '@mui/icons-material/Checklist';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useAppTheme } from '../components/app/hooks/useAppTheme';
+import { useAppLanguage } from '../components/app/hooks/useAppLanguage';
 
 const ConfirmEmailPage: React.FC = () => {
+    const { t } = useTranslation();
+    const { mode, theme, toggleTheme } = useAppTheme();
+    const { currentLanguage, handleLanguageChange } = useAppLanguage();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -16,7 +36,20 @@ const ConfirmEmailPage: React.FC = () => {
             return;
         }
         fetch(`${import.meta.env.VITE_ROOT_URL}/api/auth/confirm?token=${token}`)
-            .then(res => res.ok ? setStatus('success') : setStatus('error'))
+            .then(async res => {
+                const data = await res.json();
+                if (res.ok && data.token) {
+                    authService.setToken(data.token);
+                    setStatus('success');
+                } else if (data?.token) {
+                    authService.setToken(data.token);
+                    setStatus('success');
+                } else if (data?.message === 'auth.confirm.already_confirmed') {
+                    setStatus('success');
+                } else {
+                    setStatus('error');
+                }
+            })
             .catch(() => setStatus('error'));
     }, [searchParams]);
 
@@ -28,23 +61,96 @@ const ConfirmEmailPage: React.FC = () => {
     }, [status, navigate]);
 
     return (
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
-            <Paper elevation={6} sx={{ p: 5, borderRadius: 4, textAlign: 'center', maxWidth: 400 }}>
-                {status === 'loading' && <CircularProgress color="primary" sx={{ mb: 2 }} />}
-                {status === 'success' && <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />}
-                {status === 'error' && <ErrorIcon color="error" sx={{ fontSize: 60, mb: 2 }} />}
-                <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-                    {status === 'loading' && 'Confirming your email...'}
-                    {status === 'success' && 'Registration confirmed! Redirecting...'}
-                    {status === 'error' && 'Invalid or expired confirmation link.'}
-                </Typography>
-                {status === 'success' && (
-                    <Typography variant="body2" color="text.secondary">
-                        You will be redirected to the login page in a few seconds.
-                    </Typography>
-                )}
-            </Paper>
-        </Box>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
+                <IconButton onClick={toggleTheme} color="inherit">
+                    {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                </IconButton>
+                <Button
+                    onClick={handleLanguageChange}
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    sx={{
+                        fontSize: 22,
+                        px: 1.5,
+                        minWidth: 44,
+                        minHeight: 36,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    {currentLanguage === 'en' ? (
+                        <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
+                    ) : (
+                        <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
+                    )}
+                </Button>
+            </Box>
+
+            <Box
+                sx={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    px: 2
+                }}
+            >
+                <Paper
+                    elevation={8}
+                    sx={{
+                        p: 6,
+                        textAlign: 'center',
+                        maxWidth: 400,
+                        borderRadius: 4,
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main}22 0%, ${theme.palette.secondary.main}22 100%)`
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+                        <ChecklistIcon sx={{ fontSize: 32, color: 'primary.main', mr: 1.5 }} />
+                        <Typography variant="h4" fontWeight={800} color="primary">
+                            TaskFlow
+                        </Typography>
+                    </Box>
+
+                    {status === 'loading' && (
+                        <>
+                            <CircularProgress color="primary" sx={{ mb: 3 }} />
+                            <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+                                {t('confirmingEmail')}
+                            </Typography>
+                        </>
+                    )}
+
+                    {status === 'success' && (
+                        <>
+                            <CheckCircleIcon sx={{ fontSize: 60, mb: 2, color: 'success.main' }} />
+                            <Typography variant="h6" color="success.main" sx={{ mb: 2 }}>
+                                {t('emailConfirmedSuccess')}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {t('emailConfirmedRedirecting')}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {t('emailConfirmationRedirectMessage')}
+                            </Typography>
+                        </>
+                    )}
+
+                    {status === 'error' && (
+                        <>
+                            <ErrorIcon sx={{ fontSize: 60, mb: 2, color: 'error.main' }} />
+                            <Typography variant="h6" color="error.main" sx={{ mb: 2 }}>
+                                {t('invalidConfirmationLink')}
+                            </Typography>
+                        </>
+                    )}
+                </Paper>
+            </Box>
+        </ThemeProvider>
     );
 };
 

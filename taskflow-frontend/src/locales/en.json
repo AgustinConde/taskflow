@@ -133,5 +133,20 @@
     "user.profile.username_exists": "Username already exists.",
     "user.profile.email_exists": "Email already exists.",
     "user.profile.current_password_incorrect": "Current password is incorrect.",
-    "user.profile.updated": "Profile updated successfully!"
+    "user.profile.updated": "Profile updated successfully!",
+    "confirmingEmail": "Confirming your email...",
+    "emailConfirmedSuccess": "Email confirmed successfully!",
+    "emailConfirmedRedirecting": "Redirecting to login...",
+    "invalidConfirmationLink": "Invalid or expired confirmation link.",
+    "emailConfirmationRedirectMessage": "You will be redirected to the login page in a few seconds.",
+    "resetPasswordTitle": "Reset your password",
+    "newPasswordLabel": "New password",
+    "confirmNewPasswordLabel": "Confirm new password",
+    "resetPasswordButton": "Reset Password",
+    "passwordResetSuccess": "Password reset successfully!",
+    "passwordResetRedirecting": "Redirecting to login...",
+    "invalidResetLink": "Invalid or expired reset link.",
+    "passwordMinimumLength": "Password must be at least 6 characters.",
+    "passwordsDoNotMatchError": "Passwords do not match.",
+    "failedToResetPassword": "Failed to reset password."
 }

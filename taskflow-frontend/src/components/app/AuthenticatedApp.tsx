@@ -41,7 +41,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
 
     const handleOpenProfileDialog = () => setProfileDialogOpen(true);
     const handleCloseProfileDialog = () => setProfileDialogOpen(false);
-    const handleSaveProfile = (data: Partial<typeof user>) => {
+    const handleSaveProfile = () => {
         setProfileDialogOpen(false);
         showInfo(t('profileUpdated'));
     };

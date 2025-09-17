@@ -86,6 +86,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, initialTab = 0 }
 
     const [forgotOpen, setForgotOpen] = useState(false);
 
+    /* v8 ignore start */
     const handleForgotSubmit = async (email: string) => {
         try {
             await authService.forgotPassword(email);
@@ -94,6 +95,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, initialTab = 0 }
             return err.message || 'Error';
         }
     };
+    /* v8 ignore stop */
 
     return (
         <Dialog

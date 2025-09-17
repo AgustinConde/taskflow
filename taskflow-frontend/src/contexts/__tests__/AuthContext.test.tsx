@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../AuthContext';
+import React from 'react';
 
 vi.mock('../../services/authService', () => ({
     authService: {
@@ -218,6 +219,46 @@ describe('AuthContext', () => {
             );
 
             expect(screen.getByTestId('has-logout')).toHaveTextContent('true');
+        });
+
+        it('should return emailNotConfirmed object if error.code is emailNotConfirmed', async () => {
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.login).mockRejectedValue({ code: 'emailNotConfirmed' });
+            let result: any;
+            const TestLoginComponent = () => {
+                const auth = useAuth();
+                React.useEffect(() => {
+                    auth.login({ username: 'user', password: 'pass' }).then(r => { result = r; });
+                }, []);
+                return <div data-testid="login-test" />;
+            };
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestLoginComponent />
+                </Wrapper>
+            );
+            await waitFor(() => expect(result).toEqual({ emailNotConfirmed: true, email: 'user' }));
+        });
+
+        it('should return false if register returns false', async () => {
+            vi.mocked(authService.getToken).mockReturnValue(null);
+            vi.mocked(authService.register).mockResolvedValue(false);
+            let result: any;
+            const TestRegisterComponent = () => {
+                const auth = useAuth();
+                React.useEffect(() => {
+                    auth.register({ username: 'u', email: 'e', password: 'p' }).then(r => { result = r; });
+                }, []);
+                return <div data-testid="register-test" />;
+            };
+            const Wrapper = createWrapper();
+            render(
+                <Wrapper>
+                    <TestRegisterComponent />
+                </Wrapper>
+            );
+            await waitFor(() => expect(result).toBe(false));
         });
     });
 

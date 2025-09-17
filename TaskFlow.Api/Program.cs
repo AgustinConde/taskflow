@@ -106,6 +106,8 @@ app.MapGet("/weatherforecast", () =>
 app.MapControllers();
 
 app.Run();
+// Fallback to SPA only for routes without file extensions
+app.MapFallbackToFile("{*path:regex(^(?!.*\\.).*$)}", "index.html");
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {

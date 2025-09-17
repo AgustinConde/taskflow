@@ -50,6 +50,9 @@ Generated\ Files/
 # Backend config and uploads
 TaskFlow.Api/appsettings*.json
 TaskFlow.Api/wwwroot/uploads/
+TaskFlow.Api/wwwroot/*.js
+TaskFlow.Api/wwwroot/*.css
+TaskFlow.Api/wwwroot/assets/
 
 # NUnit
 *.VisualState.xml

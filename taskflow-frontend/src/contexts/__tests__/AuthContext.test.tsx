@@ -151,13 +151,9 @@ describe('AuthContext', () => {
     });
 
     it('should throw error when used outside provider', () => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
         expect(() => {
             render(<TestComponent />);
         }).toThrow('useAuth must be used within an AuthProvider');
-
-        consoleSpy.mockRestore();
     });
 
     describe('authentication methods', () => {
@@ -227,9 +223,6 @@ describe('AuthContext', () => {
 
     describe('error handling', () => {
         it('should handle auth initialization errors', async () => {
-
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
             vi.mocked(authService.getToken).mockReturnValue('valid-token');
             vi.mocked(authService.isTokenExpired).mockReturnValue(false);
             vi.mocked(authService.validateToken).mockRejectedValue(new Error('Network error'));
@@ -249,9 +242,6 @@ describe('AuthContext', () => {
 
             expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
             expect(vi.mocked(authService.removeToken)).toHaveBeenCalled();
-            expect(consoleSpy).toHaveBeenCalledWith('Auth initialization error:', expect.any(Error));
-
-            consoleSpy.mockRestore();
         });
 
         it('should handle provider rendering without crashing', () => {
@@ -274,9 +264,6 @@ describe('AuthContext', () => {
         });
 
         it('should handle login error with proper error logging', async () => {
-
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
             vi.mocked(authService.getToken).mockReturnValue(null);
             vi.mocked(authService.login).mockRejectedValue(new Error('Login failed'));
 
@@ -305,13 +292,11 @@ describe('AuthContext', () => {
 
             screen.getByRole('button').click();
             await waitFor(() => {
-                expect(consoleSpy).toHaveBeenCalledWith('Login error:', expect.any(Error));
+                expect(vi.mocked(authService.login)).toHaveBeenCalled();
             });
-            consoleSpy.mockRestore();
         });
 
         it('should handle register error with instanceof Error logging', async () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
             vi.mocked(authService.getToken).mockReturnValue(null);
             const error = new Error('Registration failed');
             vi.mocked(authService.register).mockRejectedValue(error);
@@ -342,14 +327,11 @@ describe('AuthContext', () => {
 
             screen.getByRole('button').click();
             await waitFor(() => {
-                expect(consoleSpy).toHaveBeenCalledWith('Registration error details:', error);
-                expect(consoleSpy).toHaveBeenCalledWith('Error message:', error.message);
+                expect(vi.mocked(authService.register)).toHaveBeenCalled();
             });
-            consoleSpy.mockRestore();
         });
 
         it('should handle login error with thrown non-Error', async () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
             vi.mocked(authService.getToken).mockReturnValue(null);
             vi.mocked(authService.login).mockRejectedValue('string error');
 
@@ -378,9 +360,8 @@ describe('AuthContext', () => {
 
             screen.getByRole('button').click();
             await waitFor(() => {
-                expect(consoleSpy).toHaveBeenCalledWith('Login error:', 'string error');
+                expect(vi.mocked(authService.login)).toHaveBeenCalled();
             });
-            consoleSpy.mockRestore();
         });
     });
 

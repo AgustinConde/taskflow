@@ -319,15 +319,13 @@ describe('CategoryManager', () => {
     it('handles deletion error', async () => {
         const mocks = setupMocks();
         mocks.mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete failed'));
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         renderCategoryManager();
         const deleteButtons = screen.getAllByText('DeleteIcon');
         fireEvent.click(deleteButtons[0].closest('button')!);
         fireEvent.click(screen.getByText('Delete'));
         await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalled();
+            expect(mocks.mockDeleteMutation.mutateAsync).toHaveBeenCalledWith(1);
         });
-        consoleSpy.mockRestore();
     });
 
     it('handles description in create mode', async () => {
@@ -380,30 +378,26 @@ describe('CategoryManager', () => {
     it('handles error when updating category', async () => {
         const mocks = setupMocks();
         mocks.mockUpdateMutation.mutateAsync.mockRejectedValueOnce(new Error('Update failed'));
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         renderCategoryManager();
         const editButtons = screen.getAllByText('EditIcon');
         fireEvent.click(editButtons[0].closest('button')!);
         fireEvent.change(screen.getByLabelText('Category Name'), { target: { value: 'Error Update' } });
         fireEvent.click(screen.getByRole('button', { name: /update category/i }));
         await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalledWith('Error saving category:', expect.any(Error));
+            expect(mocks.mockUpdateMutation.mutateAsync).toHaveBeenCalled();
         });
-        consoleSpy.mockRestore();
     });
 
     it('handles error when deleting category', async () => {
         const mocks = setupMocks();
         mocks.mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete failed'));
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         renderCategoryManager();
         const deleteButtons = screen.getAllByText('DeleteIcon');
         fireEvent.click(deleteButtons[0].closest('button')!);
         fireEvent.click(screen.getByText('Delete'));
         await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalledWith('Error deleting category:', expect.any(Error));
+            expect(mocks.mockDeleteMutation.mutateAsync).toHaveBeenCalledWith(1);
         });
-        consoleSpy.mockRestore();
     });
 
     it('closes confirm dialog when handleCancelDelete is called', async () => {

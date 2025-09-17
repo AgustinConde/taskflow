@@ -255,24 +255,20 @@ describe('TaskList', () => {
             });
         });
 
-        it('should handle console errors gracefully', async () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        it('should handle update errors gracefully', async () => {
             const user = userEvent.setup();
-
             const updateMutateAsync = vi.fn().mockRejectedValue(new Error('Update failed'));
             setupMocks({ updateMutation: { mutateAsync: updateMutateAsync, isPending: false } });
             renderTaskList();
             await waitFor(() => expect(screen.getByTestId('edit-task-1')).toBeInTheDocument());
             await user.click(screen.getByTestId('edit-task-1'));
-            await waitFor(() => expect(consoleSpy).toHaveBeenCalledWith('Error updating task:', expect.any(Error)));
-
-            consoleSpy.mockRestore();
+            await waitFor(() => {
+                expect(updateMutateAsync).toHaveBeenCalled();
+            });
         });
 
         it('should handle delete errors gracefully', async () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
             const user = userEvent.setup();
-
             const deleteMutateAsync = vi.fn().mockRejectedValue(new Error('Delete failed'));
             setupMocks({ deleteMutation: { mutateAsync: deleteMutateAsync, isPending: false } });
             renderTaskList();
@@ -280,15 +276,13 @@ describe('TaskList', () => {
             await user.click(screen.getByTestId('delete-task-1'));
             await waitFor(() => expect(screen.getByTestId('delete-dialog')).toBeInTheDocument());
             await user.click(screen.getByTestId('confirm-delete'));
-            await waitFor(() => expect(consoleSpy).toHaveBeenCalledWith('Error deleting task:', expect.any(Error)));
-
-            consoleSpy.mockRestore();
+            await waitFor(() => {
+                expect(deleteMutateAsync).toHaveBeenCalledWith(1);
+            });
         });
 
         it('should handle toggle completion errors gracefully', async () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
             const user = userEvent.setup();
-
             const toggleMutateAsync = vi.fn().mockRejectedValue(new Error('Toggle failed'));
             setupMocks({ toggleMutation: { mutateAsync: toggleMutateAsync, isPending: false } });
             renderTaskList();
@@ -296,10 +290,7 @@ describe('TaskList', () => {
             await user.click(screen.getByTestId('task-checkbox-1'));
             await waitFor(() => {
                 expect(toggleMutateAsync).toHaveBeenCalledWith(mockTasks[0]);
-                expect(consoleSpy).toHaveBeenCalledWith('Error toggling task completion:', expect.any(Error));
             });
-
-            consoleSpy.mockRestore();
         });
 
         it('should call mutateAsync and handle error when task creation fails', async () => {

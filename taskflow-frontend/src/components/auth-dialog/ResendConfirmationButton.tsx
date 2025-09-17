@@ -17,7 +17,7 @@ const ResendConfirmationButton: React.FC<Props> = ({ email, setError }) => {
         setLoading(true);
         setError(null);
         try {
-            await authService.forgotPassword(email);
+            await authService.resendConfirmationEmail(email);
             setSent(true);
         } catch (err: any) {
             setError(err.message || t('resendFailed', 'Failed to resend confirmation email.'));

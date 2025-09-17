@@ -149,5 +149,8 @@
     "passwordMinimumLength": "Password must be at least 6 characters.",
     "passwordsDoNotMatchError": "Passwords do not match.",
     "failedToResetPassword": "Failed to reset password.",
-    "goToHome": "Go to Home"
+    "goToHome": "Go to Home",
+    "resendFailed": "Failed to resend confirmation email.",
+    "confirmationSent": "Confirmation email sent!",
+    "resendConfirmation": "Resend confirmation email"
 }

@@ -14,11 +14,14 @@ namespace TaskFlow.Api.Controllers
         private readonly JwtService _jwtService = jwtService;
 
         [HttpPost("resend-confirmation")]
-        public async Task<IActionResult> ResendConfirmation([FromBody] string email)
+        public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationDto request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
             var emailService = HttpContext.RequestServices.GetService(typeof(IEmailService)) as IEmailService;
-            var result = await _authService.ResendConfirmationEmailAsync(email, emailService!, frontendUrl);
+            var result = await _authService.ResendConfirmationEmailAsync(request.Email, emailService!, frontendUrl);
             if (!result)
                 return BadRequest(new { message = "auth.resend.not_eligible" });
             return Ok(new { message = "auth.resend.success" });

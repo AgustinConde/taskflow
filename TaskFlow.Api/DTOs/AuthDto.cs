@@ -77,4 +77,11 @@ namespace TaskFlow.Api.DTOs
         [StringLength(100, MinimumLength = 6)]
         public required string NewPassword { get; set; }
     }
+
+    public class ResendConfirmationDto
+    {
+        [Required]
+        [EmailAddress]
+        public required string Email { get; set; }
+    }
 }

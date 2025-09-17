@@ -149,5 +149,8 @@
     "passwordMinimumLength": "La contraseña debe tener al menos 6 caracteres.",
     "passwordsDoNotMatchError": "Las contraseñas no coinciden.",
     "failedToResetPassword": "Error al restablecer la contraseña.",
-    "goToHome": "Ir al inicio"
+    "goToHome": "Ir al inicio",
+    "resendFailed": "Error al reenviar el email de confirmación.",
+    "confirmationSent": "¡Email de confirmación enviado!",
+    "resendConfirmation": "Reenviar email de confirmación"
 }

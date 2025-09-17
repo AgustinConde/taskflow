@@ -43,7 +43,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     children,
     maxNotifications = 3,
     defaultDuration = 4000,
-    position = 'top-right'
+    position = 'bottom-left'
 }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
 

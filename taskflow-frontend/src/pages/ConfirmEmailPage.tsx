@@ -3,6 +3,7 @@ import CountryFlag from 'react-country-flag';
 import { authService } from '../services/authService';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { API_ENDPOINTS } from '../config/api';
 import {
     Box,
     Paper,
@@ -35,7 +36,7 @@ const ConfirmEmailPage: React.FC = () => {
             setStatus('error');
             return;
         }
-        fetch(`${import.meta.env.VITE_ROOT_URL}/api/auth/confirm?token=${token}`)
+        fetch(`${API_ENDPOINTS.auth.confirmEmail}?token=${token}`)
             .then(async res => {
                 const data = await res.json();
                 if (res.ok && data.token) {

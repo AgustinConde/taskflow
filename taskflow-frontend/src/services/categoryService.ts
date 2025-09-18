@@ -1,8 +1,8 @@
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../types/Category';
 import { authService } from './authService';
+import { API_ENDPOINTS } from '../config/api';
 
-const API_BASE_URL = 'http://localhost:5149/api';
-const API_URL = `${API_BASE_URL}/categories`;
+const API_URL = API_ENDPOINTS.categories.base;
 
 class CategoryService {
     private getAuthHeaders(): Record<string, string> {

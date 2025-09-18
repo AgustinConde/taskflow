@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CountryFlag from 'react-country-flag';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { API_ENDPOINTS } from '../config/api';
 import {
     Box,
     Paper,
@@ -51,7 +52,7 @@ const ResetPasswordPage: React.FC = () => {
         }
         setLoading(true);
         try {
-            const response = await fetch(`${import.meta.env.VITE_ROOT_URL}/api/auth/reset`, {
+            const response = await fetch(API_ENDPOINTS.auth.resetPassword, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, newPassword })

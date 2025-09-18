@@ -1,1 +1,30 @@
-export const API_BASE_URL = 'http://localhost:5149/api';
+// API Configuration
+const ROOT_URL = import.meta.env.VITE_ROOT_URL || 'http://localhost:5149';
+
+export const API_BASE_URL = `${ROOT_URL}/api`;
+
+// API Endpoints
+export const API_ENDPOINTS = {
+    auth: {
+        login: `${API_BASE_URL}/auth/login`,
+        register: `${API_BASE_URL}/auth/register`,
+        logout: `${API_BASE_URL}/auth/logout`,
+        me: `${API_BASE_URL}/auth/me`,
+        validate: `${API_BASE_URL}/auth/validate`,
+        forgotPassword: `${API_BASE_URL}/auth/forgot-password`,
+        resetPassword: `${API_BASE_URL}/auth/reset`,
+        confirmEmail: `${API_BASE_URL}/auth/confirm`,
+        resendConfirmation: `${API_BASE_URL}/auth/resend-confirmation`,
+    },
+    tasks: {
+        base: `${API_BASE_URL}/tasks`,
+        byId: (id: string | number) => `${API_BASE_URL}/tasks/${id}`,
+    },
+    categories: {
+        base: `${API_BASE_URL}/categories`,
+        byId: (id: string | number) => `${API_BASE_URL}/categories/${id}`,
+    },
+} as const;
+
+// Root URL for non-API resources (like avatar images)
+export { ROOT_URL };

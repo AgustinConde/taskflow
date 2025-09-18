@@ -25,7 +25,7 @@ interface UserProfileDialogProps {
     onSave: (data: UserProfileFormData) => void;
 }
 
-const ROOT_URL = import.meta.env.VITE_ROOT_URL;
+import { ROOT_URL } from '../../config/api';
 
 const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClose }) => {
     const { t } = useTranslation();

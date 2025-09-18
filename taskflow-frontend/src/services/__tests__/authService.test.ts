@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { authService } from '../authService';
 import { server } from '../../__tests__/mocks/server';
 
-const ROOT_URL = import.meta.env.VITE_ROOT_URL;
+import { ROOT_URL } from '../../config/api';
 
 const mockFetch = (responseData: any, ok = true, status = 200) => {
     return vi.fn().mockResolvedValue({

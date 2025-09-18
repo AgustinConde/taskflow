@@ -1,10 +1,9 @@
 import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../types/Auth';
-const ROOT_URL = import.meta.env.VITE_ROOT_URL;
-const API_URL = `${ROOT_URL}/api`;
+import { API_ENDPOINTS, ROOT_URL } from '../config/api';
 
 class AuthService {
     async resendConfirmationEmail(email: string): Promise<void> {
-        const response = await fetch(`${API_URL}/auth/resend-confirmation`, {
+        const response = await fetch(API_ENDPOINTS.auth.resendConfirmation, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
@@ -16,7 +15,7 @@ class AuthService {
     }
 
     async forgotPassword(email: string): Promise<void> {
-        const response = await fetch(`${API_URL}/auth/forgot`, {
+        const response = await fetch(API_ENDPOINTS.auth.forgotPassword, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
@@ -47,7 +46,7 @@ class AuthService {
     }
 
     async login(credentials: LoginRequest): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(API_ENDPOINTS.auth.login, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
@@ -72,7 +71,7 @@ class AuthService {
 
     async register(data: RegisterRequest): Promise<boolean> {
 
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(API_ENDPOINTS.auth.register, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -88,7 +87,7 @@ class AuthService {
     }
 
     async getCurrentUser(): Promise<User> {
-        const response = await fetch(`${API_URL}/auth/me`, {
+        const response = await fetch(API_ENDPOINTS.auth.me, {
             headers: this.getAuthHeaders()
         });
 
@@ -106,7 +105,7 @@ class AuthService {
 
     async validateToken(): Promise<boolean> {
         try {
-            const response = await fetch(`${API_URL}/auth/validate`, {
+            const response = await fetch(API_ENDPOINTS.auth.validate, {
                 headers: this.getAuthHeaders()
             });
             return response.ok;

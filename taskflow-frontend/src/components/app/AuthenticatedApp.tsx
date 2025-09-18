@@ -5,19 +5,20 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { Box, CircularProgress } from '@mui/material';
 import TaskList from '../task-list/TaskList';
 import { LazyDashboard } from '../dashboard';
+import CalendarPage from '../../pages/CalendarPage';
 import AppNavBar from './AppNavBar';
 import UserProfileDialog from '../user/UserProfileDialog';
 import type { Task } from '../../types/Task';
 import type { Category } from '../../types/Category';
 
 interface AuthenticatedAppProps {
-    currentTab: 'tasks' | 'dashboard';
+    currentTab: 'tasks' | 'dashboard' | 'calendar';
     mode: 'light' | 'dark';
     currentLanguage: string;
     tasks: Task[];
     categories: Category[];
     dataLoading: boolean;
-    onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard') => void;
+    onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard' | 'calendar') => void;
     onToggleTheme: () => void;
     onLanguageChange: () => void;
 }
@@ -90,6 +91,8 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
                     </Box>
                 ) : currentTab === 'dashboard' ? (
                     <LazyDashboard tasks={tasks} categories={categories} />
+                ) : currentTab === 'calendar' ? (
+                    <CalendarPage />
                 ) : (
                     <Box sx={{ px: { xs: 2, sm: 3 }, maxWidth: 1200, margin: '0 auto' }}>
                         <TaskList />

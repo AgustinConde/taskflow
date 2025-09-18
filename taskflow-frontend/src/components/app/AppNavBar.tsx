@@ -19,6 +19,7 @@ import {
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TaskIcon from '@mui/icons-material/Task';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -27,10 +28,10 @@ import type { User } from '../../types/Auth';
 
 interface AppNavBarProps {
     user: User | null;
-    currentTab: 'tasks' | 'dashboard';
+    currentTab: 'tasks' | 'dashboard' | 'calendar';
     mode: 'light' | 'dark';
     currentLanguage: string;
-    onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard') => void;
+    onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard' | 'calendar') => void;
     onToggleTheme: () => void;
     onLanguageChange: () => void;
     onLogout: () => void;
@@ -143,6 +144,12 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                             value="dashboard"
                             label={t('dashboard')}
                             icon={<DashboardIcon />}
+                            iconPosition="start"
+                        />
+                        <Tab
+                            value="calendar"
+                            label={t('calendar')}
+                            icon={<CalendarMonthIcon />}
                             iconPosition="start"
                         />
                     </Tabs>

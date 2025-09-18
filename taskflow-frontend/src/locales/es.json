@@ -152,5 +152,20 @@
     "goToHome": "Ir al inicio",
     "resendFailed": "Error al reenviar el email de confirmación.",
     "confirmationSent": "¡Email de confirmación enviado!",
-    "resendConfirmation": "Reenviar email de confirmación"
+    "resendConfirmation": "Reenviar email de confirmación",
+    "calendar": "Calendario",
+    "sun": "Dom",
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mié",
+    "thu": "Jue",
+    "fri": "Vie",
+    "sat": "Sáb",
+    "today": "Hoy",
+    "month": "Mes",
+    "week": "Semana",
+    "day": "Día",
+    "status": "Estado",
+    "overdue": "Vencida",
+    "active": "activos"
 }

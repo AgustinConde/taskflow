@@ -152,5 +152,20 @@
     "goToHome": "Go to Home",
     "resendFailed": "Failed to resend confirmation email.",
     "confirmationSent": "Confirmation email sent!",
-    "resendConfirmation": "Resend confirmation email"
+    "resendConfirmation": "Resend confirmation email",
+    "calendar": "Calendar",
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "today": "Today",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "status": "Status",
+    "overdue": "Overdue",
+    "active": "active"
 }

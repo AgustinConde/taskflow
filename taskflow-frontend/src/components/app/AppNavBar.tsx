@@ -24,6 +24,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import PWAStatusIndicator from '../common/PWAStatusIndicator';
 import type { User } from '../../types/Auth';
 
 interface AppNavBarProps {
@@ -156,6 +157,7 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PWAStatusIndicator />
                     {!isSmallScreen && (
                         <Typography
                             variant="body2"

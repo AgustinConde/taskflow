@@ -38,7 +38,7 @@ export const useCreateCategory = () => {
 
             showSuccess(t('categoryCreatedSuccessfully', 'Category created successfully'));
         },
-        onError: (error) => {
+        onError: (_error) => {
             showError(t('errorCreatingCategory', 'Error creating category'));
         },
     });
@@ -64,7 +64,7 @@ export const useUpdateCategory = () => {
 
             return { previousCategories };
         },
-        onError: (error, _updatedCategory, context) => {
+        onError: (_error, _updatedCategory, context) => {
             if (context?.previousCategories) {
                 queryClient.setQueryData(categoryKeys.lists(), context.previousCategories);
             }
@@ -97,7 +97,7 @@ export const useDeleteCategory = () => {
 
             return { previousCategories };
         },
-        onError: (error, _deletedCategoryId, context) => {
+        onError: (_error, _deletedCategoryId, context) => {
             if (context?.previousCategories) {
                 queryClient.setQueryData(categoryKeys.lists(), context.previousCategories);
             }

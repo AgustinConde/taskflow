@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { offlineStorage } from '../utils/offlineStorage';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from './useNotifications';
 import type { Task } from '../types/Task';
 import type { Category } from '../types/Category';
 

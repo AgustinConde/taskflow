@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from './useNotifications';
 
 interface BeforeInstallPromptEvent extends Event {
     readonly platforms: string[];

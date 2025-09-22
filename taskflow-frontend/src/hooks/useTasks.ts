@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from './useNotifications';
 import { useTranslation } from 'react-i18next';
 import { taskService } from '../services/taskService';
 import type { Task } from '../types/Task';
@@ -46,7 +46,7 @@ export const useCreateTask = () => {
 
             queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
 
-            showSuccess(t('taskCreatedSuccessfully', 'Task created successfully'));
+            showSuccess(t('taskCreatedSuccessfully', 'Task created successfully'), `task-created-${newTask.id}`);
         },
         onError: () => {
             showError(t('errorCreatingTask', 'Error creating task'));
@@ -83,8 +83,8 @@ export const useUpdateTask = () => {
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
         },
-        onSuccess: () => {
-            showSuccess(t('taskUpdatedSuccessfully', 'Task updated successfully'));
+        onSuccess: (_updatedTask, variables) => {
+            showSuccess(t('taskUpdatedSuccessfully', 'Task updated successfully'), `task-updated-${variables.id}`);
         },
     });
 };
@@ -116,8 +116,8 @@ export const useDeleteTask = () => {
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
         },
-        onSuccess: () => {
-            showSuccess(t('taskDeletedSuccessfully', 'Task deleted successfully'));
+        onSuccess: (_, deletedTaskId) => {
+            showSuccess(t('taskDeletedSuccessfully', 'Task deleted successfully'), `task-deleted-${deletedTaskId}`);
         },
     });
 };

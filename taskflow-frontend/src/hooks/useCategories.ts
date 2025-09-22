@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from './useNotifications';
 import { useTranslation } from 'react-i18next';
 import { categoryService } from '../services/categoryService';
 import type { Category } from '../types/Category';
@@ -36,7 +36,7 @@ export const useCreateCategory = () => {
 
             queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
 
-            showSuccess(t('categoryCreatedSuccessfully', 'Category created successfully'));
+            showSuccess(t('categoryCreatedSuccessfully', 'Category created successfully'), `category-created-${newCategory.id}`);
         },
         onError: (_error) => {
             showError(t('errorCreatingCategory', 'Error creating category'));
@@ -73,8 +73,8 @@ export const useUpdateCategory = () => {
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
         },
-        onSuccess: () => {
-            showSuccess(t('categoryUpdated', 'Category updated successfully'));
+        onSuccess: (_updatedCategory, variables) => {
+            showSuccess(t('categoryUpdated', 'Category updated successfully'), `category-updated-${variables.id}`);
         },
     });
 };
@@ -106,8 +106,8 @@ export const useDeleteCategory = () => {
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
         },
-        onSuccess: () => {
-            showSuccess(t('categoryDeletedSuccessfully', 'Category deleted successfully'));
+        onSuccess: (_, deletedCategoryId) => {
+            showSuccess(t('categoryDeletedSuccessfully', 'Category deleted successfully'), `category-deleted-${deletedCategoryId}`);
         },
     });
 };

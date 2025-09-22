@@ -40,7 +40,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'TaskFlow - Task Management App',
+        name: 'TaskFlow',
         short_name: 'TaskFlow',
         description: 'A powerful task management application with offline support',
         theme_color: '#7c3aed',

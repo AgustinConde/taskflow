@@ -1,7 +1,7 @@
 {
-    "name": "TaskFlow - Task Management",
+    "name": "TaskFlow",
     "short_name": "TaskFlow",
-    "description": "Manage your tasks efficiently with categories, drag & drop, and calendar view",
+    "description": "Task Management App - Manage your tasks efficiently with categories, drag & drop, and calendar view",
     "theme_color": "#7c3aed",
     "background_color": "#ffffff",
     "display": "standalone",

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from './useNotifications';
 import { useTranslation } from 'react-i18next';
 import { categoryService } from '../services/categoryService';
+import { useAchievementIntegration } from './useAchievementIntegration';
 import type { Category } from '../types/Category';
 
 export const categoryKeys = {
@@ -26,6 +27,7 @@ export const useCreateCategory = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackCategoryCreated } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: (category: Omit<Category, 'id'>) => categoryService.createCategory(category),
@@ -37,6 +39,7 @@ export const useCreateCategory = () => {
             queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
 
             showSuccess(t('categoryCreatedSuccessfully', 'Category created successfully'), `category-created-${newCategory.id}`);
+            trackCategoryCreated(newCategory);
         },
         onError: (_error) => {
             showError(t('errorCreatingCategory', 'Error creating category'));
@@ -48,6 +51,7 @@ export const useUpdateCategory = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackCategoryUpdated } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: (category: Category) => categoryService.updateCategory(category.id!, category),
@@ -75,6 +79,7 @@ export const useUpdateCategory = () => {
         },
         onSuccess: (_updatedCategory, variables) => {
             showSuccess(t('categoryUpdated', 'Category updated successfully'), `category-updated-${variables.id}`);
+            trackCategoryUpdated(variables);
         },
     });
 };
@@ -83,6 +88,7 @@ export const useDeleteCategory = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackCategoryDeleted } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: (categoryId: number) => categoryService.deleteCategory(categoryId),
@@ -108,6 +114,7 @@ export const useDeleteCategory = () => {
         },
         onSuccess: (_, deletedCategoryId) => {
             showSuccess(t('categoryDeletedSuccessfully', 'Category deleted successfully'), `category-deleted-${deletedCategoryId}`);
+            trackCategoryDeleted({ id: deletedCategoryId });
         },
     });
 };

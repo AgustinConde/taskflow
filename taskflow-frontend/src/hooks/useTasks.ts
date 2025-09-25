@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from './useNotifications';
 import { useTranslation } from 'react-i18next';
 import { taskService } from '../services/taskService';
+import { useAchievementIntegration } from './useAchievementIntegration';
 import type { Task } from '../types/Task';
 
 export const taskKeys = {
@@ -36,6 +37,7 @@ export const useCreateTask = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackTaskCreated } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: (task: Omit<Task, 'id'>) => taskService.createTask(task),
@@ -47,6 +49,7 @@ export const useCreateTask = () => {
             queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
 
             showSuccess(t('taskCreatedSuccessfully', 'Task created successfully'), `task-created-${newTask.id}`);
+            trackTaskCreated(newTask);
         },
         onError: () => {
             showError(t('errorCreatingTask', 'Error creating task'));
@@ -58,6 +61,7 @@ export const useUpdateTask = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackTaskUpdated } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: (task: Task) => taskService.updateTask(task.id!, task),
@@ -85,6 +89,7 @@ export const useUpdateTask = () => {
         },
         onSuccess: (_updatedTask, variables) => {
             showSuccess(t('taskUpdatedSuccessfully', 'Task updated successfully'), `task-updated-${variables.id}`);
+            trackTaskUpdated(variables);
         },
     });
 };
@@ -93,6 +98,7 @@ export const useDeleteTask = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackTaskDeleted } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: (taskId: number) => taskService.deleteTask(taskId),
@@ -118,6 +124,7 @@ export const useDeleteTask = () => {
         },
         onSuccess: (_, deletedTaskId) => {
             showSuccess(t('taskDeletedSuccessfully', 'Task deleted successfully'), `task-deleted-${deletedTaskId}`);
+            trackTaskDeleted({ id: deletedTaskId });
         },
     });
 };
@@ -126,6 +133,7 @@ export const useToggleTaskCompletion = () => {
     const queryClient = useQueryClient();
     const { showError } = useNotifications();
     const { t } = useTranslation();
+    const { trackTaskCompleted } = useAchievementIntegration();
 
     return useMutation({
         mutationFn: async (task: Task) => {
@@ -138,9 +146,15 @@ export const useToggleTaskCompletion = () => {
             const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
 
             queryClient.setQueryData<Task[]>(taskKeys.lists(), (oldTasks) => {
-                return oldTasks?.map(t =>
+                const updatedTasks = oldTasks?.map(t =>
                     t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
                 ) || [];
+
+                if (!task.isCompleted) {
+                    trackTaskCompleted(task);
+                }
+
+                return updatedTasks;
             });
 
             return { previousTasks };

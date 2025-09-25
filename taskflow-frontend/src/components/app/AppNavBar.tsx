@@ -20,6 +20,7 @@ import ChecklistIcon from '@mui/icons-material/Checklist';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TaskIcon from '@mui/icons-material/Task';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EmojiEvents from '@mui/icons-material/EmojiEvents';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -29,10 +30,10 @@ import type { User } from '../../types/Auth';
 
 interface AppNavBarProps {
     user: User | null;
-    currentTab: 'tasks' | 'dashboard' | 'calendar';
+    currentTab: 'tasks' | 'dashboard' | 'calendar' | 'achievements';
     mode: 'light' | 'dark';
     currentLanguage: string;
-    onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard' | 'calendar') => void;
+    onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard' | 'calendar' | 'achievements') => void;
     onToggleTheme: () => void;
     onLanguageChange: () => void;
     onLogout: () => void;
@@ -151,6 +152,12 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                             value="calendar"
                             label={t('calendar')}
                             icon={<CalendarMonthIcon />}
+                            iconPosition="start"
+                        />
+                        <Tab
+                            value="achievements"
+                            label={t('achievements')}
+                            icon={<EmojiEvents />}
                             iconPosition="start"
                         />
                     </Tabs>

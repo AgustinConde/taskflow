@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-type TabType = 'tasks' | 'dashboard' | 'calendar';
+type TabType = 'tasks' | 'dashboard' | 'calendar' | 'achievements';
 
 export const useAppNavigation = () => {
     const [currentTab, setCurrentTab] = useState<TabType>('tasks');

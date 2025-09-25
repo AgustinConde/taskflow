@@ -29,6 +29,7 @@ builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
 
 builder.Services.AddDbContext<TaskFlowDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -90,6 +91,13 @@ var summaries = new[]
 };
 
 app.MapControllers();
+
+// Seed achievements
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TaskFlowDbContext>();
+    await AchievementSeeder.SeedAchievementsAsync(context);
+}
 
 // Fallback to SPA only for routes without file extensions
 app.MapFallbackToFile("{*path:regex(^(?!.*\\.).*$)}", "index.html");

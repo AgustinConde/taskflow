@@ -3,14 +3,18 @@ using TaskFlow.Api.Models;
 
 namespace TaskFlow.Api
 {
-    public class TaskFlowDbContext : DbContext
+    public class TaskFlowDbContext(DbContextOptions<TaskFlowDbContext> options) : DbContext(options)
     {
-        public TaskFlowDbContext(DbContextOptions<TaskFlowDbContext> options) : base(options) { }
-
         public DbSet<TaskFlow.Api.Models.Task> Tasks { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<UserToken> UserTokens { get; set; }
+        public DbSet<Achievement> Achievements { get; set; }
+        public DbSet<AchievementTier> AchievementTiers { get; set; }
+        public DbSet<UserAchievementProgress> UserAchievementProgress { get; set; }
+        public DbSet<UserAchievementTierProgress> UserAchievementTierProgress { get; set; }
+        public DbSet<AchievementEvent> AchievementEvents { get; set; }
+        public DbSet<UserAchievementStats> UserAchievementStats { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +43,58 @@ namespace TaskFlow.Api
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+            modelBuilder.Entity<AchievementTier>()
+                .HasOne(at => at.Achievement)
+                .WithMany(a => a.Tiers)
+                .HasForeignKey(at => at.AchievementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAchievementProgress>()
+                .HasOne(uap => uap.User)
+                .WithMany()
+                .HasForeignKey(uap => uap.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAchievementProgress>()
+                .HasOne(uap => uap.Achievement)
+                .WithMany(a => a.UserProgress)
+                .HasForeignKey(uap => uap.AchievementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAchievementTierProgress>()
+                .HasOne(uatp => uatp.UserAchievementProgress)
+                .WithMany(uap => uap.TierProgress)
+                .HasForeignKey(uatp => uatp.UserAchievementProgressId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAchievementTierProgress>()
+                .HasOne(uatp => uatp.AchievementTier)
+                .WithMany(at => at.UserTierProgress)
+                .HasForeignKey(uatp => uatp.AchievementTierId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<AchievementEvent>()
+                .HasOne(ae => ae.User)
+                .WithMany()
+                .HasForeignKey(ae => ae.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAchievementStats>()
+                .HasOne(uas => uas.User)
+                .WithMany()
+                .HasForeignKey(uas => uas.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAchievementProgress>()
+                .HasIndex(uap => new { uap.UserId, uap.AchievementId })
+                .IsUnique();
+
+            modelBuilder.Entity<AchievementEvent>()
+                .HasIndex(ae => new { ae.UserId, ae.Timestamp });
+
+            modelBuilder.Entity<AchievementEvent>()
+                .HasIndex(ae => ae.EventType);
 
             base.OnModelCreating(modelBuilder);
         }

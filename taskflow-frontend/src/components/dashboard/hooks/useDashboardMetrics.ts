@@ -12,18 +12,23 @@ export const useDashboardMetrics = (filteredTasks: Task[]) => {
         const completionRate = total > 0 ? (completed / total) * 100 : 0;
 
         const now = new Date();
-        const overdue = filteredTasks.filter(t =>
-            !t.isCompleted &&
-            t.dueDate &&
-            isBefore(new Date(t.dueDate), now)
-        ).length;
+        const overdue = filteredTasks.filter(t => {
+            if (!t.isCompleted && t.dueDate && t.dueDate.trim() !== '') {
+                const dueDate = new Date(t.dueDate);
+                return !isNaN(dueDate.getTime()) && isBefore(dueDate, now);
+            }
+            return false;
+        }).length;
 
-        const dueSoon = filteredTasks.filter(t =>
-            !t.isCompleted &&
-            t.dueDate &&
-            isAfter(new Date(t.dueDate), now) &&
-            isBefore(new Date(t.dueDate), subDays(now, -DAYS_FOR_DUE_SOON_WARNING))
-        ).length;
+        const dueSoon = filteredTasks.filter(t => {
+            if (!t.isCompleted && t.dueDate && t.dueDate.trim() !== '') {
+                const dueDate = new Date(t.dueDate);
+                return !isNaN(dueDate.getTime()) &&
+                    isAfter(dueDate, now) &&
+                    isBefore(dueDate, subDays(now, -DAYS_FOR_DUE_SOON_WARNING));
+            }
+            return false;
+        }).length;
 
         return {
             total,

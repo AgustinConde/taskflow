@@ -37,15 +37,17 @@ export const useTaskManagement = () => {
         setCreating(true);
 
         const localDateTimeToUTCISOString = (local: string) => {
-            if (!local) return null;
-            return new Date(local).toISOString();
+            if (!local || local.trim() === '') return null;
+            const date = new Date(local);
+            if (isNaN(date.getTime())) return null;
+            return date.toISOString();
         };
 
         const newTask = {
             title: taskData.title,
             description: taskData.description,
             isCompleted: false,
-            dueDate: taskData.dueDate ? localDateTimeToUTCISOString(taskData.dueDate) : null,
+            dueDate: taskData.dueDate && taskData.dueDate.trim() !== '' ? localDateTimeToUTCISOString(taskData.dueDate) : null,
             categoryId: taskData.categoryId,
         };
 

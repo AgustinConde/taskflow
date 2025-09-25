@@ -9,7 +9,7 @@ interface TaskListHeaderProps {
     onSubmit: (taskData: {
         title: string;
         description: string;
-        dueDate: string;
+        dueDate: string | null;
         categoryId: number | null;
     }) => Promise<boolean>;
     creating: boolean;

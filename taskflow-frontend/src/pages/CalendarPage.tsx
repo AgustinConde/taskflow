@@ -35,7 +35,9 @@ const CalendarPage: React.FC = () => {
 
             if (filters.status !== 'all') {
                 const now = new Date();
-                const isOverdue = task.dueDate && new Date(task.dueDate) < now && !task.isCompleted;
+                const isOverdue = task.dueDate && task.dueDate.trim() !== '' &&
+                    !isNaN(new Date(task.dueDate).getTime()) &&
+                    new Date(task.dueDate) < now && !task.isCompleted;
 
                 switch (filters.status) {
                     case 'completed':

@@ -8,7 +8,7 @@ interface TaskFormProps {
     onSubmit: (taskData: {
         title: string;
         description: string;
-        dueDate: string;
+        dueDate: string | null;
         categoryId: number | null;
     }) => Promise<boolean>;
     creating: boolean;
@@ -28,7 +28,7 @@ const TaskForm = ({ categories, onSubmit, creating }: TaskFormProps) => {
         const success = await onSubmit({
             title,
             description,
-            dueDate,
+            dueDate: dueDate.trim() === '' ? null : dueDate,
             categoryId
         });
 

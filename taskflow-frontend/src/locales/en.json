@@ -154,6 +154,71 @@
     "confirmationSent": "Confirmation email sent!",
     "resendConfirmation": "Resend confirmation email",
     "calendar": "Calendar",
+    "achievements": "Achievements",
+    "achievementUnlocked": "Achievement Unlocked!",
+    "achievementUpgraded": "Achievement Upgraded!",
+    "achievementData": {
+        "taskCompletionist": {
+            "title": "Task Completionist",
+            "description": "Show your productivity by completing tasks"
+        },
+        "dailyAchiever": {
+            "title": "Daily Achiever",
+            "description": "Complete all your scheduled tasks for a specific day"
+        },
+        "speedDemon": {
+            "title": "Speed Demon",
+            "description": "Complete tasks before their due date"
+        },
+        "categoryCreator": {
+            "title": "Category Creator",
+            "description": "Organize your work by creating custom categories"
+        },
+        "organizerSupreme": {
+            "title": "Organizer Supreme",
+            "description": "Special achievement for organization masters. Requires having at least 20 categories and 200 organized tasks"
+        },
+        "consistencyKeeper": {
+            "title": "Consistency Keeper",
+            "description": "Maintain a daily login streak"
+        },
+        "weekendWarrior": {
+            "title": "Weekend Warrior",
+            "description": "Complete tasks during weekends"
+        },
+        "featureExplorer": {
+            "title": "Feature Explorer",
+            "description": "Discover all TaskFlow features: create tasks, categories, use calendar, and visit dashboard"
+        },
+        "calendarMaster": {
+            "title": "Calendar Master",
+            "description": "Use the calendar view for planning"
+        },
+        "earlyBird": {
+            "title": "Early Bird",
+            "description": "Complete tasks early in the morning (between 4:00 AM and 10:00 AM)"
+        },
+        "nightOwl": {
+            "title": "Night Owl",
+            "description": "Complete tasks late at night (between 9:00 PM and 4:00 AM)"
+        },
+        "perfectionist": {
+            "title": "Perfectionist",
+            "description": "Hidden achievement: Complete 50 consecutive tasks before their due date without missing any"
+        },
+        "firstSteps": {
+            "title": "First Steps",
+            "description": "Welcome to TaskFlow! Create your first task to begin your productivity journey"
+        },
+        "multitasker": {
+            "title": "Multitasker",
+            "description": "Efficiently manage multiple active tasks simultaneously with excellent organization"
+        },
+        "timeMaster": {
+            "title": "Time Master",
+            "description": "Complete tasks exactly on their due date with perfect timing"
+        }
+    },
     "sun": "Sun",
     "mon": "Mon",
     "tue": "Tue",
@@ -167,5 +232,52 @@
     "day": "Day",
     "status": "Status",
     "overdue": "Overdue",
-    "active": "active"
+    "active": "active",
+    "achievementsDashboard": {
+        "title": "Achievements",
+        "subtitle": "Track your progress and unlock achievements as you master TaskFlow!",
+        "userLevel": "User Level",
+        "totalPoints": "Total Points",
+        "currentStreak": "Current Streak",
+        "bestStreak": "Best Streak",
+        "level": "Level",
+        "experiencePoints": "Experience Points",
+        "nextLevel": "Next Level",
+        "categoryFilter": "Filter by Category",
+        "allCategories": "All Categories",
+        "bronze": "Bronze",
+        "silver": "Silver",
+        "gold": "Gold",
+        "diamond": "Diamond",
+        "unlocked": "Unlocked",
+        "locked": "Locked",
+        "points": "POINTS",
+        "achievementsCount": "Achievements",
+        "productivity": "Productivity",
+        "organization": "Organization",
+        "consistency": "Consistency",
+        "exploration": "Exploration",
+        "mastery": "Mastery",
+        "levelTitle": "Level {{level}} - {{title}}",
+        "totalPointsEarned": "{{points}} total points earned",
+        "progressToLevel": "Progress to Level {{level}}",
+        "progressTo": "Progress to {{tier}}:",
+        "noAchievementsFound": "No achievements found in this category",
+        "filterByCategory": "Filter by Category",
+        "loadingAchievements": "Loading achievements...",
+        "beginner": "Beginner",
+        "novice": "Novice",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "expert": "Expert",
+        "master": "Master",
+        "legend": "Legend",
+        "organized": "Organized",
+        "productive": "Productive",
+        "efficient": "Efficient",
+        "guru": "Guru",
+        "hidden": "Hidden",
+        "completed": "Completed",
+        "inProgress": "In Progress"
+    }
 }

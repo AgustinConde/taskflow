@@ -154,6 +154,71 @@
     "confirmationSent": "¡Email de confirmación enviado!",
     "resendConfirmation": "Reenviar email de confirmación",
     "calendar": "Calendario",
+    "achievements": "Logros",
+    "achievementUnlocked": "¡Logro Desbloqueado!",
+    "achievementUpgraded": "¡Logro Mejorado!",
+    "achievementData": {
+        "taskCompletionist": {
+            "title": "Completador de Tareas",
+            "description": "Demuestra tu productividad completando tareas"
+        },
+        "dailyAchiever": {
+            "title": "Logrador Diario",
+            "description": "Completa todas tus tareas de un día específico"
+        },
+        "speedDemon": {
+            "title": "Demonio de la Velocidad",
+            "description": "Completa tareas antes de su fecha límite"
+        },
+        "categoryCreator": {
+            "title": "Creador de Categorías",
+            "description": "Organiza tu trabajo creando categorías"
+        },
+        "organizerSupreme": {
+            "title": "Organizador Supremo",
+            "description": "Maestro de la organización y planificación"
+        },
+        "consistencyKeeper": {
+            "title": "Guardián de la Consistencia",
+            "description": "Mantén una racha de inicio de sesión diario"
+        },
+        "weekendWarrior": {
+            "title": "Guerrero de Fin de Semana",
+            "description": "Mantente productivo incluso los fines de semana"
+        },
+        "featureExplorer": {
+            "title": "Explorador de Funciones",
+            "description": "Descubre y usa diferentes funciones de la app"
+        },
+        "calendarMaster": {
+            "title": "Maestro del Calendario",
+            "description": "Usa la vista de calendario regularmente"
+        },
+        "earlyBird": {
+            "title": "Madrugador",
+            "description": "Completa tareas temprano en la mañana (entre 4:00 AM y 10:00 AM)"
+        },
+        "nightOwl": {
+            "title": "Búho Nocturno",
+            "description": "Completa tareas tarde en la noche (entre 9:00 PM y 4:00 AM)"
+        },
+        "perfectionist": {
+            "title": "Perfeccionista",
+            "description": "Completa tareas exactamente en su fecha límite con timing perfecto"
+        },
+        "firstSteps": {
+            "title": "Primeros Pasos",
+            "description": "¡Bienvenido a TaskFlow! Crea tu primera tarea"
+        },
+        "multitasker": {
+            "title": "Multitarea",
+            "description": "Maneja múltiples tareas eficientemente"
+        },
+        "timeMaster": {
+            "title": "Maestro del Tiempo",
+            "description": "Completa tareas dentro de sus fechas límite"
+        }
+    },
     "sun": "Dom",
     "mon": "Lun",
     "tue": "Mar",
@@ -167,5 +232,52 @@
     "day": "Día",
     "status": "Estado",
     "overdue": "Vencida",
-    "active": "activos"
+    "active": "activos",
+    "achievementsDashboard": {
+        "title": "Logros",
+        "subtitle": "¡Sigue tu progreso y desbloquea logros mientras dominas TaskFlow!",
+        "userLevel": "Nivel de Usuario",
+        "totalPoints": "Puntos Totales",
+        "currentStreak": "Racha Actual",
+        "bestStreak": "Mejor Racha",
+        "level": "Nivel",
+        "experiencePoints": "Puntos de Experiencia",
+        "nextLevel": "Siguiente Nivel",
+        "categoryFilter": "Filtrar por Categoría",
+        "allCategories": "Todas las Categorías",
+        "bronze": "Bronce",
+        "silver": "Plata",
+        "gold": "Oro",
+        "diamond": "Diamante",
+        "unlocked": "Desbloqueado",
+        "locked": "Bloqueado",
+        "points": "PUNTOS",
+        "achievementsCount": "Logros",
+        "productivity": "Productividad",
+        "organization": "Organización",
+        "consistency": "Consistencia",
+        "exploration": "Exploración",
+        "mastery": "Maestría",
+        "levelTitle": "Nivel {{level}} - {{title}}",
+        "totalPointsEarned": "{{points}} puntos totales ganados",
+        "progressToLevel": "Progreso al Nivel {{level}}",
+        "progressTo": "Progreso a {{tier}}:",
+        "noAchievementsFound": "No se encontraron logros en esta categoría",
+        "filterByCategory": "Filtrar por Categoría",
+        "loadingAchievements": "Cargando logros...",
+        "beginner": "Principiante",
+        "novice": "Novato",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado",
+        "expert": "Experto",
+        "master": "Maestro",
+        "legend": "Leyenda",
+        "organized": "Organizado",
+        "productive": "Productivo",
+        "efficient": "Eficiente",
+        "guru": "Gurú",
+        "hidden": "Oculto",
+        "completed": "Completado",
+        "inProgress": "En Progreso"
+    }
 }

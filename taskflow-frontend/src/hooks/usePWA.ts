@@ -39,11 +39,10 @@ export const usePWA = (): PWAState & PWAActions => {
         offlineReady: [offlineReady],
         updateServiceWorker
     } = useRegisterSW({
-        onRegistered(r) {
-            console.log('SW Registered: ', r);
+        onRegistered(_r) {
         },
         onRegisterError(error) {
-            console.log('SW registration error', error);
+            console.error('SW registration error', error);
         },
         onNeedRefresh() {
             showInfo('App update available! Click to refresh.');

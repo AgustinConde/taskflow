@@ -24,6 +24,13 @@ export const API_ENDPOINTS = {
         base: `${API_BASE_URL}/categories`,
         byId: (id: string | number) => `${API_BASE_URL}/categories/${id}`,
     },
+    achievements: {
+        base: `${API_BASE_URL}/achievements`,
+        progress: `${API_BASE_URL}/achievements/progress`,
+        trackEvent: `${API_BASE_URL}/achievements/events`,
+        stats: `${API_BASE_URL}/achievements/stats`,
+        initialize: `${API_BASE_URL}/achievements/initialize`,
+    },
 } as const;
 
 // Root URL for non-API resources (like avatar images)

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { AuthContextType, User, LoginRequest, RegisterRequest } from '../types/Auth';
 import { authService } from '../services/authService';
+import { achievementStorage } from '../utils/achievementStorage';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -20,6 +22,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
 
 
@@ -34,6 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                         const userData = await authService.getCurrentUser();
                         setUser(userData);
                         setToken(savedToken);
+                        achievementStorage.setUserId(userData.id.toString());
                     } else {
                         authService.removeToken();
                     }
@@ -54,6 +58,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             setUser(userData);
             setToken(authResponse.token);
+
+            achievementStorage.setUserId(userData.id.toString());
+
             return true;
         } catch (error: any) {
             if (error && error.code === 'emailNotConfirmed') {
@@ -80,6 +87,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const logout = () => {
         authService.logout();
+        queryClient.clear();
+        achievementStorage.setUserId(null);
+
         setUser(null);
         setToken(null);
     };

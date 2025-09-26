@@ -258,7 +258,7 @@ describe('AuthService', () => {
             global.fetch = mockFetch({});
             await authService.forgotPassword('test@test.com');
             expect(global.fetch).toHaveBeenCalledWith(
-                `${ROOT_URL}/api/auth/forgot`,
+                `${ROOT_URL}/api/auth/forgot-password`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

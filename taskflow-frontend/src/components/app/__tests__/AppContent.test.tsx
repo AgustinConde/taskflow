@@ -5,9 +5,17 @@ import { createTheme } from '@mui/material';
 import AppContent from '../AppContent';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAppTheme, useAppNavigation, useAppData, useAppLanguage } from '../hooks';
+import { TestProviders } from '../../../__tests__/utils/testProviders';
 
 vi.mock('../../../contexts/AuthContext');
 vi.mock('../hooks');
+vi.mock('../../../hooks/useAchievementIntegration', () => ({
+    useAchievementIntegration: () => ({
+        trackAppOpened: vi.fn(),
+        trackCalendarViewed: vi.fn(),
+        trackDashboardViewed: vi.fn()
+    })
+}));
 
 vi.mock('../LoadingScreen', () => ({
     __esModule: true,
@@ -52,20 +60,11 @@ const defaultTheme = createTheme({
     }
 });
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false }
-        }
-    });
-
-    return (
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    );
-};
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <TestProviders>
+        {children}
+    </TestProviders>
+);
 
 describe('AppContent', () => {
     beforeEach(() => {

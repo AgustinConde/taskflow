@@ -73,6 +73,16 @@ vi.mock('../../user/UserProfileDialog', () => ({
         ) : null
 }));
 
+vi.mock('../../../pages/CalendarPage', () => ({
+    __esModule: true,
+    default: () => <div data-testid="calendar-page">Calendar Page</div>
+}));
+
+vi.mock('../../../pages/AchievementsPage', () => ({
+    __esModule: true,
+    default: () => <div data-testid="achievements-page">Achievements Page</div>
+}));
+
 const mockTasks: Task[] = [
     {
         id: 1,
@@ -311,6 +321,30 @@ describe('AuthenticatedApp', () => {
             );
 
             expect(screen.getByTestId('lazy-dashboard')).toBeInTheDocument();
+        });
+
+        it('should render calendar page when calendar tab is active', () => {
+            render(
+                <TestWrapper>
+                    <AuthenticatedApp {...defaultProps} currentTab="calendar" />
+                </TestWrapper>
+            );
+
+            expect(screen.getByTestId('calendar-page')).toBeInTheDocument();
+            expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
+            expect(screen.queryByTestId('lazy-dashboard')).not.toBeInTheDocument();
+        });
+
+        it('should render achievements page when achievements tab is active', () => {
+            render(
+                <TestWrapper>
+                    <AuthenticatedApp {...defaultProps} currentTab="achievements" />
+                </TestWrapper>
+            );
+
+            expect(screen.getByTestId('achievements-page')).toBeInTheDocument();
+            expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
+            expect(screen.queryByTestId('lazy-dashboard')).not.toBeInTheDocument();
         });
     });
 

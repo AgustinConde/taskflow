@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createTheme } from '@mui/material';
 import AppContent from '../AppContent';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -10,12 +10,10 @@ import { TestProviders } from '../../../__tests__/utils/testProviders';
 vi.mock('../../../contexts/AuthContext');
 vi.mock('../hooks');
 vi.mock('../../../hooks/useAchievementIntegration', () => ({
-    useAchievementIntegration: () => ({
-        trackAppOpened: vi.fn(),
-        trackCalendarViewed: vi.fn(),
-        trackDashboardViewed: vi.fn()
-    })
+    useAchievementIntegration: vi.fn()
 }));
+
+import { useAchievementIntegration } from '../../../hooks/useAchievementIntegration';
 
 vi.mock('../LoadingScreen', () => ({
     __esModule: true,
@@ -33,9 +31,12 @@ vi.mock('../UnauthenticatedApp', () => ({
 
 vi.mock('../AuthenticatedApp', () => ({
     __esModule: true,
-    default: ({ currentTab, tasks, categories }: any) => (
+    default: ({ currentTab, tasks, categories, onTabChange }: any) => (
         <div data-testid="authenticated-app">
             Current Tab: {currentTab}, Tasks: {tasks?.length || 0}, Categories: {categories?.length || 0}
+            <button onClick={() => onTabChange({}, 'calendar')} data-testid="calendar-tab">Calendar</button>
+            <button onClick={() => onTabChange({}, 'dashboard')} data-testid="dashboard-tab">Dashboard</button>
+            <button onClick={() => onTabChange({}, 'tasks')} data-testid="tasks-tab">Tasks</button>
         </div>
     )
 }));
@@ -98,6 +99,21 @@ describe('AppContent', () => {
         mockUseAppLanguage.mockReturnValue({
             currentLanguage: 'en',
             handleLanguageChange: vi.fn()
+        });
+
+        vi.mocked(useAchievementIntegration).mockReturnValue({
+            trackAppOpened: vi.fn(),
+            trackCalendarViewed: vi.fn(),
+            trackDashboardViewed: vi.fn(),
+            trackTaskCreated: vi.fn(),
+            trackTaskCompleted: vi.fn(),
+            trackTaskUpdated: vi.fn(),
+            trackTaskDeleted: vi.fn(),
+            trackCategoryCreated: vi.fn(),
+            trackCategoryUpdated: vi.fn(),
+            trackCategoryDeleted: vi.fn(),
+            trackAllTasksCompletedToday: vi.fn(),
+            trackWeekendProductivity: vi.fn()
         });
     });
 
@@ -432,6 +448,143 @@ describe('AppContent', () => {
             );
 
             expect(screen.getByTestId('unauthenticated-app')).toBeInTheDocument();
+        });
+    });
+
+    describe('Achievement Tracking', () => {
+        const mockTrackAppOpened = vi.fn();
+        const mockTrackCalendarViewed = vi.fn();
+        const mockTrackDashboardViewed = vi.fn();
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            mockUseAuth.mockReturnValue({
+                isAuthenticated: true,
+                loading: false
+            });
+
+            vi.mocked(useAchievementIntegration).mockReturnValue({
+                trackAppOpened: mockTrackAppOpened,
+                trackCalendarViewed: mockTrackCalendarViewed,
+                trackDashboardViewed: mockTrackDashboardViewed,
+                trackTaskCreated: vi.fn(),
+                trackTaskCompleted: vi.fn(),
+                trackTaskUpdated: vi.fn(),
+                trackTaskDeleted: vi.fn(),
+                trackCategoryCreated: vi.fn(),
+                trackCategoryUpdated: vi.fn(),
+                trackCategoryDeleted: vi.fn(),
+                trackAllTasksCompletedToday: vi.fn(),
+                trackWeekendProductivity: vi.fn()
+            });
+        });
+
+        it('should track app opened when user becomes authenticated', () => {
+            render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            expect(mockTrackAppOpened).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not track app opened multiple times for same session', () => {
+            const { rerender } = render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            rerender(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            expect(mockTrackAppOpened).toHaveBeenCalledTimes(1);
+        });
+
+        it('should track calendar viewed when calendar tab is selected', () => {
+            const mockHandleTabChange = vi.fn();
+            mockUseAppNavigation.mockReturnValue({
+                currentTab: 'tasks',
+                handleTabChange: mockHandleTabChange,
+                authDialogOpen: false,
+                openAuthDialog: vi.fn(),
+                closeAuthDialog: vi.fn()
+            });
+
+            render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            expect(screen.getByTestId('authenticated-app')).toBeInTheDocument();
+        });
+
+        it('should track dashboard viewed when dashboard tab is selected', () => {
+            const mockHandleTabChange = vi.fn();
+            mockUseAppNavigation.mockReturnValue({
+                currentTab: 'tasks',
+                handleTabChange: mockHandleTabChange,
+                authDialogOpen: false,
+                openAuthDialog: vi.fn(),
+                closeAuthDialog: vi.fn()
+            });
+
+            render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            expect(screen.getByTestId('authenticated-app')).toBeInTheDocument();
+        });
+
+        it('should call handleTabChangeWithTracking and track calendar when calendar is selected', async () => {
+            const user = userEvent.setup();
+
+            render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            const calendarButton = screen.getByTestId('calendar-tab');
+            await user.click(calendarButton);
+            expect(mockTrackCalendarViewed).toHaveBeenCalledTimes(1);
+        });
+
+        it('should call handleTabChangeWithTracking and track dashboard when dashboard is selected', async () => {
+            const user = userEvent.setup();
+
+            render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            const dashboardButton = screen.getByTestId('dashboard-tab');
+            await user.click(dashboardButton);
+            expect(mockTrackDashboardViewed).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not track anything when tasks tab is selected', async () => {
+            const user = userEvent.setup();
+
+            render(
+                <TestWrapper>
+                    <AppContent />
+                </TestWrapper>
+            );
+
+            const tasksButton = screen.getByTestId('tasks-tab');
+            await user.click(tasksButton);
+
+            expect(mockTrackCalendarViewed).not.toHaveBeenCalled();
+            expect(mockTrackDashboardViewed).not.toHaveBeenCalled();
         });
     });
 });

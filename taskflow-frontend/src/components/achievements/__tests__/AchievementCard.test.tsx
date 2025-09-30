@@ -1,12 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { AchievementCard } from '../achievements/AchievementCard';
-import { TestProviders } from '../../__tests__/utils/testProviders';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { AchievementCard } from '../AchievementCard';
+import { TestProviders } from '../../../__tests__/utils/testProviders';
 
 vi.mock('@mui/icons-material', () => ({
     EmojiEvents: () => <div data-testid="emoji-events-icon">🏆</div>,
     Star: () => <div data-testid="star-icon">⭐</div>,
     TrendingUp: () => <div data-testid="trending-up-icon">📈</div>,
+    __esModule: true,
+    default: {}
 }));
 
 const createWrapper = () => {
@@ -107,5 +109,64 @@ describe('AchievementCard', () => {
         );
 
         expect(screen.getByText('First Task')).toBeInTheDocument();
+    });
+
+    it('should display hidden achievement indicator for hidden achievements without progress', () => {
+        const hiddenAchievement = {
+            ...mockAchievement,
+            isHidden: true
+        };
+
+        const noProgress = {
+            achievementId: '1',
+            currentValue: 0,
+            unlockedTiers: [],
+            lastUpdated: new Date('2023-01-01T12:00:00Z')
+        };
+
+        render(
+            <AchievementCard achievement={hiddenAchievement} progress={noProgress} />,
+            { wrapper: createWrapper() }
+        );
+
+        expect(screen.getByText('Hidden')).toBeInTheDocument();
+    });
+
+    it('should not display hidden indicator for hidden achievements with progress', () => {
+        const hiddenAchievement = {
+            ...mockAchievement,
+            isHidden: true
+        };
+
+        render(
+            <AchievementCard achievement={hiddenAchievement} progress={mockProgress} />,
+            { wrapper: createWrapper() }
+        );
+
+        expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
+    });
+
+    it('should call onClick when achievement card is clicked', () => {
+        const mockClick = vi.fn();
+
+        render(
+            <AchievementCard achievement={mockAchievement} progress={mockProgress} onClick={mockClick} />,
+            { wrapper: createWrapper() }
+        );
+
+        const card = screen.getByText('First Task').closest('div');
+        if (card?.parentElement) {
+            fireEvent.click(card.parentElement);
+            expect(mockClick).toHaveBeenCalledTimes(1);
+        }
+    });
+
+    it('should render with EmojiEvents icon', () => {
+        render(
+            <AchievementCard achievement={mockAchievement} progress={mockProgress} />,
+            { wrapper: createWrapper() }
+        );
+
+        expect(screen.getByTestId('emoji-events-icon')).toBeInTheDocument();
     });
 });

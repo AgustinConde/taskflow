@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AchievementBadge, AchievementProgressBar, AchievementTierChip } from '../achievements/AchievementBadge';
-import { TestProviders } from '../../__tests__/utils/testProviders';
+import { AchievementBadge, AchievementProgressBar, AchievementTierChip } from '../AchievementBadge';
+import { TestProviders } from '../../../__tests__/utils/testProviders';
 
 const createWrapper = () => {
     return ({ children }: { children: React.ReactNode }) => (

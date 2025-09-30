@@ -21,7 +21,13 @@ i18n.use(initReactI18next).init({
                 'achievementsDashboard.silver': 'Silver',
                 'achievementsDashboard.gold': 'Gold',
                 'achievementsDashboard.progressTo': 'Progress to {{tier}}',
-                'achievementsDashboard.hidden': 'Hidden'
+                'achievementsDashboard.hidden': 'Hidden',
+                'achievementNotification.unlocked': 'Achievement Unlocked',
+                'achievementNotification.upgraded': 'Achievement Upgraded',
+                'achievementNotification.level': 'Level',
+                'achievementNotification.points': 'Points',
+                'achievementNotification.encouragement': 'Keep up the great work! You\'re making excellent progress.',
+                'achievementNotification.awesome': 'Awesome!'
             }
         }
     },

@@ -97,7 +97,7 @@ export const AchievementNotificationDialog: React.FC<AchievementNotificationDial
         >
             <DialogTitle>
                 <Typography variant="h4" component="h2" textAlign="center" color="primary">
-                    🎉 {isNewAchievement ? t('achievementUnlocked') : t('achievementUpgraded')}
+                    🎉 {isNewAchievement ? t('achievementNotification.unlocked') : t('achievementNotification.upgraded')}
                 </Typography>
             </DialogTitle>
 
@@ -119,7 +119,7 @@ export const AchievementNotificationDialog: React.FC<AchievementNotificationDial
                     </Typography>
 
                     <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-                        {tier.level.toUpperCase()} Level
+                        {t(`achievementsDashboard.${tier.level.toLowerCase()}`)} {t('achievementNotification.level')}
                     </Typography>
 
                     <Box sx={{
@@ -134,12 +134,12 @@ export const AchievementNotificationDialog: React.FC<AchievementNotificationDial
                     }}>
                         <Icons.Stars sx={{ fontSize: 20 }} />
                         <Typography variant="body1" fontWeight="bold">
-                            +{tier.points} Points
+                            +{tier.points} {t('achievementNotification.points')}
                         </Typography>
                     </Box>
 
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                        Keep up the great work! You're making excellent progress.
+                        {t('achievementNotification.encouragement')}
                     </Typography>
                 </CelebrationBox>
             </DialogContent>
@@ -151,7 +151,7 @@ export const AchievementNotificationDialog: React.FC<AchievementNotificationDial
                     size="large"
                     sx={{ minWidth: 120 }}
                 >
-                    Awesome!
+                    {t('achievementNotification.awesome')}
                 </Button>
             </DialogActions>
         </Dialog>

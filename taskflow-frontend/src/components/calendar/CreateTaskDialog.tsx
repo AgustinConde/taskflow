@@ -23,6 +23,7 @@ interface CreateTaskDialogProps {
         description: string;
         dueDate: string;
         categoryId: number | null;
+        location?: any;
     }) => Promise<boolean>;
     categories: Category[];
     initialDate?: Date;

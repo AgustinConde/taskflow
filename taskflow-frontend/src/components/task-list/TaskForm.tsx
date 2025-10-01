@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import type { Category } from '../../types/Category';
+import type { TaskLocation } from '../../types/Location';
+import { LocationPicker } from '../location';
 
 interface TaskFormProps {
     categories: Category[];
@@ -10,6 +12,7 @@ interface TaskFormProps {
         description: string;
         dueDate: string | null;
         categoryId: number | null;
+        location: TaskLocation | null;
     }) => Promise<boolean>;
     creating: boolean;
 }
@@ -19,6 +22,7 @@ const TaskForm = ({ categories, onSubmit, creating }: TaskFormProps) => {
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [categoryId, setCategoryId] = useState<number | null>(null);
+    const [location, setLocation] = useState<TaskLocation | null>(null);
 
     const { t } = useTranslation();
 
@@ -29,7 +33,8 @@ const TaskForm = ({ categories, onSubmit, creating }: TaskFormProps) => {
             title,
             description,
             dueDate: dueDate.trim() === '' ? null : dueDate,
-            categoryId
+            categoryId,
+            location
         });
 
         if (success) {
@@ -37,6 +42,7 @@ const TaskForm = ({ categories, onSubmit, creating }: TaskFormProps) => {
             setDescription("");
             setDueDate("");
             setCategoryId(null);
+            setLocation(null);
         }
     };
 
@@ -102,6 +108,14 @@ const TaskForm = ({ categories, onSubmit, creating }: TaskFormProps) => {
                     ))}
                 </Select>
             </FormControl>
+            <Box sx={{ minWidth: 220, maxWidth: 400, flex: '0 1 300px' }}>
+                <LocationPicker
+                    value={location}
+                    onChange={setLocation}
+                    disabled={creating}
+                    placeholder={t('location.searchPlaceholder', 'Search for a place...')}
+                />
+            </Box>
             <Button
                 type="submit"
                 variant="contained"

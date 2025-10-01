@@ -6,6 +6,8 @@ import { alpha } from '@mui/material/styles';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { useTranslation } from 'react-i18next';
 import type { Category } from '../../types/Category';
+import type { TaskLocation } from '../../types/Location';
+import { LocationPicker } from '../location';
 
 interface TaskEditDialogProps {
     open: boolean;
@@ -20,6 +22,8 @@ interface TaskEditDialogProps {
     setLocalDueDate: (date: string) => void;
     localCategoryId: number | undefined;
     setLocalCategoryId: (id: number | undefined) => void;
+    localLocation: TaskLocation | null;
+    setLocalLocation: (location: TaskLocation | null) => void;
 }
 
 const TaskEditDialog = ({
@@ -34,7 +38,9 @@ const TaskEditDialog = ({
     localDueDate,
     setLocalDueDate,
     localCategoryId,
-    setLocalCategoryId
+    setLocalCategoryId,
+    localLocation,
+    setLocalLocation
 }: TaskEditDialogProps) => {
     const { t } = useTranslation();
 
@@ -195,6 +201,12 @@ const TaskEditDialog = ({
                             ))}
                         </Select>
                     </FormControl>
+
+                    <LocationPicker
+                        value={localLocation}
+                        onChange={setLocalLocation}
+                        placeholder={t('location.searchPlaceholder', 'Search for a place...')}
+                    />
                 </Stack>
             </DialogContent>
 

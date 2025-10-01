@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import TaskForm from './TaskForm';
 import TaskFilters from './TaskFilters';
 import type { Category } from '../../types/Category';
+import type { TaskLocation } from '../../types/Location';
 
 interface TaskListHeaderProps {
     categories: Category[];
@@ -11,6 +12,7 @@ interface TaskListHeaderProps {
         description: string;
         dueDate: string | null;
         categoryId: number | null;
+        location: TaskLocation | null;
     }) => Promise<boolean>;
     creating: boolean;
     search: string;

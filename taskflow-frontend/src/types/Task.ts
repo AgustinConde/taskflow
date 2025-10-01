@@ -1,3 +1,5 @@
+import type { TaskLocation } from './Location';
+
 export interface Task {
     id: number;
     title: string;
@@ -7,6 +9,7 @@ export interface Task {
     dueDate?: string | null;
     categoryId?: number | null;
     categoryName?: string;
+    location?: TaskLocation | null;
 }
 
 export interface CreateTaskRequest {
@@ -15,6 +18,7 @@ export interface CreateTaskRequest {
     dueDate?: string | null;
     categoryId?: number | null;
     categoryName?: string;
+    location?: TaskLocation | null;
 }
 
 export interface UpdateTaskRequest {
@@ -24,4 +28,5 @@ export interface UpdateTaskRequest {
     dueDate?: string | null;
     categoryId?: number | null;
     categoryName?: string;
+    location?: TaskLocation | null;
 }

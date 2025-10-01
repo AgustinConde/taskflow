@@ -61,8 +61,8 @@ describe('useTasks hooks', () => {
             expect(singleResult.current.data).toEqual(mockTask);
         });
         it('creates, updates, deletes and toggles a task', async () => {
-            const newTask = { title: 'New Task', description: 'New Desc', isCompleted: false, createdAt: '2024-01-01T00:00:00Z', categoryId: 1 };
-            const createdTask = { ...newTask, id: 3 };
+            const newTask = { title: 'New Task', description: 'New Desc', isCompleted: false, categoryId: 1 };
+            const createdTask = { ...newTask, id: 3, createdAt: '2024-01-01T00:00:00Z' };
             const updatedTask = { ...mockTask, title: 'Updated' };
             vi.mocked(taskService.createTask).mockResolvedValue(createdTask);
             vi.mocked(taskService.updateTask).mockResolvedValue(updatedTask);
@@ -95,7 +95,7 @@ describe('useTasks hooks', () => {
             const { result: createResult } = renderHook(() => useCreateTask(), { wrapper });
             const { result: updateResult } = renderHook(() => useUpdateTask(), { wrapper });
             const { result: deleteResult } = renderHook(() => useDeleteTask(), { wrapper });
-            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, createdAt: '', categoryId: 1 });
+            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, categoryId: 1 });
             updateResult.current.mutate(mockTask);
             deleteResult.current.mutate(1);
             await waitFor(() => {
@@ -259,7 +259,7 @@ describe('useTasks hooks', () => {
             expect(createResult.current.isSuccess).toBe(false);
             expect(disabledResult.current.isFetching).toBe(false);
 
-            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, createdAt: '', categoryId: 1 });
+            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, categoryId: 1 });
 
             await waitFor(() => expect(createResult.current.isSuccess).toBe(true));
         });
@@ -271,7 +271,7 @@ describe('useTasks hooks', () => {
             const { result: createResult } = renderHook(() => useCreateTask(), { wrapper });
             const { result: updateResult } = renderHook(() => useUpdateTask(), { wrapper });
 
-            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, createdAt: '', categoryId: 1 });
+            createResult.current.mutate({ title: 'New', description: '', isCompleted: false, categoryId: 1 });
             updateResult.current.mutate(mockTask);
 
             await waitFor(() => {

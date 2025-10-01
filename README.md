@@ -13,6 +13,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 
 - **User Authentication & Authorization**: Registration, login, email confirmation with JWT tokens
 - **Task Management**: Full CRUD operations with intuitive and responsive UI
+- **Location Support**: Geolocation with Google Maps integration for physical task locations
 - **Category Management**: Create, edit, and organize tasks by categories
 - **Dashboard & Analytics**: Visual metrics and charts for task progress tracking
 - **Drag & Drop**: Reorder tasks with hello-pangea/dnd
@@ -50,7 +51,16 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
    Edit `.env` and set:
    ```env
    VITE_ROOT_URL=http://localhost:5149
+   VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
    ```
+   
+   **Getting Google Maps API Key**:
+   1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   2. Create or select a project
+   3. Enable these APIs:
+      - Maps JavaScript API
+      - Places API (New)
+   4. Create an API Key and copy it
 
 4. **Start development server**:
    ```bash
@@ -87,6 +97,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 ### Frontend (.env)
 
 - `VITE_ROOT_URL` — Backend API URL (e.g., `http://localhost:5149`)
+- `VITE_GOOGLE_MAPS_API_KEY` — Google Maps API Key for geolocation features (optional but recommended)
 
 ### Backend (.env)
 
@@ -149,6 +160,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 - `src/components/task-list/` — Task listing and filtering
 - `src/components/category-manager/` — Category CRUD operations
 - `src/components/dashboard/` — Analytics and metrics
+- `src/components/location/` — Location picker and map display for tasks
 - `src/contexts/` — React contexts (Auth, Notifications)
 - `src/services/` — API communication services
 - `src/config/` — Centralized API configuration and endpoints
@@ -201,11 +213,13 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 
 1. **Register a new account** or log in with existing credentials
 2. **Create categories** to organize your tasks
-3. **Add tasks** with titles, descriptions, due dates, and categories
-4. **Use the dashboard** to view analytics and progress
-5. **Switch themes and languages** from the app navigation
-6. **Drag and drop tasks** to reorder them
-7. **Use contextual menus** for quick actions on tasks
+3. **Add tasks** with titles, descriptions, due dates, categories, and locations
+4. **Search and select locations** using Google Places autocomplete or GPS location
+5. **View task locations** on interactive maps in task details
+6. **Use the dashboard** to view analytics and progress
+7. **Switch themes and languages** from the app navigation
+8. **Drag and drop tasks** to reorder them
+9. **Use contextual menus** for quick actions on tasks
 
 </details>
 
@@ -216,6 +230,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 
 - **Autenticación y Autorización**: Registro, login, confirmación por email con tokens JWT
 - **Gestión de Tareas**: Operaciones CRUD completas con interfaz intuitiva y responsiva
+- **Soporte de Ubicación**: Geolocalización opcional con integración de Google Maps para ubicaciones físicas de tareas
 - **Gestión de Categorías**: Crear, editar y organizar tareas por categorías
 - **Dashboard y Analíticas**: Métricas visuales y gráficos para seguimiento de progreso
 - **Drag & Drop**: Reordenar tareas con hello-pangea/dnd
@@ -253,7 +268,16 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
    Editá `.env` y configurá:
    ```env
    VITE_ROOT_URL=http://localhost:5149
+   VITE_GOOGLE_MAPS_API_KEY=tu_clave_api_google_maps_aqui
    ```
+   
+   **Obtener API Key de Google Maps**:
+   1. Andá a [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   2. Creá o seleccioná un proyecto
+   3. Habilitá estas APIs:
+      - Maps JavaScript API
+      - Places API (New)
+   4. Creá una API Key y copiala
 
 4. **Iniciar servidor de desarrollo**:
    ```bash
@@ -290,6 +314,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 ### Frontend (.env)
 
 - `VITE_ROOT_URL` — URL de la API del backend (ej., `http://localhost:5149`)
+- `VITE_GOOGLE_MAPS_API_KEY` — API Key de Google Maps para funcionalidades de geolocalización (opcional pero recomendado)
 
 ### Backend (.env)
 
@@ -352,6 +377,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - `src/components/task-list/` — Listado y filtrado de tareas
 - `src/components/category-manager/` — Operaciones CRUD de categorías
 - `src/components/dashboard/` — Analíticas y métricas
+- `src/components/location/` — Selector de ubicación y visualización de mapas para tareas
 - `src/contexts/` — Contextos de React (Auth, Notificaciones)
 - `src/services/` — Servicios de comunicación con API
 - `src/config/` — Configuración centralizada de API y endpoints
@@ -405,8 +431,10 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 
 1. **Registrá una nueva cuenta** o iniciá sesión con credenciales existentes
 2. **Creá categorías** para organizar tus tareas
-3. **Agregá tareas** con títulos, descripciones, fechas de vencimiento y categorías
-4. **Usá el dashboard** para ver analíticas y progreso
-5. **Cambiá temas e idiomas** desde la navegación de la app
-6. **Arrastrá y soltá tareas** para reordenarlas
-7. **Usá menús contextuales** para acciones rápidas en las tareas
+3. **Agregá tareas** con títulos, descripciones, fechas de vencimiento, categorías y ubicaciones
+4. **Buscá y seleccioná ubicaciones** usando el autocompletado de Google Places o ubicación GPS
+5. **Visualizá ubicaciones de tareas** en mapas interactivos en los detalles de la tarea
+6. **Usá el dashboard** para ver analíticas y progreso
+7. **Cambiá temas e idiomas** desde la navegación de la app
+8. **Arrastrá y soltá tareas** para reordenarlas
+9. **Usá menús contextuales** para acciones rápidas en las tareas

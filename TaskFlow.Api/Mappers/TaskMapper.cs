@@ -16,7 +16,8 @@ namespace TaskFlow.Api.Mappers
                 CreatedAt = task.CreatedAt,
                 DueDate = task.DueDate,
                 UserId = task.UserId,
-                CategoryId = task.CategoryId
+                CategoryId = task.CategoryId,
+                Location = task.Location != null ? LocationMapper.ToDto(task.Location) : null
             };
         }
 
@@ -31,7 +32,8 @@ namespace TaskFlow.Api.Mappers
                 CreatedAt = dto.CreatedAt,
                 DueDate = dto.DueDate,
                 UserId = dto.UserId,
-                CategoryId = dto.CategoryId
+                CategoryId = dto.CategoryId,
+                LocationId = dto.Location?.Id
             };
         }
 

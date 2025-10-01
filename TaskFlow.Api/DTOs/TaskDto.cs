@@ -20,6 +20,8 @@ namespace TaskFlow.Api.DTOs
 
         public int UserId { get; set; }
         public int? CategoryId { get; set; }
+
+        public LocationDto? Location { get; set; }
     }
 }
 

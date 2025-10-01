@@ -14,6 +14,7 @@ namespace TaskFlow.Api.Services
         public List<TaskDto> GetAllByUser(int userId)
         {
             return _context.Tasks
+                .Include(t => t.Location)
                 .Where(t => t.UserId == userId)
                 .Select(t => TaskMapper.ToDto(t))
                 .ToList();
@@ -22,6 +23,7 @@ namespace TaskFlow.Api.Services
         public TaskDto? GetByIdAndUser(int id, int userId)
         {
             var task = _context.Tasks
+                .Include(t => t.Location)
                 .FirstOrDefault(t => t.Id == id && t.UserId == userId);
             return task == null ? null : TaskMapper.ToDto(task);
         }
@@ -30,6 +32,24 @@ namespace TaskFlow.Api.Services
         {
             var task = TaskMapper.ToEntity(dto, userId);
             task.CreatedAt = DateTime.UtcNow;
+
+            if (dto.Location != null)
+            {
+                var location = new Location
+                {
+                    Address = dto.Location.Address,
+                    Latitude = dto.Location.Latitude,
+                    Longitude = dto.Location.Longitude,
+                    PlaceName = dto.Location.PlaceName,
+                    PlaceId = dto.Location.PlaceId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Locations.Add(location);
+                _context.SaveChanges();
+
+                task.LocationId = location.Id;
+                task.Location = location;
+            }
 
             _context.Tasks.Add(task);
             _context.SaveChanges();
@@ -43,6 +63,7 @@ namespace TaskFlow.Api.Services
         public bool Update(int id, TaskDto dto, int userId)
         {
             var task = _context.Tasks
+                .Include(t => t.Location)
                 .FirstOrDefault(t => t.Id == id && t.UserId == userId);
 
             if (task == null) return false;
@@ -52,6 +73,42 @@ namespace TaskFlow.Api.Services
             task.IsCompleted = dto.IsCompleted;
             task.DueDate = dto.DueDate;
             task.CategoryId = dto.CategoryId;
+
+            if (dto.Location != null)
+            {
+                if (task.Location != null)
+                {
+                    task.Location.Address = dto.Location.Address;
+                    task.Location.Latitude = dto.Location.Latitude;
+                    task.Location.Longitude = dto.Location.Longitude;
+                    task.Location.PlaceName = dto.Location.PlaceName;
+                    task.Location.PlaceId = dto.Location.PlaceId;
+                }
+                else
+                {
+                    var location = new Location
+                    {
+                        Address = dto.Location.Address,
+                        Latitude = dto.Location.Latitude,
+                        Longitude = dto.Location.Longitude,
+                        PlaceName = dto.Location.PlaceName,
+                        PlaceId = dto.Location.PlaceId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Locations.Add(location);
+                    _context.SaveChanges();
+
+                    task.LocationId = location.Id;
+                    task.Location = location;
+                }
+            }
+            else if (task.Location != null)
+            {
+                var locationToRemove = task.Location;
+                task.LocationId = null;
+                task.Location = null;
+                _context.Locations.Remove(locationToRemove);
+            }
 
             _context.SaveChanges();
             return true;

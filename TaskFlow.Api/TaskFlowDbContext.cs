@@ -15,6 +15,7 @@ namespace TaskFlow.Api
         public DbSet<UserAchievementTierProgress> UserAchievementTierProgress { get; set; }
         public DbSet<AchievementEvent> AchievementEvents { get; set; }
         public DbSet<UserAchievementStats> UserAchievementStats { get; set; }
+        public DbSet<Location> Locations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +30,25 @@ namespace TaskFlow.Api
                 .WithMany(c => c.Tasks)
                 .HasForeignKey(t => t.CategoryId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<TaskFlow.Api.Models.Task>()
+                .HasOne(t => t.Location)
+                .WithMany(l => l.Tasks)
+                .HasForeignKey(t => t.LocationId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Location>()
+                .Property(l => l.PlaceId)
+                .HasMaxLength(500);
+
+            modelBuilder.Entity<Location>()
+                .Property(l => l.PlaceName)
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<Location>()
+                .Property(l => l.Address)
+                .HasMaxLength(500)
+                .IsRequired();
 
             modelBuilder.Entity<Category>()
                 .HasOne(c => c.User)

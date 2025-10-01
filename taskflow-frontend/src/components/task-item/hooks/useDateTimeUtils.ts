@@ -10,12 +10,13 @@ export const useDateTimeUtils = () => {
         const dd = pad(date.getDate());
         const hh = pad(date.getHours());
         const min = pad(date.getMinutes());
-        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        const result = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        return result;
     }, []);
 
     const localDateTimeToUTCISOString = useCallback((local: string) => {
         if (!local) return null;
-        return new Date(local).toISOString();
+        return local;
     }, []);
 
     return {

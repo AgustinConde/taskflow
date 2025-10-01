@@ -90,13 +90,13 @@ const CalendarPage: React.FC = () => {
         description: string;
         dueDate: string;
         categoryId: number | null;
+        location?: any;
     }) => {
         try {
             await createTaskMutation.mutateAsync({
                 ...taskData,
                 categoryId: taskData.categoryId || undefined,
-                isCompleted: false,
-                createdAt: new Date().toISOString()
+                isCompleted: false
             });
             showSuccess(t('taskCreated'));
             return true;

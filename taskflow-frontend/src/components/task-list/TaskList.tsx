@@ -1,6 +1,7 @@
 import { useState, memo, useCallback } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import type { TaskLocation } from '../../types/Location';
 
 import TaskListHeader from './TaskListHeader';
 import TaskGrid from './TaskGrid';
@@ -42,9 +43,18 @@ const TaskList = memo(() => {
         isCustomSort
     } = useTaskSorting(filteredTasks, categories, tasks);
 
-    const handleCreateTask = useCallback(async (taskData: any): Promise<boolean> => {
+    const handleCreateTask = useCallback(async (taskData: {
+        title: string;
+        description: string;
+        dueDate: string | null;
+        categoryId: number | null;
+        location: TaskLocation | null;
+    }): Promise<boolean> => {
         try {
-            await createTaskMutation.mutateAsync(taskData);
+            await createTaskMutation.mutateAsync({
+                ...taskData,
+                isCompleted: false
+            });
             return true;
         } catch (error) {
             return false;

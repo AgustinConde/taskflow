@@ -1,6 +1,17 @@
 import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../types/Task';
 import { authService } from './authService';
 
+const localDateTimeToUTC = (local: string | null | undefined): string | null => {
+    if (!local) return null;
+
+    const [datePart, timePart] = local.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+
+    const localDate = new Date(year, month - 1, day, hour, minute);
+    return localDate.toISOString();
+};
+
 const API_URL = "http://localhost:5149/api/tasks";
 
 class TaskService {
@@ -37,10 +48,15 @@ class TaskService {
     }
 
     async createTask(task: CreateTaskRequest): Promise<Task> {
+        const taskWithUTCDate = {
+            ...task,
+            dueDate: localDateTimeToUTC(task.dueDate)
+        };
+
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: this.getAuthHeaders(),
-            body: JSON.stringify(task)
+            body: JSON.stringify(taskWithUTCDate)
         });
 
         if (!response.ok) {
@@ -52,10 +68,15 @@ class TaskService {
     }
 
     async updateTask(id: number, task: UpdateTaskRequest): Promise<Task> {
+        const taskWithUTCDate = {
+            ...task,
+            dueDate: task.dueDate ? localDateTimeToUTC(task.dueDate) : task.dueDate
+        };
+
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
             headers: this.getAuthHeaders(),
-            body: JSON.stringify(task)
+            body: JSON.stringify(taskWithUTCDate)
         });
 
         if (!response.ok) {

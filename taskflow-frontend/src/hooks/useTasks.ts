@@ -40,7 +40,7 @@ export const useCreateTask = () => {
     const { trackTaskCreated } = useAchievementIntegration();
 
     return useMutation({
-        mutationFn: (task: Omit<Task, 'id'>) => taskService.createTask(task),
+        mutationFn: (task: Omit<Task, 'id' | 'createdAt'>) => taskService.createTask(task),
         onSuccess: (newTask) => {
             queryClient.setQueryData<Task[]>(taskKeys.lists(), (oldTasks) => {
                 return oldTasks ? [...oldTasks, newTask] : [newTask];

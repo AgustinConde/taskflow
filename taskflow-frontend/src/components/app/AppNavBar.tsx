@@ -74,11 +74,21 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                 backdropFilter: 'blur(8px)'
             }}
         >
-            <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 }, minHeight: { xs: 56, sm: 64 } }}>
+            <Toolbar sx={{
+                justifyContent: 'space-between',
+                px: { xs: 1, sm: 2, md: 3 },
+                minHeight: { xs: 56, sm: 64 },
+                gap: { xs: 0.5, sm: 1, md: 2 },
+                flexWrap: 'nowrap',
+                overflow: 'hidden'
+            }}>
                 <Box sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: { xs: 2, sm: 3 }
+                    gap: { xs: 1, sm: 2, md: 3 },
+                    flex: '1 1 auto',
+                    minWidth: 0,
+                    overflow: 'hidden'
                 }}>
                     <Box sx={{
                         display: 'flex',
@@ -120,18 +130,25 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                             }
                         }}
                         sx={{
+                            minWidth: 0,
+                            flexShrink: 1,
                             '& .MuiTab-root': {
                                 color: 'rgba(255,255,255,0.7)',
                                 minHeight: 48,
+                                minWidth: { xs: 'auto', sm: 90 },
+                                px: { xs: 1, sm: 2 },
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                fontSize: '0.9rem',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9rem' },
                                 '&.Mui-selected': {
                                     color: 'white',
                                 },
                                 '&:hover': {
                                     color: 'white',
                                     backgroundColor: 'rgba(255,255,255,0.1)'
+                                },
+                                '& .MuiSvgIcon-root': {
+                                    fontSize: { xs: '1.1rem', sm: '1.3rem' }
                                 }
                             }
                         }}
@@ -163,7 +180,13 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                     </Tabs>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: { xs: 0.5, sm: 1 },
+                    flex: '0 0 auto',
+                    minWidth: 0
+                }}>
                     <PWAStatusIndicator />
                     {!isSmallScreen && (
                         <Typography
@@ -173,9 +196,8 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                maxWidth: { sm: 100, md: 140, lg: 180 },
-                                mr: 1.5,
-                                fontSize: '0.875rem'
+                                maxWidth: { xs: 80, sm: 100, md: 140, lg: 180 },
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
                             }}
                         >
                             {isMediumScreen ? user?.username : `${t('welcome')}, ${user?.username}! `}

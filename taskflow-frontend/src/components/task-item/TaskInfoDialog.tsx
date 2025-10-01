@@ -4,6 +4,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import type { Task } from '../../types/Task';
+import { LocationDisplay } from '../location';
 
 interface TaskInfoDialogProps {
     open: boolean;
@@ -94,6 +95,17 @@ const TaskInfoDialog = ({ open, onClose, task }: TaskInfoDialogProps) => {
                             {task.description || '-'}
                         </Alert>
                     </Box>
+
+                    {task.location && (
+                        <Box sx={{ mt: 2 }}>
+                            <LocationDisplay
+                                location={task.location}
+                                showMap={true}
+                                mapHeight={200}
+                                interactive={true}
+                            />
+                        </Box>
+                    )}
                 </DialogContentText>
             </DialogContent>
             <DialogActions sx={{ pt: 1, pb: 2 }}>

@@ -39,12 +39,14 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         setLocalDueDate,
         localCategoryId,
         setLocalCategoryId,
+        localLocation,
+        setLocalLocation,
         editModalOpen,
         setEditModalOpen,
         infoOpen,
         setInfoOpen
     } = useTaskItemState(task);
-    const { localDateTimeToUTCISOString } = useDateTimeUtils();
+    const { localDateTimeToUTCISOString, toLocalInputDateTime } = useDateTimeUtils();
 
     const taskCategory = task.categoryId ? categories.find(cat => cat.id === task.categoryId) || null : null;
 
@@ -57,8 +59,9 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
         setEditModalOpen(true);
         setLocalTitle(task.title);
         setLocalDescription(task.description || "");
-        setLocalDueDate(task.dueDate ? task.dueDate : "");
+        setLocalDueDate(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
         setLocalCategoryId(task.categoryId || undefined);
+        setLocalLocation(task.location || null);
         handleMenuClose();
     };
 
@@ -69,6 +72,7 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
             description: localDescription,
             dueDate: localDateTimeToUTCISOString(localDueDate),
             categoryId: localCategoryId,
+            location: localLocation,
         };
         onEditSave(updatedTask);
         setEditModalOpen(false);
@@ -130,6 +134,8 @@ const TaskItem: React.FC<TaskItemProps> = memo(({
                 setLocalDueDate={setLocalDueDate}
                 localCategoryId={localCategoryId}
                 setLocalCategoryId={setLocalCategoryId}
+                localLocation={localLocation}
+                setLocalLocation={setLocalLocation}
             />
         </Box>
     );

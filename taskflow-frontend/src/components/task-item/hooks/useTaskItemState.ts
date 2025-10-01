@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Task } from '../../../types/Task';
+import type { TaskLocation } from '../../../types/Location';
 import { useDateTimeUtils } from './useDateTimeUtils';
 
 export const useTaskItemState = (task: Task) => {
@@ -13,6 +14,9 @@ export const useTaskItemState = (task: Task) => {
     const [localCategoryId, setLocalCategoryId] = useState<number | undefined>(
         task.categoryId || undefined
     );
+    const [localLocation, setLocalLocation] = useState<TaskLocation | null>(
+        task.location || null
+    );
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [infoOpen, setInfoOpen] = useState(false);
 
@@ -21,6 +25,7 @@ export const useTaskItemState = (task: Task) => {
         setLocalDescription(task.description || "");
         setLocalDueDate(task.dueDate ? toLocalInputDateTime(task.dueDate) : "");
         setLocalCategoryId(task.categoryId || undefined);
+        setLocalLocation(task.location || null);
     }, [task, toLocalInputDateTime]);
 
     return {
@@ -32,6 +37,8 @@ export const useTaskItemState = (task: Task) => {
         setLocalDueDate,
         localCategoryId,
         setLocalCategoryId,
+        localLocation,
+        setLocalLocation,
         editModalOpen,
         setEditModalOpen,
         infoOpen,

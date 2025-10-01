@@ -279,5 +279,21 @@
         "hidden": "Hidden",
         "completed": "Completed",
         "inProgress": "In Progress"
+    },
+    "location": {
+        "selectLocation": "Location",
+        "searchPlaceholder": "Search for a place...",
+        "getCurrentLocation": "Use current location",
+        "clearLocation": "Clear location",
+        "typeToSearch": "Type at least 3 characters to search",
+        "noResults": "No locations found",
+        "searchError": "Error searching locations",
+        "locationDenied": "Location access denied",
+        "geocodeError": "Could not determine address",
+        "getCurrentLocationError": "Error getting current location",
+        "mapsNotAvailable": "Maps are not available",
+        "mapLoadError": "Error loading map",
+        "coordinates": "Coordinates",
+        "selectedLocation": "Selected Location"
     }
 }

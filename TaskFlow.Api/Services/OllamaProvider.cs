@@ -62,9 +62,10 @@ namespace TaskFlow.Api.Services
                     stream = false,
                     options = new
                     {
-                        temperature = 0.7,
+                        temperature = 0.6,
                         top_p = 0.9,
-                        num_predict = 300
+                        num_predict = 400,
+                        num_ctx = 2048
                     }
                 };
 
@@ -148,7 +149,7 @@ namespace TaskFlow.Api.Services
                     if (pendingTasks.Count != 0)
                     {
                         promptBuilder.AppendLine("**Pending:**");
-                        foreach (var task in pendingTasks.Take(5)) // Limit to 5 most recent
+                        foreach (var task in pendingTasks.Take(3))
                         {
                             promptBuilder.AppendLine($"- {task.Title}" +
                                 (task.DueDate.HasValue ? $" (Due: {task.DueDate:yyyy-MM-dd})" : ""));

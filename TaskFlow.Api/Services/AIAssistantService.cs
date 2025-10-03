@@ -111,12 +111,12 @@ Remember: Stay focused on TaskFlow and task management ONLY. Respond ENTIRELY in
                     .Include(t => t.Category)
                     .Where(t => t.UserId == userId)
                     .OrderByDescending(t => t.CreatedAt)
-                    .Take(10)
+                    .Take(5)
                     .Select(t => new TaskSummary
                     {
                         Id = t.Id,
                         Title = t.Title,
-                        Description = null, // Omit to reduce prompt size
+                        Description = null,
                         IsCompleted = t.IsCompleted,
                         DueDate = t.DueDate,
                         CategoryName = t.Category != null ? t.Category.Name : null,

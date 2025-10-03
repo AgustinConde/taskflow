@@ -295,5 +295,19 @@
         "mapLoadError": "Error al cargar el mapa",
         "coordinates": "Coordenadas",
         "selectedLocation": "Ubicación Seleccionada"
+    },
+    "aiAssistant": {
+        "title": "Asistente TaskFlow",
+        "open": "Abrir Asistente IA",
+        "close": "Cerrar",
+        "online": "En línea",
+        "offline": "Fuera de línea",
+        "welcome": "¡Hola! Soy tu asistente de TaskFlow. ¿En qué puedo ayudarte hoy? Puedo sugerirte tareas, ayudarte a organizar tu día, o darte consejos de productividad.",
+        "inputPlaceholder": "Escribe tu mensaje...",
+        "thinking": "Pensando...",
+        "error": "Lo siento, ocurrió un error. Por favor, asegúrate de que Ollama esté ejecutándose.",
+        "notAvailable": "El asistente de IA no está disponible. Por favor, asegúrate de que Ollama esté ejecutándose localmente.",
+        "disclaimer": "Las respuestas de IA son generadas y pueden no ser siempre precisas",
+        "restricted": "Solo puedo ayudarte con temas relacionados con la gestión de tareas. Por favor, pregúntame algo relacionado con TaskFlow."
     }
 }

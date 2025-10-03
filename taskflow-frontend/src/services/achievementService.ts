@@ -79,9 +79,7 @@ class AchievementService {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Achievement service error:', response.status, errorText);
-                throw new Error(`Failed to track achievement event: ${response.status} ${errorText}`);
+                throw new Error(`Failed to track achievement event: ${response.status}`);
             }
         } catch (error) {
             console.error('Error tracking achievement event:', error);
@@ -116,6 +114,23 @@ class AchievementService {
             return response.json();
         } catch (error) {
             console.error('Error fetching achievements:', error);
+            return [];
+        }
+    }
+
+    async getNotifications(): Promise<any[]> {
+        try {
+            const response = await fetch(API_ENDPOINTS.achievements.notifications, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch achievement notifications');
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error('Error fetching achievement notifications:', error);
             return [];
         }
     }

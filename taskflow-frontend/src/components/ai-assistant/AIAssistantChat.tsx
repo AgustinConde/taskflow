@@ -121,7 +121,7 @@ const AIAssistantChat: React.FC = () => {
         }
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
@@ -162,10 +162,12 @@ const AIAssistantChat: React.FC = () => {
                 anchor="right"
                 open={isOpen}
                 onClose={handleClose}
-                PaperProps={{
-                    sx: {
-                        width: { xs: '100%', sm: 400, md: 450 },
-                        maxWidth: '100vw'
+                slotProps={{
+                    paper: {
+                        sx: {
+                            width: { xs: '100%', sm: 400, md: 450 },
+                            maxWidth: '100vw'
+                        }
                     }
                 }}
             >
@@ -311,7 +313,7 @@ const AIAssistantChat: React.FC = () => {
                                 maxRows={3}
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
+                                onKeyDown={handleKeyDown}
                                 placeholder={t('aiAssistant.inputPlaceholder', 'Type your message...')}
                                 disabled={!isAIAvailable || sendMessageMutation.isPending}
                                 variant="outlined"

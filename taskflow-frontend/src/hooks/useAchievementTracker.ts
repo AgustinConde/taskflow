@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNotifications } from './useNotifications';
 import type {
     Achievement,
@@ -16,6 +17,7 @@ import { calculateUserLevel } from '../types/Achievement';
 
 export const useAchievementTracker = () => {
     const { showSuccess } = useNotifications();
+    const { t } = useTranslation();
     const [achievements, setAchievements] = useState<Achievement[]>([]);
     const [progress, setProgress] = useState<AchievementProgress[]>([]);
     const [userStats, setUserStats] = useState<UserAchievementStats | null>(null);
@@ -166,6 +168,23 @@ export const useAchievementTracker = () => {
                 try {
                     await achievementService.trackEvent(event);
 
+                    const notifications = await achievementService.getNotifications();
+
+                    notifications.forEach((notification: any) => {
+                        const { achievement, tier, isNewAchievement } = notification;
+                        if (isNewAchievement) {
+                            showSuccess(
+                                `🏆 Achievement Unlocked: ${achievement.key} (${tier.level.toUpperCase()})!`,
+                                `achievement-${achievement.id}-${tier.level}`
+                            );
+                        } else {
+                            showSuccess(
+                                `⭐ Achievement Upgraded: ${achievement.key} (${tier.level.toUpperCase()})!`,
+                                `achievement-upgrade-${achievement.id}-${tier.level}`
+                            );
+                        }
+                    });
+
                     const backendProgress = await achievementService.getUserProgress();
                     const backendStats = await achievementService.getUserStats();
 
@@ -175,6 +194,7 @@ export const useAchievementTracker = () => {
                         return;
                     }
                 } catch (backendError) {
+                    console.error('Error processing achievement event:', backendError);
                 }
             }
 
@@ -351,19 +371,21 @@ export const useAchievementTracker = () => {
     };
 
     const showAchievementNotification = (notification: AchievementNotification) => {
-        const { achievement, tier, isNewAchievement } = notification;
+        const { achievement, tier } = notification;
 
-        if (isNewAchievement) {
-            showSuccess(
-                `🏆 Achievement Unlocked: ${achievement.key} (${tier.level.toUpperCase()})!`,
-                `achievement-${achievement.id}-${tier.level}`
-            );
-        } else {
-            showSuccess(
-                `⭐ Achievement Upgraded: ${achievement.key} (${tier.level.toUpperCase()})!`,
-                `achievement-upgrade-${achievement.id}-${tier.level}`
-            );
-        }
+        const achievementKey = achievement.id.replace(/_/g, '');
+        const achievementNameKey = `achievementData.${achievementKey}.title`;
+        const achievementName = t(achievementNameKey, achievement.key);
+
+        const tierNameKey = `achievementTiers.${tier.level.toLowerCase()}`;
+        const tierName = t(tierNameKey, tier.level);
+
+        const message = `${achievementName} (${tierName})`;
+
+        showSuccess(
+            message,
+            `achievement-${achievement.id}-${tier.level}`
+        );
     };
 
     return {

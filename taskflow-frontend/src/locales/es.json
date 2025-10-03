@@ -157,6 +157,14 @@
     "achievements": "Logros",
     "achievementUnlocked": "¡Logro Desbloqueado!",
     "achievementUpgraded": "¡Logro Mejorado!",
+    "achievementCompleted": "¡{{name}} completado!",
+    "achievementTiers": {
+        "bronze": "Bronce",
+        "silver": "Plata",
+        "gold": "Oro",
+        "platinum": "Platino",
+        "diamond": "Diamante"
+    },
     "achievementData": {
         "taskCompletionist": {
             "title": "Completador de Tareas",

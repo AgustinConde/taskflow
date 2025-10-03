@@ -157,6 +157,14 @@
     "achievements": "Achievements",
     "achievementUnlocked": "Achievement Unlocked!",
     "achievementUpgraded": "Achievement Upgraded!",
+    "achievementCompleted": "{{name}} completed!",
+    "achievementTiers": {
+        "bronze": "Bronze",
+        "silver": "Silver",
+        "gold": "Gold",
+        "platinum": "Platinum",
+        "diamond": "Diamond"
+    },
     "achievementData": {
         "taskCompletionist": {
             "title": "Task Completionist",

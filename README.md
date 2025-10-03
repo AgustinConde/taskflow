@@ -14,6 +14,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 - **User Authentication & Authorization**: Registration, login, email confirmation with JWT tokens
 - **Task Management**: Full CRUD operations with intuitive and responsive UI
 - **Location Support**: Geolocation with Google Maps integration for physical task locations
+- **AI Assistant**: Intelligent task companion powered by Ollama for suggestions, organization, and productivity insights
 - **Category Management**: Create, edit, and organize tasks by categories
 - **Dashboard & Analytics**: Visual metrics and charts for task progress tracking
 - **Drag & Drop**: Reorder tasks with hello-pangea/dnd
@@ -28,6 +29,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 
 - **Frontend**: Node.js 18+ and npm
 - **Backend**: .NET 8 SDK, SQL Server (local or remote)
+- **AI Assistant**: Ollama (optional, for AI-powered features)
 - **Optional**: SQL Server Management Studio (SSMS)
 
 ## Installation & Setup
@@ -91,6 +93,28 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
    dotnet run
    ```
    API available at the port shown in console (typically `https://localhost:5149`)
+
+### Ollama Setup (Optional - For AI Assistant)
+
+1. **Install Ollama**:
+   - Windows: Download from [ollama.com](https://ollama.com)
+   - Linux/Mac: `curl -fsSL https://ollama.com/install.sh | sh`
+
+2. **Download the AI model**:
+   ```bash
+   ollama pull llama3.2
+   ```
+
+3. **Verify Ollama is running**:
+   - Ollama runs automatically on `http://localhost:11434`
+   - Test with: `curl http://localhost:11434/api/version`
+
+4. **Use the AI Assistant**:
+   - Click the chat button in the bottom-right corner
+   - Ask about task organization, suggestions, or productivity tips
+   - The AI only responds to TaskFlow-related questions
+
+> 💡 **Note**: The AI Assistant requires Ollama to be running. If Ollama is not installed, the feature will show as "Offline" but the rest of the app works normally.
 
 ## Environment Variables
 
@@ -161,6 +185,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 - `src/components/category-manager/` — Category CRUD operations
 - `src/components/dashboard/` — Analytics and metrics
 - `src/components/location/` — Location picker and map display for tasks
+- `src/components/ai-assistant/` — AI chat interface and assistant features
 - `src/contexts/` — React contexts (Auth, Notifications)
 - `src/services/` — API communication services
 - `src/config/` — Centralized API configuration and endpoints
@@ -170,8 +195,10 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 ### Backend
 - `Controllers/` — API endpoints
 - `Services/` — Business logic
+  - `Services/AIAssistant/` — AI provider implementations and assistant logic
 - `Models/` — Entity models
 - `DTOs/` — Data transfer objects
+  - `DTOs/AIAssistant/` — AI chat request/response DTOs
 - `Migrations/` — Entity Framework migrations
 
 ## Key Dependencies
@@ -209,6 +236,10 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 - `PUT    /api/categories/{id}` — Update category
 - `DELETE /api/categories/{id}` — Delete category
 
+#### AI Assistant
+- `POST /api/ai-assistant/chat` — Send message to AI assistant (requires authentication)
+- `GET  /api/ai-assistant/status` — Check Ollama availability
+
 ## Usage
 
 1. **Register a new account** or log in with existing credentials
@@ -220,6 +251,30 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 7. **Switch themes and languages** from the app navigation
 8. **Drag and drop tasks** to reorder them
 9. **Use contextual menus** for quick actions on tasks
+10. **Chat with the AI Assistant** for task suggestions, organization tips, and productivity insights
+
+## AI Assistant
+
+TaskFlow includes an intelligent AI assistant powered by Ollama that helps you manage your tasks more effectively. The assistant can:
+
+- **Suggest new tasks** based on your current workload and goals
+- **Organize existing tasks** by priority, category, or deadline
+- **Create completion plans** with step-by-step breakdowns
+- **Suggest new categories** to better organize your work
+
+The AI assistant is **context-aware**, meaning it knows about your tasks, categories, and progress. It's also **topic-restricted** to only discuss task management and productivity topics related to TaskFlow.
+
+### Quick Start
+
+1. **Install Ollama** (see Ollama Setup section above)
+2. **Click the chat icon** in the bottom-right corner of the app
+3. **Start chatting** - try asking:
+   - "Help me organize my tasks for this week"
+   - "What should I work on next?"
+   - "Suggest some categories for my tasks"
+   - "Create a plan to complete my urgent tasks"
+
+For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.md).
 
 </details>
 
@@ -231,6 +286,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - **Autenticación y Autorización**: Registro, login, confirmación por email con tokens JWT
 - **Gestión de Tareas**: Operaciones CRUD completas con interfaz intuitiva y responsiva
 - **Soporte de Ubicación**: Geolocalización opcional con integración de Google Maps para ubicaciones físicas de tareas
+- **Asistente de IA**: Compañero inteligente impulsado por Ollama para sugerencias, organización y análisis de productividad
 - **Gestión de Categorías**: Crear, editar y organizar tareas por categorías
 - **Dashboard y Analíticas**: Métricas visuales y gráficos para seguimiento de progreso
 - **Drag & Drop**: Reordenar tareas con hello-pangea/dnd
@@ -245,6 +301,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 
 - **Frontend**: Node.js 18+ y npm
 - **Backend**: .NET 8 SDK, SQL Server (local o remoto)
+- **Asistente de IA**: Ollama (opcional, para funcionalidades impulsadas por IA)
 - **Opcional**: SQL Server Management Studio (SSMS)
 
 ## Instalación y configuración
@@ -308,6 +365,28 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
    dotnet run
    ```
    API disponible en el puerto mostrado en consola (típicamente `https://localhost:5149`)
+
+### Configuración de Ollama (Opcional - Para Asistente de IA)
+
+1. **Instalar Ollama**:
+   - Windows: Descargar desde [ollama.com](https://ollama.com)
+   - Linux/Mac: `curl -fsSL https://ollama.com/install.sh | sh`
+
+2. **Descargar el modelo de IA**:
+   ```bash
+   ollama pull llama3.2
+   ```
+
+3. **Verificar que Ollama está corriendo**:
+   - Ollama se ejecuta automáticamente en `http://localhost:11434`
+   - Probá con: `curl http://localhost:11434/api/version`
+
+4. **Usar el Asistente de IA**:
+   - Hacé clic en el botón de chat en la esquina inferior derecha
+   - Preguntá sobre organización de tareas, sugerencias o tips de productividad
+   - La IA solo responde preguntas relacionadas con TaskFlow
+
+> 💡 **Nota**: El Asistente de IA requiere que Ollama esté en ejecución. Si Ollama no está instalado, la función se mostrará como "Sin conexión" pero el resto de la app funciona normalmente.
 
 ## Variables de entorno
 
@@ -378,6 +457,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - `src/components/category-manager/` — Operaciones CRUD de categorías
 - `src/components/dashboard/` — Analíticas y métricas
 - `src/components/location/` — Selector de ubicación y visualización de mapas para tareas
+- `src/components/ai-assistant/` — Interfaz de chat de IA y funciones del asistente
 - `src/contexts/` — Contextos de React (Auth, Notificaciones)
 - `src/services/` — Servicios de comunicación con API
 - `src/config/` — Configuración centralizada de API y endpoints
@@ -427,6 +507,10 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - `PUT    /api/categories/{id}` — Actualizar categoría
 - `DELETE /api/categories/{id}` — Eliminar categoría
 
+#### Asistente de IA
+- `POST /api/ai-assistant/chat` — Enviar mensaje al asistente de IA (requiere autenticación)
+- `GET  /api/ai-assistant/status` — Verificar disponibilidad de Ollama
+
 ## Uso
 
 1. **Registrá una nueva cuenta** o iniciá sesión con credenciales existentes
@@ -438,3 +522,27 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 7. **Cambiá temas e idiomas** desde la navegación de la app
 8. **Arrastrá y soltá tareas** para reordenarlas
 9. **Usá menús contextuales** para acciones rápidas en las tareas
+10. **Chateá con el Asistente de IA** para sugerencias de tareas, tips de organización y análisis de productividad
+
+## Asistente de IA
+
+TaskFlow incluye un asistente de IA inteligente impulsado por Ollama que te ayuda a gestionar tus tareas de manera más efectiva. El asistente puede:
+
+- **Sugerir nuevas tareas** basándose en tu carga de trabajo actual y objetivos
+- **Organizar tareas existentes** por prioridad, categoría o fecha límite
+- **Crear planes de completitud** con desgloses paso a paso
+- **Sugerir nuevas categorías** para organizar mejor tu trabajo
+
+El asistente de IA es **consciente del contexto**, lo que significa que conoce tus tareas, categorías y progreso. También está **restringido por tema** para discutir solo gestión de tareas y temas de productividad relacionados con TaskFlow.
+
+### Inicio Rápido
+
+1. **Instalá Ollama** (ver sección Configuración de Ollama arriba)
+2. **Hacé clic en el ícono de chat** en la esquina inferior derecha de la app
+3. **Comenzá a chatear** - probá preguntar:
+   - "Ayudame a organizar mis tareas para esta semana"
+   - "¿En qué debería trabajar ahora?"
+   - "Sugerí algunas categorías para mis tareas"
+   - "Creá un plan para completar mis tareas urgentes"
+
+Para documentación detallada, ver [Documentación del Asistente de IA](docs/AI_ASSISTANT.md).

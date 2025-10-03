@@ -9,6 +9,7 @@ import CalendarPage from '../../pages/CalendarPage';
 import AchievementsPage from '../../pages/AchievementsPage';
 import AppNavBar from './AppNavBar';
 import UserProfileDialog from '../user/UserProfileDialog';
+import { AIAssistantChat } from '../ai-assistant';
 import type { Task } from '../../types/Task';
 import type { Category } from '../../types/Category';
 
@@ -102,6 +103,9 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
                     </Box>
                 )}
             </Box>
+
+            {/* AI Assistant Chat - Floating button visible on all tabs */}
+            <AIAssistantChat />
         </>
     );
 };

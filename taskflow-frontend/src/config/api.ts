@@ -28,8 +28,13 @@ export const API_ENDPOINTS = {
         base: `${API_BASE_URL}/achievements`,
         progress: `${API_BASE_URL}/achievements/progress`,
         trackEvent: `${API_BASE_URL}/achievements/events`,
+        notifications: `${API_BASE_URL}/achievements/notifications`,
         stats: `${API_BASE_URL}/achievements/stats`,
         initialize: `${API_BASE_URL}/achievements/initialize`,
+    },
+    aiAssistant: {
+        chat: `${API_BASE_URL}/ai-assistant/chat`,
+        status: `${API_BASE_URL}/ai-assistant/status`,
     },
 } as const;
 

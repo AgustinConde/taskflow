@@ -31,6 +31,11 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 
+// AI Assistant services
+builder.Services.AddHttpClient(); // For OllamaProvider
+builder.Services.AddScoped<IAIProvider, OllamaProvider>();
+builder.Services.AddScoped<AIAssistantService>();
+
 builder.Services.AddDbContext<TaskFlowDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

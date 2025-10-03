@@ -275,16 +275,288 @@ namespace TaskFlow.Api.Services
             _context.AchievementEvents.Add(achievementEvent);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation($"Tracked achievement event: {eventDto.Type} for user {userId}");
+            try
+            {
+                await ProcessSingleEvent(userId, achievementEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error processing achievement event {eventDto.Type} for user {userId}");
+            }
+        }
+
+        private async System.Threading.Tasks.Task ProcessSingleEvent(int userId, AchievementEvent evt)
+        {
+            if (evt.IsProcessed)
+            {
+                return;
+            }
+
+            var achievements = await _context.Achievements
+                .Include(a => a.Tiers)
+                .ToListAsync();
+
+            var affectedAchievements = GetAchievementsForEvent(achievements, evt.EventType);
+
+            if (!affectedAchievements.Any())
+            {
+                evt.IsProcessed = true;
+                return;
+            }
+
+            if (evt.EventType?.ToUpperInvariant() == "DAILY_LOGIN")
+            {
+                await UpdateStreakAsync(userId, evt.Timestamp);
+            }
+
+            foreach (var achievement in affectedAchievements)
+            {
+                var progress = await _context.UserAchievementProgress
+                    .Include(uap => uap.TierProgress)
+                    .ThenInclude(tp => tp.AchievementTier)
+                    .FirstOrDefaultAsync(uap => uap.UserId == userId && uap.AchievementId == achievement.Id);
+
+                if (progress == null)
+                {
+                    progress = new UserAchievementProgress
+                    {
+                        UserId = userId,
+                        AchievementId = achievement.Id,
+                        CurrentValue = 0,
+                        LastUpdated = DateTime.UtcNow
+                    };
+                    _context.UserAchievementProgress.Add(progress);
+                    await _context.SaveChangesAsync();
+                }
+
+                progress.CurrentValue++;
+                progress.LastUpdated = DateTime.UtcNow;
+
+                var orderedTiers = achievement.Tiers.OrderBy(t => t.Target).ToList();
+                foreach (var tier in orderedTiers)
+                {
+                    if (progress.CurrentValue >= tier.Target)
+                    {
+                        var tierProgress = progress.TierProgress
+                            .FirstOrDefault(tp => tp.AchievementTierId == tier.Id);
+
+                        if (tierProgress == null || !tierProgress.IsUnlocked)
+                        {
+                            if (tierProgress == null)
+                            {
+                                tierProgress = new UserAchievementTierProgress
+                                {
+                                    UserAchievementProgressId = progress.Id,
+                                    AchievementTierId = tier.Id,
+                                    IsUnlocked = true,
+                                    UnlockedAt = DateTime.UtcNow
+                                };
+                                progress.TierProgress.Add(tierProgress);
+                            }
+                            else
+                            {
+                                tierProgress.IsUnlocked = true;
+                                tierProgress.UnlockedAt = DateTime.UtcNow;
+                            }
+
+                            if (progress.FirstUnlockedAt == null)
+                            {
+                                progress.FirstUnlockedAt = DateTime.UtcNow;
+                            }
+                        }
+                    }
+                }
+            }
+            evt.IsProcessed = true;
+
+            await _context.SaveChangesAsync();
+            await UpdateUserStatsAsync(userId);
+        }
+
+        private async System.Threading.Tasks.Task UpdateStreakAsync(int userId, DateTime eventDate)
+        {
+            var stats = await _context.UserAchievementStats
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (stats == null)
+            {
+                return;
+            }
+
+            var today = eventDate.Date;
+            var lastStreakDate = stats.LastStreakDate?.Date;
+
+            if (lastStreakDate == null)
+            {
+                stats.CurrentStreak = 1;
+                stats.LongestStreak = 1;
+                stats.LastStreakDate = today;
+            }
+            else if (lastStreakDate == today)
+            {
+                return;
+            }
+            else if (lastStreakDate == today.AddDays(-1))
+            {
+                stats.CurrentStreak++;
+                stats.LastStreakDate = today;
+
+                if (stats.CurrentStreak > stats.LongestStreak)
+                {
+                    stats.LongestStreak = stats.CurrentStreak;
+                }
+            }
+            else
+            {
+                stats.CurrentStreak = 1;
+                stats.LastStreakDate = today;
+            }
+
+            stats.LastUpdated = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
         }
 
 
-
-
-
-        public System.Threading.Tasks.Task<List<AchievementNotificationDto>> ProcessAchievementEvents(int userId)
+        public async System.Threading.Tasks.Task<List<AchievementNotificationDto>> ProcessAchievementEvents(int userId)
         {
-            return System.Threading.Tasks.Task.FromResult(new List<AchievementNotificationDto>());
+            var notifications = new List<AchievementNotificationDto>();
+
+            var events = await _context.AchievementEvents
+                .Where(e => e.UserId == userId && !e.IsProcessed)
+                .OrderByDescending(e => e.Timestamp)
+                .Take(100)
+                .ToListAsync();
+
+            if (!events.Any())
+            {
+                return notifications;
+            }
+
+            var achievements = await _context.Achievements
+                .Include(a => a.Tiers)
+                .ToListAsync();
+
+            var userProgress = await _context.UserAchievementProgress
+                .Include(uap => uap.TierProgress)
+                .ThenInclude(tp => tp.AchievementTier)
+                .Where(uap => uap.UserId == userId)
+                .ToDictionaryAsync(uap => uap.AchievementId);
+
+            foreach (var evt in events)
+            {
+                var affectedAchievements = GetAchievementsForEvent(achievements, evt.EventType);
+
+                foreach (var achievement in affectedAchievements)
+                {
+                    if (!userProgress.TryGetValue(achievement.Id, out var progress))
+                    {
+                        progress = new UserAchievementProgress
+                        {
+                            UserId = userId,
+                            AchievementId = achievement.Id,
+                            CurrentValue = 0,
+                            LastUpdated = DateTime.UtcNow
+                        };
+                        _context.UserAchievementProgress.Add(progress);
+                        await _context.SaveChangesAsync();
+                        userProgress[achievement.Id] = progress;
+                    }
+
+                    var oldValue = progress.CurrentValue;
+                    progress.CurrentValue++;
+                    progress.LastUpdated = DateTime.UtcNow;
+                    _logger.LogInformation($"Achievement {achievement.Id}: {oldValue} -> {progress.CurrentValue}");
+
+                    var orderedTiers = achievement.Tiers.OrderBy(t => t.Target).ToList();
+                    foreach (var tier in orderedTiers)
+                    {
+                        if (progress.CurrentValue >= tier.Target)
+                        {
+                            var tierProgress = progress.TierProgress
+                                .FirstOrDefault(tp => tp.AchievementTierId == tier.Id);
+
+                            if (tierProgress == null || !tierProgress.IsUnlocked)
+                            {
+                                if (tierProgress == null)
+                                {
+                                    tierProgress = new UserAchievementTierProgress
+                                    {
+                                        UserAchievementProgressId = progress.Id,
+                                        AchievementTierId = tier.Id,
+                                        IsUnlocked = true,
+                                        UnlockedAt = DateTime.UtcNow
+                                    };
+                                    progress.TierProgress.Add(tierProgress);
+                                }
+                                else
+                                {
+                                    tierProgress.IsUnlocked = true;
+                                    tierProgress.UnlockedAt = DateTime.UtcNow;
+                                }
+
+                                if (progress.FirstUnlockedAt == null)
+                                {
+                                    progress.FirstUnlockedAt = DateTime.UtcNow;
+                                }
+
+                                notifications.Add(new AchievementNotificationDto
+                                {
+                                    Achievement = new AchievementDto
+                                    {
+                                        Id = achievement.Id,
+                                        Key = achievement.Key,
+                                        Category = achievement.Category,
+                                        Type = achievement.Type,
+                                        Icon = achievement.Icon,
+                                        Color = achievement.Color,
+                                        IsHidden = achievement.IsHidden
+                                    },
+                                    Tier = new AchievementTierDto
+                                    {
+                                        Id = tier.Id,
+                                        Level = tier.Level,
+                                        Target = tier.Target,
+                                        Points = tier.Points,
+                                        Unlocked = true,
+                                        UnlockedAt = DateTime.UtcNow
+                                    },
+                                    IsNewAchievement = progress.FirstUnlockedAt == DateTime.UtcNow
+                                });
+
+                                _logger.LogInformation($"User {userId} unlocked {achievement.Key} - {tier.Level} tier");
+                            }
+                        }
+                    }
+                }
+                evt.IsProcessed = true;
+            }
+
+            await _context.SaveChangesAsync();
+            await UpdateUserStatsAsync(userId);
+
+            return notifications;
+        }
+
+        private List<Achievement> GetAchievementsForEvent(List<Achievement> achievements, string eventType)
+        {
+            return eventType?.ToUpperInvariant() switch
+            {
+                "TASK_COMPLETED" => achievements.Where(a => a.Id == "task_completionist").ToList(),
+                "TASK_CREATED" => achievements.Where(a => a.Id is "first_steps" or "multitasker").ToList(),
+                "CATEGORY_CREATED" => achievements.Where(a => a.Id == "category_creator").ToList(),
+                "ALL_TASKS_COMPLETED_TODAY" => achievements.Where(a => a.Id == "daily_achiever").ToList(),
+                "TASK_COMPLETED_ON_TIME" => achievements.Where(a => a.Id is "speed_demon" or "time_master").ToList(),
+                "TASK_COMPLETED_LATE" => achievements.Where(a => a.Id == "none").ToList(),
+                "TASK_UPDATED" => achievements.Where(a => a.Id == "none").ToList(),
+                "EARLY_BIRD" => achievements.Where(a => a.Id == "early_bird").ToList(),
+                "NIGHT_OWL" => achievements.Where(a => a.Id == "night_owl").ToList(),
+                "WEEKEND_PRODUCTIVITY" => achievements.Where(a => a.Id == "weekend_warrior").ToList(),
+                "DAILY_LOGIN" => achievements.Where(a => a.Id == "consistency_keeper").ToList(),
+                "CALENDAR_VIEWED" or "CALENDAR_VIEW_USED" => achievements.Where(a => a.Id == "calendar_master").ToList(),
+                "DASHBOARD_VIEWED" => achievements.Where(a => a.Id == "feature_explorer").ToList(),
+                "APP_OPENED" => achievements.Where(a => a.Id == "feature_explorer").ToList(),
+                _ => []
+            };
         }
     }
 }

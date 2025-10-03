@@ -6,10 +6,11 @@ using TaskFlow.Api.Models;
 
 namespace TaskFlow.Api.Services
 {
-    public class AuthService(TaskFlowDbContext context, JwtService jwtService)
+    public class AuthService(TaskFlowDbContext context, JwtService jwtService, IAchievementService achievementService)
     {
         private readonly TaskFlowDbContext _context = context;
         private readonly JwtService _jwtService = jwtService;
+        private readonly IAchievementService _achievementService = achievementService;
 
         private static async Task<bool> SendConfirmationEmailAsync(User user, string token, IEmailService emailService, string baseUrl)
         {
@@ -83,6 +84,15 @@ namespace TaskFlow.Api.Services
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            try
+            {
+                await _achievementService.InitializeUserAchievementsAsync(user.Id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing achievements for user {user.Id}: {ex.Message}");
+            }
 
             var confirmationToken = Guid.NewGuid().ToString();
             var userToken = new UserToken

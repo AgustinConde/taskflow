@@ -106,6 +106,8 @@ namespace TaskFlow.Api.Models
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
+        public bool IsProcessed { get; set; } = false;
+
         public virtual User User { get; set; } = null!;
     }
 
@@ -126,6 +128,8 @@ namespace TaskFlow.Api.Models
         public int CurrentStreak { get; set; } = 0;
 
         public int LongestStreak { get; set; } = 0;
+
+        public DateTime? LastStreakDate { get; set; } = null;
 
         public int Level { get; set; } = 1;
 

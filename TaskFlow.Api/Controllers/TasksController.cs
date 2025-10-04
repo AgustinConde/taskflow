@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TaskFlow.Api.Services;
 using TaskFlow.Api.DTOs;
 
@@ -8,6 +9,7 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [EnableRateLimiting("api")]
     public class TasksController(TaskService _taskService, JwtService _jwtService) : ControllerBase
     {
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TaskFlow.Api.Services;
 using TaskFlow.Api.DTOs;
 using System.Security.Claims;
@@ -9,6 +10,7 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [EnableRateLimiting("api")]
     public class AchievementsController(IAchievementService achievementService, ILogger<AchievementsController> logger) : ControllerBase
     {
         private readonly IAchievementService _achievementService = achievementService;

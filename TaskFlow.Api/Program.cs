@@ -5,6 +5,7 @@ using TaskFlow.Api.UtcDateTimeConverter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 
 // Load environment variables from .env if it exists
 try { DotNetEnv.Env.Load(); } catch { /* Ignore if .env file is not found */ }
@@ -61,6 +62,59 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddRateLimiter(rateLimiterOptions =>
+{
+    // Global rate limiter - applies to all endpoints by default
+    rateLimiterOptions.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+
+    rateLimiterOptions.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    rateLimiterOptions.AddPolicy("api", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    rateLimiterOptions.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+        var retryAfterSeconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+            ? (double?)retryAfter.TotalSeconds
+            : null;
+
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            message = "rate_limit.exceeded",
+            retryAfter = retryAfterSeconds
+        }, cancellationToken);
+    };
+});
 
 builder.Services.AddCors(options =>
 {
@@ -85,6 +139,9 @@ app.UseCors();
 
 // Static files middleware for wwwroot
 app.UseStaticFiles();
+
+// Rate limiting middleware (before authentication)
+app.UseRateLimiter();
 
 // Authentication & Authorization middleware
 app.UseAuthentication();

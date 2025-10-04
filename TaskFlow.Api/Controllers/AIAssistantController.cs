@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Services;
@@ -8,7 +9,8 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/ai-assistant")]
-    [Authorize] // Requires JWT authentication
+    [Authorize]
+    [EnableRateLimiting("api")] // Requires JWT authentication
     public class AIAssistantController(
         AIAssistantService aiAssistantService,
         ILogger<AIAssistantController> logger) : ControllerBase

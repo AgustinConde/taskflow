@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Services;
 using static TaskFlow.Api.Services.AuthService;
@@ -14,6 +15,7 @@ namespace TaskFlow.Api.Controllers
         private readonly JwtService _jwtService = jwtService;
 
         [HttpPost("resend-confirmation")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationDto request)
         {
             if (!ModelState.IsValid)
@@ -28,6 +30,7 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
             if (!ModelState.IsValid)
@@ -43,6 +46,7 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
@@ -132,6 +136,7 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost("forgot")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, [FromServices] IEmailService emailService)
         {
             var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
@@ -140,6 +145,7 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost("reset")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
             var ok = await _authService.ResetPasswordAsync(dto.Token, dto.NewPassword);

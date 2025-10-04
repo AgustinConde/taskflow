@@ -36,6 +36,13 @@ const Calendar: React.FC<CalendarProps> = ({
     const theme = useTheme();
     const [currentDate, setCurrentDate] = useState(new Date());
 
+    const getLocalDateString = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
@@ -58,11 +65,12 @@ const Calendar: React.FC<CalendarProps> = ({
 
     const getTasksForDate = useMemo(() => {
         return (date: Date) => {
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = getLocalDateString(date);
             return tasks.filter(task => {
                 if (!task.dueDate) return false;
-                const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
-                return taskDate === dateStr;
+                const taskDate = new Date(task.dueDate);
+                const taskDateStr = getLocalDateString(taskDate);
+                return taskDateStr === dateStr;
             });
         };
     }, [tasks]);
@@ -156,7 +164,7 @@ const Calendar: React.FC<CalendarProps> = ({
                     sx={{ height: 'calc(100% - 120px)', minHeight: 600 }}
                 >
                     {calendarDays.map((dayData, index) => {
-                        const dateStr = dayData ? dayData.date.toISOString().split('T')[0] : 'invalid';
+                        const dateStr = dayData ? getLocalDateString(dayData.date) : 'invalid';
 
                         return (
                             <Droppable key={index} droppableId={dateStr}>

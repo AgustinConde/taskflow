@@ -80,7 +80,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); Enable in production with valid SSL certificate only
 app.UseCors();
 
 // Static files middleware for wwwroot
@@ -104,7 +104,7 @@ using (var scope = app.Services.CreateScope())
     await AchievementSeeder.SeedAchievementsAsync(context);
 }
 
-// Fallback to SPA only for routes without file extensions
-app.MapFallbackToFile("{*path:regex(^(?!.*\\.).*$)}", "index.html");
+// Fallback to SPA for all non-file routes
+app.MapFallbackToFile("index.html");
 
 app.Run();

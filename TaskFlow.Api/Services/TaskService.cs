@@ -20,6 +20,30 @@ namespace TaskFlow.Api.Services
                 .ToList();
         }
 
+        public PaginatedResultDto<TaskDto> GetAllByUserPaginated(int userId, int pageNumber = 1, int pageSize = 20)
+        {
+            var query = _context.Tasks
+                .Include(t => t.Location)
+                .Where(t => t.UserId == userId);
+
+            var totalCount = query.Count();
+
+            var tasks = query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => TaskMapper.ToDto(t))
+                .ToList();
+
+            return new PaginatedResultDto<TaskDto>
+            {
+                Items = tasks,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public TaskDto? GetByIdAndUser(int id, int userId)
         {
             var task = _context.Tasks

@@ -160,6 +160,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                         fullWidth
                         InputProps={{
                             ...params.InputProps,
+                            endAdornment: null,
                             startAdornment: (
                                 <LocationOnIcon
                                     sx={{
@@ -168,45 +169,46 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                                         fontSize: 20
                                     }}
                                 />
-                            ),
-                            endAdornment: (
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    {loading && <CircularProgress size={20} sx={{ mr: 1 }} />}
+                            )
+                        }}
+                        slotProps={{
+                            input: {
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        {loading && <CircularProgress size={20} />}
 
-                                    {!disabled && (
-                                        <>
-                                            <Tooltip title={t('location.getCurrentLocation', 'Use current location')}>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={handleGetCurrentLocation}
-                                                    disabled={isGettingCurrentLocation}
-                                                    sx={{ mr: 0.5 }}
-                                                >
-                                                    {isGettingCurrentLocation ? (
-                                                        <CircularProgress size={16} />
-                                                    ) : (
-                                                        <MyLocationIcon fontSize="small" />
-                                                    )}
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            {value && (
-                                                <Tooltip title={t('location.clearLocation', 'Clear location')}>
+                                        {!disabled && (
+                                            <>
+                                                <Tooltip title={t('location.getCurrentLocation', 'Use current location')}>
                                                     <IconButton
                                                         size="small"
-                                                        onClick={handleClear}
-                                                        sx={{ mr: 0.5 }}
+                                                        onClick={handleGetCurrentLocation}
+                                                        disabled={isGettingCurrentLocation}
                                                     >
-                                                        <ClearIcon fontSize="small" />
+                                                        {isGettingCurrentLocation ? (
+                                                            <CircularProgress size={16} />
+                                                        ) : (
+                                                            <MyLocationIcon fontSize="small" />
+                                                        )}
                                                     </IconButton>
                                                 </Tooltip>
-                                            )}
-                                        </>
-                                    )}
 
-                                    {params.InputProps.endAdornment}
-                                </Box>
-                            )
+                                                {value && (
+                                                    <Tooltip title={t('location.clearLocation', 'Clear location')}>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={handleClear}
+                                                        >
+                                                            <ClearIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                            </>
+                                        )}
+                                    </Box>
+                                )
+                            }
                         }}
                     />
                 )}

@@ -15,21 +15,13 @@ namespace TaskFlow.Api.Controllers
 
         // GET: api/tasks
         [HttpGet]
-        public IActionResult GetTasks([FromQuery] int? page, [FromQuery] int? pageSize)
+        public IActionResult GetTasks()
         {
             try
             {
                 var userId = _jwtService.GetUserIdFromToken(User);
                 if (userId == null) return Unauthorized();
 
-                if (page.HasValue && pageSize.HasValue)
-                {
-                    var pageNumber = Math.Max(1, page.Value);
-                    var size = Math.Clamp(pageSize.Value, 1, 100); // Max 100 items per page
-
-                    var paginatedResult = _taskService.GetAllByUserPaginated(userId.Value, pageNumber, size);
-                    return Ok(paginatedResult);
-                }
                 var tasks = _taskService.GetAllByUser(userId.Value);
                 return Ok(tasks);
             }

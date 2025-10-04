@@ -25,9 +25,8 @@ namespace TaskFlow.Api.Controllers
                 var categories = await _categoryService.GetAllByUserAsync(userId.Value);
                 return Ok(categories);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error in GetCategories: {ex.Message}");
                 return StatusCode(500, new { message = "category.get.error" });
             }
         }

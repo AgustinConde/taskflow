@@ -89,9 +89,9 @@ namespace TaskFlow.Api.Services
             {
                 await _achievementService.InitializeUserAchievementsAsync(user.Id);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error initializing achievements for user {user.Id}: {ex.Message}");
+                /* Ignore achievement initialization errors */
             }
 
             var confirmationToken = Guid.NewGuid().ToString();

@@ -91,9 +91,15 @@ namespace TaskFlow.Api.Controllers
         [HttpGet("confirm")]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
         {
-            var result = await _authService.ConfirmEmailAsync(token);
+            token = token?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new { message = "auth.confirm.invalid_token" });
+            }
+
             var userToken = await _authService.GetUserTokenByTokenAsync(token);
             var user = userToken != null ? await _authService.GetUserByIdAsync(int.Parse(userToken.UserId)) : null;
+            var result = await _authService.ConfirmEmailAsync(token);
             if (result == ConfirmEmailResult.Success && user != null)
             {
                 var jwt = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
@@ -128,8 +134,8 @@ namespace TaskFlow.Api.Controllers
         [HttpPost("forgot")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, [FromServices] IEmailService emailService)
         {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            await _authService.RequestPasswordResetAsync(dto.Email, emailService, baseUrl);
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+            await _authService.RequestPasswordResetAsync(dto.Email, emailService, frontendUrl);
             return Ok(new { message = "auth.forgot.sent" });
         }
 

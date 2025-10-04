@@ -149,7 +149,67 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 - `dotnet test` — Run tests
 - `dotnet publish -c Release` — Production build
 
+### Deployment Scripts (run from project root)
+- `.\copy-frontend-to-wwwroot.ps1` — Build frontend and copy to wwwroot to serve from backend
+- `.\verify-deployment.ps1` — Verify deployment configuration (DB, SMTP, JWT, environment variables)
+
 ## Production Deployment
+
+### Option 1: Integrated Deployment (Recommended for localhost)
+
+This option serves the frontend directly from the backend, ideal for local testing or simple deployment.
+
+1. **Run the deployment script**:
+   ```powershell
+   .\copy-frontend-to-wwwroot.ps1
+   ```
+   This script automatically:
+   - Installs dependencies if needed (`npm install`)
+   - Builds the frontend for production (`npm run build`)
+   - Copies compiled files to `TaskFlow.Api/wwwroot/`
+
+2. **Verify configuration**:
+   ```powershell
+   .\verify-deployment.ps1
+   ```
+   This will check:
+   - Frontend build exists
+   - Files copied to wwwroot
+   - Environment variables configured (ConnectionString, SMTP, JWT, FRONTEND_URL)
+   - Database migrations
+
+3. **Configure environment variables** in `TaskFlow.Api/.env`:
+   ```env
+   ConnectionStrings__DefaultConnection=Server=localhost\SQLEXPRESS;Database=TaskFlowDb;Trusted_Connection=True;TrustServerCertificate=True;
+   Smtp__Host=smtp.gmail.com
+   Smtp__Port=587
+   Smtp__User=your-email@gmail.com
+   Smtp__Pass=your-app-password
+   Smtp__From=your-email@gmail.com
+   Jwt__Key=your-secret-key-minimum-32-characters
+   FRONTEND_URL=http://localhost:5149
+   ```
+
+4. **Apply migrations**:
+   ```bash
+   cd TaskFlow.Api
+   dotnet ef database update
+   ```
+
+5. **Start the backend**:
+   ```bash
+   dotnet run --project TaskFlow.Api/TaskFlow.Api.csproj
+   ```
+
+6. **Access the application**: `http://localhost:5149`
+
+The backend will serve both the API and frontend from the same port.
+
+> 💡 **Note**: For production deployment with a real domain, follow the instructions in `docs/DEPLOYMENT.md`.
+
+### Option 2: Separate Deployment (Development)
+
+For active development with hot-reload:
 
 ### Frontend
 
@@ -421,11 +481,73 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - `dotnet test` — Ejecutar tests
 - `dotnet publish -c Release` — Build de producción
 
+### Deployment Scripts (desde raíz del proyecto)
+- `.\copy-frontend-to-wwwroot.ps1` — Build del frontend y copia a wwwroot para servir desde backend
+- `.\verify-deployment.ps1` — Verificar configuración de deployment (DB, SMTP, JWT, variables de entorno)
+
 ## Despliegue en producción
+
+### Opción 1: Deployment Integrado (Recomendado para localhost)
+
+Esta opción sirve el frontend directamente desde el backend, ideal para testing local o deployment simple.
+
+1. **Ejecutar el script de deployment**:
+   ```powershell
+   .\copy-frontend-to-wwwroot.ps1
+   ```
+   Este script automáticamente:
+   - Instala dependencias si es necesario (`npm install`)
+   - Compila el frontend para producción (`npm run build`)
+   - Copia los archivos compilados a `TaskFlow.Api/wwwroot/`
+
+2. **Verificar la configuración**:
+   ```powershell
+   .\verify-deployment.ps1
+   ```
+   Esto verificará:
+   - Build del frontend existe
+   - Archivos copiados a wwwroot
+   - Variables de entorno configuradas (ConnectionString, SMTP, JWT, FRONTEND_URL)
+   - Migraciones de base de datos
+
+3. **Configurar variables de entorno** en `TaskFlow.Api/.env`:
+   ```env
+   ConnectionStrings__DefaultConnection=Server=localhost\SQLEXPRESS;Database=TaskFlowDb;Trusted_Connection=True;TrustServerCertificate=True;
+   Smtp__Host=smtp.gmail.com
+   Smtp__Port=587
+   Smtp__User=tu-email@gmail.com
+   Smtp__Pass=tu-app-password
+   Smtp__From=tu-email@gmail.com
+   Jwt__Key=tu-clave-secreta-de-minimo-32-caracteres
+   FRONTEND_URL=http://localhost:5149
+   ```
+
+4. **Aplicar migraciones**:
+   ```bash
+   cd TaskFlow.Api
+   dotnet ef database update
+   ```
+
+5. **Iniciar el backend**:
+   ```bash
+   dotnet run --project TaskFlow.Api/TaskFlow.Api.csproj
+   ```
+
+6. **Acceder a la aplicación**: `http://localhost:5149`
+
+El backend servirá tanto la API como el frontend desde el mismo puerto.
+
+> 💡 **Nota**: Para deployment en producción con dominio real, seguir las instrucciones en `docs/DEPLOYMENT.md`.
+
+### Opción 2: Deployment Separado (Desarrollo)
+
+### Opción 2: Deployment Separado (Desarrollo)
+
+Para desarrollo activo con hot-reload:
 
 ### Frontend
 
-1. **Compilar para producción**:
+1. **Build para producción**:
    ```bash
    npm run build
    ```

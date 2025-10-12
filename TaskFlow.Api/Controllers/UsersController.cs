@@ -16,7 +16,8 @@ namespace TaskFlow.Api.Controllers
 
         // POST: api/users/photo
         [HttpPost("photo")]
-        public async Task<IActionResult> UploadPhoto([FromForm] IFormFile avatar)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadPhoto(IFormFile avatar)
         {
             if (avatar == null || avatar.Length == 0)
             {

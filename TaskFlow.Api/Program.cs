@@ -23,6 +23,48 @@ builder.Services.AddControllers()
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Enable file upload support for IFormFile parameters
+    options.OperationFilter<SwaggerFileOperationFilter>();
+
+    // Map IFormFile to file upload in Swagger UI
+    options.MapType<IFormFile>(() => new Microsoft.OpenApi.Models.OpenApiSchema
+    {
+        Type = "string",
+        Format = "binary"
+    });
+
+    // Custom schema filter to handle IFormFile in request bodies
+    options.SchemaFilter<FileUploadSchemaFilter>();
+
+    // Add JWT Authentication to Swagger
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter your valid token in the text input below.\r\n\r\n"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddHostedService<UserCleanupService>();
 builder.Services.AddScoped<TaskService>();
@@ -132,7 +174,25 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "TaskFlow API v1");
+        c.RoutePrefix = "swagger"; // http://localhost:5149/swagger
+    });
 }
+
+// Middleware to prevent caching of Swagger pages
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/swagger"))
+    {
+        context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+        context.Response.Headers["Pragma"] = "no-cache";
+        context.Response.Headers["Expires"] = "0";
+    }
+    await next();
+});
 
 // app.UseHttpsRedirection(); Enable in production with valid SSL certificate only
 app.UseCors();
@@ -156,7 +216,17 @@ using (var scope = app.Services.CreateScope())
     await AchievementSeeder.SeedAchievementsAsync(context);
 }
 
-// Fallback to SPA for all non-file routes
-app.MapFallbackToFile("index.html");
+// Fallback to SPA
+app.MapFallback(async context =>
+{
+    var path = context.Request.Path.Value;
+    if (path != null && (path.StartsWith("/api") || path.StartsWith("/swagger")))
+    {
+        context.Response.StatusCode = 404;
+        return;
+    }
+
+    await context.Response.SendFileAsync("wwwroot/index.html");
+});
 
 app.Run();

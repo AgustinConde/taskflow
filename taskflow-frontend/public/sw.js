@@ -53,6 +53,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Never cache Swagger routes
+  if (url.pathname.startsWith('/swagger')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleApiRequest(request));
     return;

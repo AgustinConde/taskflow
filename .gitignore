@@ -5,6 +5,8 @@
 
 # Ignore build outputs and sensitive files
 .env
+.env.development
+.env.production
 !.env.example
 !**/.env.example
 

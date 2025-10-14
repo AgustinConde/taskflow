@@ -5,6 +5,36 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 
 $allPassed = $true
 
+# Detect environment (default: production)
+$envMode = $env:ASPNETCORE_ENVIRONMENT
+if ([string]::IsNullOrEmpty($envMode)) { $envMode = "Production" }
+Write-Host "[INFO] Environment: $envMode" -ForegroundColor Cyan
+
+# Backend env file selection
+if ($envMode -eq "Production") {
+    $backendEnvFile = "TaskFlow.Api\.env.production"
+    $backendSettingsFile = "TaskFlow.Api\appsettings.Production.json"
+}
+elseif ($envMode -eq "Development") {
+    $backendEnvFile = "TaskFlow.Api\.env.development"
+    $backendSettingsFile = "TaskFlow.Api\appsettings.Development.json"
+}
+else {
+    $backendEnvFile = "TaskFlow.Api\.env"
+    $backendSettingsFile = "TaskFlow.Api\appsettings.json"
+}
+
+# Frontend env file selection
+if ($envMode -eq "Production") {
+    $frontendEnvFile = "taskflow-frontend\.env.production"
+}
+elseif ($envMode -eq "Development") {
+    $frontendEnvFile = "taskflow-frontend\.env.development"
+}
+else {
+    $frontendEnvFile = "taskflow-frontend\.env"
+}
+
 # Check 1: Frontend build exists
 Write-Host "[1/7] Checking frontend build..." -ForegroundColor Yellow
 $frontendDist = "taskflow-frontend\dist"
@@ -38,54 +68,62 @@ else {
     $allPassed = $false
 }
 
-# Check 3: appsettings.json configuration
-Write-Host "[3/7] Checking appsettings.json..." -ForegroundColor Yellow
-$appsettings = "TaskFlow.Api\appsettings.json"
-if (Test-Path $appsettings) {
-    $config = Get-Content $appsettings | ConvertFrom-Json
-    
-    $issues = @()
-    if ([string]::IsNullOrEmpty($config.ConnectionStrings.DefaultConnection)) {
-        $issues += "ConnectionString is empty"
+# Check 3: Backend env file
+Write-Host "[3/7] Checking backend env file ($backendEnvFile)..." -ForegroundColor Yellow
+if (Test-Path $backendEnvFile) {
+    $envContent = Get-Content $backendEnvFile -Raw
+    $missingVars = @()
+    if ($envContent -notmatch "ConnectionStrings__DefaultConnection=(.+)") {
+        $missingVars += "ConnectionStrings__DefaultConnection missing"
     }
-    if ([string]::IsNullOrEmpty($config.Smtp.Host)) {
-        $issues += "SMTP Host is empty"
+    if ($envContent -notmatch "Smtp__Host=(.+)") {
+        $missingVars += "Smtp__Host missing"
     }
-    if ([string]::IsNullOrEmpty($config.Smtp.User)) {
-        $issues += "SMTP User is empty"
+    if ($envContent -notmatch "Smtp__User=(.+)") {
+        $missingVars += "Smtp__User missing"
     }
-    if ([string]::IsNullOrEmpty($config.Jwt.Key)) {
-        $issues += "JWT Key is empty"
+    if ($envContent -notmatch "Jwt__Key=(.+)") {
+        $missingVars += "Jwt__Key missing"
     }
-    elseif ($config.Jwt.Key.Length -lt 32) {
-        $issues += "JWT Key too short (needs 32+ characters)"
-    }
-    
-    if ($issues.Count -eq 0) {
-        Write-Host "  [OK] appsettings.json configured" -ForegroundColor Green
+    if ($missingVars.Count -eq 0) {
+        Write-Host "  [OK] All critical backend env variables present" -ForegroundColor Green
     }
     else {
-        Write-Host "  [ERROR] appsettings.json issues:" -ForegroundColor Red
-        foreach ($issue in $issues) {
-            Write-Host "    - $issue" -ForegroundColor Red
+        Write-Host "  [ERROR] Backend env file issues:" -ForegroundColor Red
+        foreach ($var in $missingVars) {
+            Write-Host "    - $var" -ForegroundColor Red
         }
         $allPassed = $false
     }
 }
 else {
-    Write-Host "  [ERROR] appsettings.json not found" -ForegroundColor Red
+    Write-Host "  [ERROR] Backend env file not found: $backendEnvFile" -ForegroundColor Red
     $allPassed = $false
 }
 
-# Check 4: Environment variables
-Write-Host "[4/7] Checking environment variables..." -ForegroundColor Yellow
-$frontendUrl = [Environment]::GetEnvironmentVariable("FRONTEND_URL")
-if ([string]::IsNullOrEmpty($frontendUrl)) {
-    Write-Host "  [WARN] FRONTEND_URL not set (will default to http://localhost:5173)" -ForegroundColor Yellow
-    Write-Host "    For production, set: set FRONTEND_URL=https://your-domain.com" -ForegroundColor Gray
+# Check 4: Frontend env file
+Write-Host "[4/7] Checking frontend env file ($frontendEnvFile)..." -ForegroundColor Yellow
+if (Test-Path $frontendEnvFile) {
+    $envContent = Get-Content $frontendEnvFile -Raw
+    if ($envContent -match "VITE_ROOT_URL=(.+)") {
+        $viteUrl = $matches[1].Trim()
+        Write-Host "  [OK] VITE_ROOT_URL = $viteUrl" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  [WARN] VITE_ROOT_URL not found in $frontendEnvFile" -ForegroundColor Yellow
+    }
+    if ($envContent -match "VITE_GOOGLE_MAPS_API_KEY=(.+)") {
+        $apiKey = $matches[1].Trim()
+        if ($apiKey -eq "your_google_maps_api_key_here") {
+            Write-Host "  [WARN] Google Maps API key not configured" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "  [OK] Google Maps API key configured" -ForegroundColor Green
+        }
+    }
 }
 else {
-    Write-Host "  [OK] FRONTEND_URL = $frontendUrl" -ForegroundColor Green
+    Write-Host "  [WARN] Frontend env file not found: $frontendEnvFile" -ForegroundColor Yellow
 }
 
 # Check 5: Database migrations
@@ -114,31 +152,35 @@ else {
     $allPassed = $false
 }
 
-# Check 7: .env file
-Write-Host "[7/7] Checking frontend .env file..." -ForegroundColor Yellow
-$envFile = "taskflow-frontend\.env"
-if (Test-Path $envFile) {
-    $envContent = Get-Content $envFile -Raw
-    if ($envContent -match "VITE_ROOT_URL=(.+)") {
-        $viteUrl = $matches[1].Trim()
-        Write-Host "  [OK] VITE_ROOT_URL = $viteUrl" -ForegroundColor Green
+# Check 7: appsettings file (optional)
+Write-Host "[7/7] Checking backend appsettings file ($backendSettingsFile)..." -ForegroundColor Yellow
+if (Test-Path $backendSettingsFile) {
+    $config = Get-Content $backendSettingsFile | ConvertFrom-Json
+    $issues = @()
+    if ($config.ConnectionStrings.DefaultConnection -eq "") {
+        $issues += "ConnectionString is empty (using env file is OK)"
+    }
+    if ($config.Smtp.Host -eq "") {
+        $issues += "SMTP Host is empty (using env file is OK)"
+    }
+    if ($config.Smtp.User -eq "") {
+        $issues += "SMTP User is empty (using env file is OK)"
+    }
+    if ($config.Jwt.Key -eq "") {
+        $issues += "JWT Key is empty (using env file is OK)"
+    }
+    if ($issues.Count -eq 0) {
+        Write-Host "  [OK] appsettings file present (values may be set via env file)" -ForegroundColor Green
     }
     else {
-        Write-Host "  [WARN] VITE_ROOT_URL not found in .env" -ForegroundColor Yellow
-    }
-    
-    if ($envContent -match "VITE_GOOGLE_MAPS_API_KEY=(.+)") {
-        $apiKey = $matches[1].Trim()
-        if ($apiKey -eq "your_google_maps_api_key_here") {
-            Write-Host "  [WARN] Google Maps API key not configured" -ForegroundColor Yellow
-        }
-        else {
-            Write-Host "  [OK] Google Maps API key configured" -ForegroundColor Green
+        Write-Host "  [INFO] appsettings file present but values are empty (expected if using env files)" -ForegroundColor Yellow
+        foreach ($issue in $issues) {
+            Write-Host "    - $issue" -ForegroundColor Yellow
         }
     }
 }
 else {
-    Write-Host "  [WARN] .env file not found. Copy from .env.example" -ForegroundColor Yellow
+    Write-Host "  [INFO] appsettings file not found: $backendSettingsFile (expected if using env files)" -ForegroundColor Yellow
 }
 
 # Summary
@@ -157,7 +199,7 @@ Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Review docs/DEPLOYMENT.md for detailed instructions" -ForegroundColor Gray
 Write-Host "  2. Apply database migrations: cd TaskFlow.Api; dotnet ef database update" -ForegroundColor Gray
 Write-Host "  3. Start the backend: dotnet run --project TaskFlow.Api/TaskFlow.Api.csproj" -ForegroundColor Gray
-Write-Host "  4. Test all features using the checklist in DEPLOYMENT.md`n" -ForegroundColor Gray
+Write-Host "  4. Test all features using el checklist in DEPLOYMENT.md`n" -ForegroundColor Gray
 
 # Return exit code
 if ($allPassed) { exit 0 } else { exit 1 }

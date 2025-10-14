@@ -7,8 +7,19 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Threading.RateLimiting;
 
-// Load environment variables from .env if it exists
-try { DotNetEnv.Env.Load(); } catch { /* Ignore if .env file is not found */ }
+
+// Load environment variables
+var aspnetEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+try
+{
+    if (aspnetEnv == "Production")
+        DotNetEnv.Env.Load(".env.production");
+    else if (aspnetEnv == "Development")
+        DotNetEnv.Env.Load(".env.development");
+    else
+        DotNetEnv.Env.Load(); // fallback to .env
+}
+catch { /* Ignore if env file is not found */ }
 
 var builder = WebApplication.CreateBuilder(args);
 

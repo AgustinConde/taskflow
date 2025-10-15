@@ -26,6 +26,22 @@ jobs:
       - name: Build and copy frontend
         run: pwsh copy-frontend-to-wwwroot.ps1
 
+      - name: Create .env.production file
+        run: |
+          cd TaskFlow.Api
+          @"
+          ConnectionStrings__DefaultConnection=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
+          Smtp__Host=smtp.gmail.com
+          Smtp__Port=587
+          Smtp__User=taskflow.noreply@gmail.com
+          Smtp__Pass=${{ secrets.SMTP_PASSWORD }}
+          Smtp__From=taskflow.noreply@gmail.com
+          Jwt__Key=${{ secrets.JWT_KEY }}
+          Jwt__Issuer=TaskFlowApi
+          Jwt__Audience=TaskFlowClient
+          FRONTEND_URL=https://taskflow-app.azurewebsites.net
+          "@ | Out-File -FilePath .env.production -Encoding utf8
+
       - name: Build with dotnet
         run: dotnet build --configuration Release
 

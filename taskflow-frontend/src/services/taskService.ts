@@ -1,5 +1,6 @@
 import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../types/Task';
 import { authService } from './authService';
+import { API_ENDPOINTS } from '../config/api';
 
 const localDateTimeToUTC = (local: string | null | undefined): string | null => {
     if (!local) return null;
@@ -12,7 +13,7 @@ const localDateTimeToUTC = (local: string | null | undefined): string | null => 
     return localDate.toISOString();
 };
 
-const API_URL = "http://localhost:5149/api/tasks";
+const API_URL = API_ENDPOINTS.tasks.base;
 
 class TaskService {
     private getAuthHeaders(): HeadersInit {

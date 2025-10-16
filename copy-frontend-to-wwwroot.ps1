@@ -20,20 +20,41 @@ Write-Host "[INFO] Build mode: $buildMode" -ForegroundColor Cyan
 # Navigate to frontend directory
 Set-Location -Path "taskflow-frontend"
 
-# Install dependencies if needed
-if (-not (Test-Path "node_modules")) {
-    Write-Host "[INSTALL] Installing dependencies..." -ForegroundColor Yellow
-    # Use npm ci in CI/CD for clean install, npm install in local
-    if ($env:CI -eq "true" -or $env:GITHUB_ACTIONS -eq "true") {
-        npm ci
+# Install dependencies
+Write-Host "[INSTALL] Installing dependencies..." -ForegroundColor Yellow
+# Always do a fresh install in CI/CD
+if ($env:CI -eq "true" -or $env:GITHUB_ACTIONS -eq "true") {
+    # Clean install in CI/CD
+    if (Test-Path "node_modules") {
+        Remove-Item -Path "node_modules" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    # Temporarily unset NODE_ENV to install devDependencies
+    $originalNodeEnv = $env:NODE_ENV
+    $env:NODE_ENV = ""
+    npm install --include=dev --legacy-peer-deps
+    $env:NODE_ENV = $originalNodeEnv
+}
+else {
+    # In local development, only install if node_modules doesn't exist
+    if (-not (Test-Path "node_modules")) {
+        npm install --include=dev --legacy-peer-deps
     }
     else {
-        npm install
+        Write-Host "[SKIP] Dependencies already installed" -ForegroundColor Gray
     }
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] Failed to install dependencies" -ForegroundColor Red
-        exit 1
-    }
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Failed to install dependencies" -ForegroundColor Red
+    exit 1
+}
+
+# Verify vite is installed
+$vitePath = "node_modules\.bin\vite.cmd"
+if (-not (Test-Path $vitePath)) {
+    Write-Host "[ERROR] Vite not found in node_modules" -ForegroundColor Red
+    Write-Host "[DEBUG] Listing node_modules\.bin:" -ForegroundColor Yellow
+    Get-ChildItem "node_modules\.bin" -ErrorAction SilentlyContinue
+    exit 1
 }
 
 # Build the frontend with detected environment

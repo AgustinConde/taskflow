@@ -23,7 +23,6 @@ import { useAppTheme } from '../components/app/hooks/useAppTheme';
 import { useAppLanguage } from '../components/app/hooks/useAppLanguage';
 
 const ConfirmEmailPage: React.FC = () => {
-    console.log('[CONFIRM] Component mounted');
     const { t } = useTranslation();
     const { mode, theme, toggleTheme } = useAppTheme();
     const { currentLanguage, handleLanguageChange } = useAppLanguage();
@@ -33,14 +32,11 @@ const ConfirmEmailPage: React.FC = () => {
 
     useEffect(() => {
         const token = searchParams.get('token');
-        console.log('[CONFIRM] Token from URL:', token);
         if (!token) {
-            console.log('[CONFIRM] No token found');
             setStatus('error');
             return;
         }
         const url = `${API_ENDPOINTS.auth.confirmEmail}?token=${token}`;
-        console.log('[CONFIRM] Fetching:', url);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
@@ -48,9 +44,7 @@ const ConfirmEmailPage: React.FC = () => {
         fetch(url, { signal: controller.signal })
             .then(async res => {
                 clearTimeout(timeoutId);
-                console.log('[CONFIRM] Response status:', res.status);
                 const data = await res.json();
-                console.log('[CONFIRM] Response data:', data);
                 if (res.ok && data.token) {
                     authService.setToken(data.token);
                     setStatus('success');
@@ -60,21 +54,14 @@ const ConfirmEmailPage: React.FC = () => {
                 } else if (data?.message === 'auth.confirm.already_confirmed') {
                     setStatus('success');
                 } else {
-                    console.log('[CONFIRM] Setting status to error - no valid response');
                     setStatus('error');
                 }
             })
-            .catch(err => {
+            .catch(() => {
                 clearTimeout(timeoutId);
-                console.log('[CONFIRM] Fetch error:', err);
-                if (err.name === 'AbortError') {
-                    console.log('[CONFIRM] Request timed out');
-                }
                 setStatus('error');
             });
-    }, [searchParams]);
-
-    useEffect(() => {
+    }, [searchParams]); useEffect(() => {
         if (status === 'success') {
             const timeout = setTimeout(() => navigate('/', { replace: true }), 4000);
             return () => clearTimeout(timeout);

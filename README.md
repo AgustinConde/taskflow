@@ -1,13 +1,20 @@
 
 # TaskFlow
 
+**A modern, full-stack task management application built with .NET 9 and React.**
+
+🌐 **Live Application**: [https://taskflow-app.azurewebsites.net](https://taskflow-app.azurewebsites.net)
+
 <details>
 <summary>English version</summary>
 
 ---
 
 # TaskFlow (English)
-Task management application built with a .NET 8 backend (Entity Framework Core, Dapper, Stored Procedures) and a React, TypeScript, Vite, and Material UI frontend.
+
+**Enterprise-grade task management platform featuring a robust .NET 9 backend (Entity Framework Core, Dapper, Stored Procedures) and a modern React, TypeScript, Vite, and Material UI frontend.**
+
+🌐 **Access the application**: [https://taskflow-app.azurewebsites.net](https://taskflow-app.azurewebsites.net)
 
 ## Main Features
 
@@ -28,7 +35,7 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 ## Prerequisites
 
 - **Frontend**: Node.js 18+ and npm
-- **Backend**: .NET 8 SDK, SQL Server (local or remote)
+- **Backend**: .NET 9 SDK, SQL Server (local or remote)
 - **AI Assistant**: Ollama (optional, for AI-powered features)
 - **Optional**: SQL Server Management Studio (SSMS)
 
@@ -144,7 +151,8 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 - `npm run test:coverage` — Test coverage
 
 ### Backend
-- `dotnet run` — Development server
+- `dotnet run` — Development server (uses `.env.development`)
+- `dotnet run --launch-profile production` — Local production mode (uses `.env.production`)
 - `dotnet build` — Build project
 - `dotnet test` — Run tests
 - `dotnet publish -c Release` — Production build
@@ -155,57 +163,66 @@ Task management application built with a .NET 8 backend (Entity Framework Core, 
 
 ## Production Deployment
 
-### Option 1: Integrated Deployment (Recommended for localhost)
+### Option 1: Azure App Service (Recommended for Production)
 
-This option serves the frontend directly from the backend, ideal for local testing or simple deployment.
+TaskFlow is optimized for deployment to Azure with automated CI/CD via GitHub Actions.
 
-1. **Run the deployment script**:
+**Prerequisites**:
+- Azure subscription (Azure for Students supported)
+- Azure SQL Database
+- GitHub repository
+
+**Quick Start**:
+1. Create Azure SQL Database and App Service (any available region)
+2. Configure GitHub Secrets: `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `JWT_KEY`, `DB_CONNECTION_STRING`, `GOOGLE_MAPS_API_KEY`
+3. Push to main branch → GitHub Actions deploys automatically
+4. **Manually restart App Service** in Azure Portal after first deployment
+
+**Important SMTP Configuration**:
+- ⚠️ **Use Gmail App Passwords** - Regular passwords don't work with SMTP
+- Go to Google Account → Security → 2-Step Verification → App Passwords
+- Generate password specifically for TaskFlow
+- If getting "5.7.0 Authentication Required", regenerate the App Password
+
+📚 **Complete Azure deployment guide**: `docs/DEPLOYMENT.md`
+
+---
+
+### Option 2: Integrated Local Deployment (Testing)
+
+Serve frontend and backend together for local testing in production mode.
+
+1. **Build and deploy frontend**:
    ```powershell
    .\copy-frontend-to-wwwroot.ps1
    ```
-   This script automatically:
-   - Installs dependencies if needed (`npm install`)
-   - Builds the frontend for production (`npm run build`)
-   - Copies compiled files to `TaskFlow.Api/wwwroot/`
 
-2. **Verify configuration**:
-   ```powershell
-   .\verify-deployment.ps1
-   ```
-   This will check:
-   - Frontend build exists
-   - Files copied to wwwroot
-   - Environment variables configured (ConnectionString, SMTP, JWT, FRONTEND_URL)
-   - Database migrations
-
-3. **Configure environment variables** in `TaskFlow.Api/.env`:
+2. **Configure** `TaskFlow.Api/.env.production`:
    ```env
    ConnectionStrings__DefaultConnection=Server=localhost\SQLEXPRESS;Database=TaskFlowDb;Trusted_Connection=True;TrustServerCertificate=True;
    Smtp__Host=smtp.gmail.com
    Smtp__Port=587
    Smtp__User=your-email@gmail.com
-   Smtp__Pass=your-app-password
+   Smtp__Pass=your-gmail-app-password
    Smtp__From=your-email@gmail.com
    Jwt__Key=your-secret-key-minimum-32-characters
    FRONTEND_URL=http://localhost:5149
    ```
 
-4. **Apply migrations**:
+3. **Apply migrations**:
    ```bash
    cd TaskFlow.Api
    dotnet ef database update
    ```
 
-5. **Start the backend**:
+4. **Run in production mode**:
    ```bash
-   dotnet run --project TaskFlow.Api/TaskFlow.Api.csproj
+   dotnet run --launch-profile production
    ```
 
-6. **Access the application**: `http://localhost:5149`
+5. **Access**: `http://localhost:5149`
 
-The backend will serve both the API and frontend from the same port.
-
-> 💡 **Note**: For production deployment with a real domain, follow the instructions in `docs/DEPLOYMENT.md`.
+> 💡 **Tip**: Use `--launch-profile production` to test production configuration locally. For development with hot-reload, use separate terminals for `npm run dev` (frontend) and `dotnet run` (backend).
 
 ### Option 2: Separate Deployment (Development)
 
@@ -273,7 +290,7 @@ For active development with hot-reload:
 
 ---
 
-## Backend (.NET 8 API)
+## Backend (.NET 9 API)
 
 ### API Endpoints
 
@@ -338,8 +355,13 @@ For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.m
 
 </details>
 
+---
+
 # TaskFlow (Español)
-Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Framework Core, Dapper, Stored Procedures) y frontend en React, TypeScript, Vite y Material UI.
+
+**Plataforma profesional de gestión de tareas con un backend robusto en .NET 9 (Entity Framework Core, Dapper, Stored Procedures) y un frontend moderno en React, TypeScript, Vite y Material UI.**
+
+🌐 **Acceder a la aplicación**: [https://taskflow-app.azurewebsites.net](https://taskflow-app.azurewebsites.net)
 
 ## Características principales
 
@@ -360,7 +382,7 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 ## Requisitos previos
 
 - **Frontend**: Node.js 18+ y npm
-- **Backend**: .NET 8 SDK, SQL Server (local o remoto)
+- **Backend**: .NET 9 SDK, SQL Server (local o remoto)
 - **Asistente de IA**: Ollama (opcional, para funcionalidades impulsadas por IA)
 - **Opcional**: SQL Server Management Studio (SSMS)
 
@@ -461,9 +483,10 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - `Smtp__Host` — Host del servidor SMTP (ej., `smtp.gmail.com`)
 - `Smtp__Port` — Puerto SMTP (ej., `587`)
 - `Smtp__User` — Usuario SMTP
-- `Smtp__Pass` — Contraseña SMTP/contraseña de aplicación
+- `Smtp__Pass` — Contraseña SMTP/contraseña de aplicación (usar App Password de Gmail, no contraseña normal)
 - `Smtp__From` — Dirección de email remitente
 - `Jwt__Key` — Clave secreta JWT (mínimo 32 caracteres)
+- `FRONTEND_URL` — URL del frontend para links de confirmación de email (ej., `http://localhost:5173` en desarrollo)
 
 ## Scripts disponibles
 
@@ -476,7 +499,8 @@ Aplicación de gestión de tareas construida con backend en .NET 8 (Entity Frame
 - `npm run test:coverage` — Cobertura de tests
 
 ### Backend
-- `dotnet run` — Servidor de desarrollo
+- `dotnet run` — Servidor de desarrollo (modo Development)
+- `dotnet run --launch-profile production` — Servidor con configuración de producción
 - `dotnet build` — Compilar proyecto
 - `dotnet test` — Ejecutar tests
 - `dotnet publish -c Release` — Build de producción
@@ -516,11 +540,16 @@ Esta opción sirve el frontend directamente desde el backend, ideal para testing
    Smtp__Host=smtp.gmail.com
    Smtp__Port=587
    Smtp__User=tu-email@gmail.com
-   Smtp__Pass=tu-app-password
+   Smtp__Pass=tu-app-password  # Usar App Password de Gmail, no contraseña regular
    Smtp__From=tu-email@gmail.com
    Jwt__Key=tu-clave-secreta-de-minimo-32-caracteres
    FRONTEND_URL=http://localhost:5149
    ```
+   
+   **Importante sobre SMTP**:
+   - Para Gmail, necesitás un **App Password**, no tu contraseña regular
+   - Generalo en: [Google Account → Security → 2-Step Verification → App passwords](https://myaccount.google.com/apppasswords)
+   - La verificación en 2 pasos debe estar activada primero
 
 4. **Aplicar migraciones**:
    ```bash
@@ -606,7 +635,7 @@ Para desarrollo activo con hot-reload:
 
 ---
 
-## Backend (.NET 8 API)
+## Backend (.NET 9 API)
 
 ### Endpoints de la API
 

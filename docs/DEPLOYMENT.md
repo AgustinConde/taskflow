@@ -227,16 +227,107 @@ docker build -t taskflow .
 docker run -p 80:80 -e ConnectionStrings__DefaultConnection="YOUR_CONNECTION_STRING" taskflow
 ```
 
-### Option 3: Azure App Service
+### Option 3: Azure App Service (Recommended)
 
-1. Create an Azure App Service (ASP.NET Core 8.0)
-2. Configure Application Settings:
-   - Add all appsettings.json values as App Settings
-   - Add `FRONTEND_URL` environment variable
-3. Deploy using:
-   - Visual Studio (right-click publish)
-   - Azure DevOps pipeline
-   - GitHub Actions
+TaskFlow includes automated CI/CD deployment to Azure via GitHub Actions.
+
+#### Prerequisites
+- Azure subscription (Azure for Students supported)
+- GitHub repository with TaskFlow code
+
+#### Step 1: Create Azure Resources
+
+**SQL Database**:
+- Service: Azure SQL Database
+- Tier: Basic (sufficient for testing/small production)
+- Region: Choose available region (e.g., Canada Central)
+- Note firewall rules: Allow Azure services + your IP
+
+**App Service**:
+- Runtime: .NET 9
+- Plan: Basic B1 or higher
+- Same region as database for best performance
+
+#### Step 2: Configure GitHub Secrets
+
+Repository Settings → Secrets and variables → Actions:
+
+| Secret | How to Get | Example |
+|--------|-----------|---------|
+| `AZUREAPPSERVICE_PUBLISHPROFILE` | Azure Portal → App Service → Get publish profile | (XML) |
+| `DB_CONNECTION_STRING` | Azure SQL connection string with credentials | `Server=tcp:...` |
+| `SMTP_USER` | Your Gmail address | `you@gmail.com` |
+| `SMTP_PASSWORD` | **Gmail App Password** (NOT regular password) | `abcd efgh ijkl mnop` |
+| `SMTP_FROM` | Same as SMTP_USER | `you@gmail.com` |
+| `JWT_KEY` | Generate: `openssl rand -base64 32` | (32+ chars) |
+| `GOOGLE_MAPS_API_KEY` | Google Cloud Console | `AIza...` |
+
+**⚠️ CRITICAL - Gmail App Password Setup**:
+```
+Regular Gmail passwords WON'T WORK with SMTP!
+Error: "5.7.0 Authentication Required"
+
+Solution:
+1. Google Account → Security
+2. Enable 2-Step Verification
+3. Search "App Passwords"
+4. Generate for "Mail"
+5. Use 16-char code in SMTP_PASSWORD secret
+6. If still fails, delete and regenerate App Password
+```
+
+#### Step 3: Deploy via GitHub Actions
+
+The `.github/workflows/main_taskflow-app.yml` workflow automatically:
+1. Builds frontend with production config
+2. Creates `.env.production` from secrets
+3. Builds .NET backend
+4. Deploys to Azure
+5. Attempts restart
+
+**To deploy**:
+```bash
+git push origin main
+```
+
+**After first deploy**:
+- Manually restart App Service in Azure Portal
+- GitHub Actions restart may not fully apply changes
+- Wait 2-3 minutes after restart
+
+#### Step 4: Apply Database Migrations
+
+**Via Azure CLI**:
+```bash
+az webapp ssh --resource-group your-rg --name your-app
+cd site/wwwroot
+dotnet TaskFlow.Api.dll ef database update
+```
+
+**Or use connection string locally**:
+```bash
+# In TaskFlow.Api directory
+dotnet ef database update --connection "Server=tcp:..."
+```
+
+#### Troubleshooting Azure Deployment
+
+**Problem: 500.30 - App failed to start**
+- Check Application Settings in Azure Portal contain all secrets
+- Verify .NET 9 runtime is selected
+- Check logs: Azure Portal → Log Stream
+
+**Problem: Email confirmation returns 409 Conflict**
+- SMTP authentication is failing
+- Check SMTP_PASSWORD is App Password, not regular password
+- Regenerate Gmail App Password
+- Verify 2-Step Verification is enabled
+
+**Problem: Blank screen on mobile**
+- Service Worker caching issue
+- Clear browser cache or use incognito
+- Check browser console for errors
+- Verify all assets loaded (F12 → Network tab)
 
 ## 📋 Post-Deployment Verification
 
@@ -329,8 +420,67 @@ After deployment, verify all features work correctly:
 
 ## 🐛 Common Issues
 
+### Issue: User registration returns 409 Conflict (Email sending fails)
+**Symptoms**: Users can't register, getting "auth.register.exists" error even with new credentials
+
+**Root Cause**: SMTP authentication failure - backend can't send confirmation emails
+
+**Solutions**:
+1. **Verify you're using Gmail App Password** (NOT regular password):
+   ```
+   Regular password → "5.7.0 Authentication Required" error
+   App Password → Works correctly
+   ```
+
+2. **Generate Gmail App Password**:
+   - Go to: https://myaccount.google.com/security
+   - Enable 2-Step Verification (required)
+   - Search "App Passwords"
+   - Create one for "Mail"
+   - Copy 16-character code (e.g., `abcd efgh ijkl mnop`)
+   - Use in `SMTP_PASSWORD` secret / `Smtp__Pass` setting
+
+3. **Test locally first**:
+   ```bash
+   # Set production config locally
+   cd TaskFlow.Api
+   dotnet run --launch-profile production
+   ```
+   - Try registering a test user
+   - Check console for detailed error logs
+   - If you see "5.7.0 Authentication Required", regenerate App Password
+
+4. **Azure specific**: After updating `SMTP_PASSWORD` secret in GitHub:
+   - Make a new commit to trigger deployment
+   - Manually restart App Service after deployment
+   - Wait 2-3 minutes for full restart
+
+### Issue: Email confirmation page shows blank screen (mobile)
+**Symptoms**: User clicks email link, page loads infinitely with blank white screen
+
+**Root Cause**: Fetch request timing out or Service Worker blocking
+
+**Solutions**:
+1. **Already fixed in code** - Timeout added to fetch:
+   ```typescript
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 15000);
+   fetch(url, { signal: controller.signal })
+   ```
+
+2. **User workarounds**:
+   - Open link in incognito/private mode
+   - Clear browser cache and reload
+   - Try on desktop browser
+   - Copy link and paste in browser manually
+
+3. **Developer fixes if still occurring**:
+   - Increment Service Worker cache version in `public/sw.js`
+   - Check browser console (F12) for specific errors
+   - Verify API responds: `curl https://your-app.azurewebsites.net/api/auth/confirm?token=test`
+
 ### Issue: Email confirmation links return 404
-**Solution**: Check `FRONTEND_URL` environment variable is set correctly
+**Solution**: Check `FRONTEND_URL` environment variable is set correctly (should be `https://your-app.azurewebsites.net`)
 
 ### Issue: Database connection fails
 **Solution**: Verify connection string in appsettings.json and ensure SQL Server is accessible
@@ -713,8 +863,67 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 
 ## 🐛 Problemas Comunes
 
+### Problema: Registro de usuario retorna 409 Conflict (Falla envío de email)
+**Síntomas**: Los usuarios no pueden registrarse, reciben error "auth.register.exists" incluso con credenciales nuevas
+
+**Causa Raíz**: Falla de autenticación SMTP - el backend no puede enviar emails de confirmación
+
+**Soluciones**:
+1. **Verificar que estés usando Gmail App Password** (NO contraseña regular):
+   ```
+   Contraseña regular → Error "5.7.0 Authentication Required"
+   App Password → Funciona correctamente
+   ```
+
+2. **Generar Gmail App Password**:
+   - Ir a: https://myaccount.google.com/security
+   - Habilitar Verificación en 2 pasos (requerido)
+   - Buscar "Contraseñas de aplicaciones"
+   - Crear una para "Correo"
+   - Copiar código de 16 caracteres (ej., `abcd efgh ijkl mnop`)
+   - Usar en secret `SMTP_PASSWORD` / setting `Smtp__Pass`
+
+3. **Testear localmente primero**:
+   ```bash
+   # Configurar producción localmente
+   cd TaskFlow.Api
+   dotnet run --launch-profile production
+   ```
+   - Intentar registrar un usuario de prueba
+   - Verificar consola para logs de error detallados
+   - Si ves "5.7.0 Authentication Required", regenerar App Password
+
+4. **Específico de Azure**: Después de actualizar secret `SMTP_PASSWORD` en GitHub:
+   - Hacer un nuevo commit para disparar deployment
+   - Reiniciar manualmente App Service después del deployment
+   - Esperar 2-3 minutos para reinicio completo
+
+### Problema: Página de confirmación de email muestra pantalla en blanco (móvil)
+**Síntomas**: Usuario hace clic en link de email, página carga infinitamente con pantalla blanca
+
+**Causa Raíz**: Request fetch timeout o Service Worker bloqueando
+
+**Soluciones**:
+1. **Ya corregido en código** - Timeout agregado al fetch:
+   ```typescript
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 15000);
+   fetch(url, { signal: controller.signal })
+   ```
+
+2. **Workarounds para usuario**:
+   - Abrir link en modo incógnito/privado
+   - Limpiar caché del navegador y recargar
+   - Probar en navegador de escritorio
+   - Copiar link y pegar en navegador manualmente
+
+3. **Fixes para desarrollador si sigue ocurriendo**:
+   - Incrementar versión de caché del Service Worker en `public/sw.js`
+   - Verificar consola del navegador (F12) para errores específicos
+   - Verificar que API responda: `curl https://tu-app.azurewebsites.net/api/auth/confirm?token=test`
+
 ### Problema: Links de confirmación de email retornan 404
-**Solución**: Verificá que la variable de entorno `FRONTEND_URL` esté configurada correctamente
+**Solución**: Verificá que la variable de entorno `FRONTEND_URL` esté configurada correctamente (debe ser `https://tu-app.azurewebsites.net`)
 
 ### Problema: Falla conexión a base de datos
 **Solución**: Verificá la cadena de conexión en appsettings.json y asegurate de que SQL Server sea accesible

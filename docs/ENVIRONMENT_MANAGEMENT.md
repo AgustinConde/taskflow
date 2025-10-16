@@ -42,26 +42,44 @@ ASP.NET Core uses a hierarchy of configuration sources (later sources override e
 1. `appsettings.json` (base configuration)
 2. `appsettings.{Environment}.json` (environment-specific overrides)
 3. Environment variables
-4. `.env` file (loaded via DotNetEnv library)
+4. `.env` or `.env.{Environment}` file (loaded via DotNetEnv library)
 
 The environment is determined by the `ASPNETCORE_ENVIRONMENT` variable:
-- **Development**: Set automatically by Visual Studio / `dotnet run`
-- **Production**: Set by hosting platform (Railway, Render, Azure)
+- **Development**: Set automatically by Visual Studio / `dotnet run` / `launchSettings.json`
+- **Production**: Set by `--launch-profile production` or hosting platform (Azure, Railway, Render)
+
+#### Launch Profiles (New!)
+
+TaskFlow now includes multiple launch profiles in `Properties/launchSettings.json`:
+
+| Profile | Command | Environment | Env File Used |
+|---------|---------|-------------|---------------|
+| `http` | `dotnet run` | Development | `.env.development` |
+| `https` | N/A | Development | `.env.development` |
+| `production` | `dotnet run --launch-profile production` | Production | `.env.production` |
+
+This allows you to **test production configuration locally** without changing environment files.
 
 ## 📁 File Structure
 
 ```
 taskflow/
 ├── taskflow-frontend/
-│   ├── .env.development          # Development config (localhost:5149)
-│   ├── .env.production           # Production config (your domain)
-│   └── .env.example              # Template with empty values
+│   ├── .env.development          # Dev config (localhost:5149)
+│   ├── .env.production           # Production config (Azure/your domain)
+│   └── .env.example              # Template
 │
 ├── TaskFlow.Api/
-│   ├── .env                      # Local development secrets
-│   ├── appsettings.json          # Base configuration
-│   ├── appsettings.Development.json  # Dev overrides (optional)
-│   └── appsettings.Production.json   # Production config template
+│   ├── .env.development          # Local dev secrets (localhost database)
+│   ├── .env.production           # Local prod secrets (Azure database)
+│   ├── appsettings.json          # Base config
+│   ├── appsettings.Development.json  # Dev overrides
+│   ├── appsettings.Production.json   # Prod overrides
+│   └── Properties/
+│       └── launchSettings.json   # Launch profiles (http, https, production)
+│
+└── .github/workflows/
+    └── main_taskflow-app.yml     # Azure CI/CD pipeline (creates .env files from secrets)
 ```
 
 ## ⚙️ Configuration Files
@@ -86,20 +104,37 @@ VITE_ROOT_URL=https://your-domain.com
 VITE_GOOGLE_MAPS_API_KEY=your_api_key_here
 ```
 
-### Backend `.env`
+### Backend `.env.development`
 
-Used for local development secrets (not committed to git):
+Used for local development secrets (localhost database):
 
 ```env
 ConnectionStrings__DefaultConnection=Server=localhost\SQLEXPRESS;Database=TaskFlowDb;Trusted_Connection=True;TrustServerCertificate=True;
 Smtp__Host=smtp.gmail.com
 Smtp__Port=587
 Smtp__User=your-email@gmail.com
-Smtp__Pass=your-app-password
+Smtp__Pass=your-gmail-app-password
 Smtp__From=your-email@gmail.com
 Jwt__Key=your-secret-key-minimum-32-characters
-FRONTEND_URL=http://localhost:5149
+FRONTEND_URL=http://localhost:5173
 ```
+
+### Backend `.env.production`
+
+Used for local testing with production configuration (Azure database):
+
+```env
+ConnectionStrings__DefaultConnection=Server=tcp:your-server.database.windows.net,1433;Initial Catalog=taskflow-db;User ID=admin;Password=pass;Encrypt=True;
+Smtp__Host=smtp.gmail.com
+Smtp__Port=587
+Smtp__User=your-email@gmail.com
+Smtp__Pass=your-gmail-app-password
+Smtp__From=your-email@gmail.com
+Jwt__Key=your-production-secret-key
+FRONTEND_URL=https://your-app.azurewebsites.net
+```
+
+**Note**: This file is NOT committed to git. In Azure, the GitHub Actions workflow creates this file dynamically from GitHub Secrets during deployment.
 
 ### Backend `appsettings.Production.json`
 
@@ -156,47 +191,74 @@ dotnet run
 
 ---
 
-### Workflow 2: Testing Local Production Build
+### Workflow 2: Local Production Testing (NEW!)
 
-**Use case**: Test production build locally before deploying
+**Use case**: Test production configuration locally (Azure database + SMTP) without deploying
 
-**Frontend**:
+**Setup** `.env.production` with Azure database connection string (see example above)
+
+**Backend**:
 ```bash
-cd taskflow-frontend
-npm run build
-# Automatically uses .env.production
-# Creates dist/ folder with production build
+cd TaskFlow.Api
+dotnet run --launch-profile production
+# Uses .env.production
+# ASPNETCORE_ENVIRONMENT=Production
+# Connects to Azure SQL Database
 ```
 
-**Backend** (using integrated deployment):
+**Frontend** (development mode for hot-reload):
+```bash
+cd taskflow-frontend
+npm run dev
+# Uses .env.development (localhost:5149)
+# Access at http://localhost:5173
+```
+
+**Result**: Test registration/email confirmation locally before committing changes to Azure
+
+---
+
+### Workflow 3: Testing Integrated Production Build
+
+**Use case**: Test full production build locally (frontend + backend together)
+
+**Build and deploy**:
 ```powershell
 # From project root
 .\copy-frontend-to-wwwroot.ps1
 cd TaskFlow.Api
-dotnet run
+dotnet run --launch-profile production
 # Serves frontend from wwwroot/
+# Uses .env.production
 # Access at http://localhost:5149
 ```
 
-**Result**: Full production-like environment on `http://localhost:5149`
+**Result**: Complete production environment on `http://localhost:5149`
 
 ---
 
-### Workflow 3: Cloud Production Deployment
+### Workflow 4: Azure Production Deployment
 
-**Use case**: Deploy to Railway, Render, or Azure
+**Use case**: Deploy to Azure App Service via GitHub Actions
 
-**Frontend Build**:
+**Setup GitHub Secrets** (one-time):
+- `AZUREAPPSERVICE_PUBLISHPROFILE`
+- `DB_CONNECTION_STRING`
+- `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`
+- `JWT_KEY`
+- `GOOGLE_MAPS_API_KEY`
+
+**Deploy**:
 ```bash
-cd taskflow-frontend
-npm run build
-# Uses .env.production automatically
+git push origin main
 ```
 
-**Backend Configuration**:
-- Configure environment variables in hosting platform dashboard
-- Platform sets `ASPNETCORE_ENVIRONMENT=Production`
-- Backend reads from `appsettings.Production.json` + environment variables
+**GitHub Actions automatically**:
+- Creates `.env.production` from secrets
+- Builds frontend with production config
+- Builds backend
+- Deploys to Azure
+- Attempts restart (manual restart recommended after first deploy)
 
 **Railway Example**:
 ```bash
@@ -219,10 +281,11 @@ The beauty of this setup is that you **never** need to manually edit environment
 
 | Task | Command | Files Used |
 |------|---------|------------|
-| Start dev server | `npm run dev` | `.env.development` |
+| Dev with hot-reload | `npm run dev` + `dotnet run` | `.env.development` (both) |
+| Test prod config locally | `npm run dev` + `dotnet run --launch-profile production` | `.env.development` (FE), `.env.production` (BE) |
 | Build for production | `npm run build` | `.env.production` |
-| Test production locally | `.\copy-frontend-to-wwwroot.ps1` + `dotnet run` | `.env.production` (frontend), `.env` (backend) |
-| Deploy to cloud | Push to git | Platform environment variables |
+| Test full prod build | `.\copy-frontend-to-wwwroot.ps1` + `dotnet run --launch-profile production` | `.env.production` (both) |
+| Deploy to Azure | `git push origin main` | GitHub Secrets → `.env.production` created by CI/CD |
 
 ### When to Update Each File
 
@@ -236,11 +299,24 @@ The beauty of this setup is that you **never** need to manually edit environment
 - When deploying to a new domain
 - When production API keys change
 
-**Update `TaskFlow.Api/.env`**:
+**Update `TaskFlow.Api/.env.development`**:
 - When local database connection changes
 - When you rotate local SMTP credentials
 - When you generate new JWT keys for testing
 - **Never commit this file** (already in .gitignore)
+
+**Update `TaskFlow.Api/.env.production`**:
+- When you want to test Azure database connection locally
+- When testing SMTP settings before deploying
+- To debug production issues locally
+- **Never commit this file** (already in .gitignore)
+- Note: In Azure, this file is created by GitHub Actions from secrets
+
+**Update GitHub Secrets** (for Azure):
+- When rotating SMTP passwords (regenerate Gmail App Password)
+- When changing JWT keys
+- When updating database credentials
+- When deploying to new Azure resources
 
 **Update `appsettings.Production.json`**:
 - When you add new configuration sections
@@ -465,14 +541,18 @@ El entorno se determina por la variable `ASPNETCORE_ENVIRONMENT`:
 taskflow/
 ├── taskflow-frontend/
 │   ├── .env.development          # Config de desarrollo (localhost:5149)
-│   ├── .env.production           # Config de producción (tu dominio)
+│   ├── .env.production           # Config de producción (tu dominio o Azure)
 │   └── .env.example              # Plantilla con valores vacíos
 │
 ├── TaskFlow.Api/
 │   ├── .env                      # Secretos de desarrollo local
+│   ├── .env.development          # Config desarrollo (Azure SQL + SMTP)
+│   ├── .env.production           # Config producción (Azure SQL + SMTP)
 │   ├── appsettings.json          # Configuración base
 │   ├── appsettings.Development.json  # Sobrescrituras dev (opcional)
-│   └── appsettings.Production.json   # Plantilla config producción
+│   ├── appsettings.Production.json   # Plantilla config producción
+│   └── Properties/
+│       └── launchSettings.json   # Perfiles de ejecución (http, production)
 ```
 
 ## ⚙️ Archivos de Configuración
@@ -497,20 +577,60 @@ VITE_ROOT_URL=https://tu-dominio.com
 VITE_GOOGLE_MAPS_API_KEY=tu_clave_api_aqui
 ```
 
-### Backend `.env`
+### Backend `.env.development`
 
-Usado para secretos de desarrollo local (no commiteado a git):
+Usado para desarrollo local con Azure SQL Database:
 
 ```env
-ConnectionStrings__DefaultConnection=Server=localhost\SQLEXPRESS;Database=TaskFlowDb;Trusted_Connection=True;TrustServerCertificate=True;
+ConnectionStrings__DefaultConnection=Server=tcp:tu-servidor.database.windows.net,1433;Initial Catalog=taskflow-db;User ID=tu-usuario;Password=tu-password;
 Smtp__Host=smtp.gmail.com
 Smtp__Port=587
 Smtp__User=tu-email@gmail.com
-Smtp__Pass=tu-contraseña-de-aplicación
+Smtp__Pass=tu-app-password-gmail
 Smtp__From=tu-email@gmail.com
 Jwt__Key=tu-clave-secreta-minimo-32-caracteres
-FRONTEND_URL=http://localhost:5149
+FRONTEND_URL=http://localhost:5173
 ```
+
+### Backend `.env.production`
+
+Usado para testing de producción local (mismo config que Azure):
+
+```env
+ConnectionStrings__DefaultConnection=Server=tcp:tu-servidor.database.windows.net,1433;Initial Catalog=taskflow-db;User ID=tu-usuario;Password=tu-password;
+Smtp__Host=smtp.gmail.com
+Smtp__Port=587
+Smtp__User=tu-email@gmail.com
+Smtp__Pass=tu-app-password-gmail
+Smtp__From=tu-email@gmail.com
+Jwt__Key=tu-clave-jwt-produccion
+FRONTEND_URL=https://tu-app.azurewebsites.net
+```
+
+### Backend `launchSettings.json`
+
+Define perfiles de ejecución para diferentes escenarios:
+
+```json
+{
+  "profiles": {
+    "http": {
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "production": {
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Production"
+      }
+    }
+  }
+}
+```
+
+Uso:
+- `dotnet run` → Usa perfil "http" (Development)
+- `dotnet run --launch-profile production` → Usa perfil "production" (Production)
 
 ### Backend `appsettings.Production.json`
 
@@ -567,9 +687,33 @@ dotnet run
 
 ---
 
-### Flujo 2: Testing de Build de Producción Local
+### Flujo 2: Testing de Producción Local (con Azure DB)
 
-**Caso de uso**: Probar build de producción localmente antes de desplegar
+**Caso de uso**: Probar configuración de producción localmente con Azure SQL Database
+
+**Backend**:
+```bash
+cd TaskFlow.Api
+dotnet run --launch-profile production
+# Carga .env.production
+# Conecta a Azure SQL Database
+# ASPNETCORE_ENVIRONMENT=Production
+```
+
+**Frontend**:
+```bash
+cd taskflow-frontend
+npm run dev
+# Carga .env.development (apunta a localhost:5149)
+```
+
+**Resultado**: Frontend en `http://localhost:5173`, Backend en `http://localhost:5149` con configuración de producción y Azure DB
+
+---
+
+### Flujo 3: Testing de Build de Producción Integrado
+
+**Caso de uso**: Probar build de producción localmente con frontend servido desde backend
 
 **Frontend**:
 ```bash
@@ -584,7 +728,7 @@ npm run build
 # Desde la raíz del proyecto
 .\copy-frontend-to-wwwroot.ps1
 cd TaskFlow.Api
-dotnet run
+dotnet run --launch-profile production
 # Sirve el frontend desde wwwroot/
 # Acceder en http://localhost:5149
 ```
@@ -593,7 +737,7 @@ dotnet run
 
 ---
 
-### Flujo 3: Deployment en Nube (Producción)
+### Flujo 4: Deployment en Nube (Producción)
 
 **Caso de uso**: Desplegar a Railway, Render o Azure
 
@@ -630,10 +774,11 @@ La belleza de esta configuración es que **nunca** necesitás editar manualmente
 
 | Tarea | Comando | Archivos Usados |
 |-------|---------|-----------------|
-| Iniciar servidor dev | `npm run dev` | `.env.development` |
+| Iniciar servidor dev | `npm run dev` + `dotnet run` | `.env.development` (ambos) |
+| Probar producción con Azure DB | `npm run dev` + `dotnet run --launch-profile production` | `.env.development` (frontend), `.env.production` (backend) |
 | Build para producción | `npm run build` | `.env.production` |
-| Probar producción localmente | `.\copy-frontend-to-wwwroot.ps1` + `dotnet run` | `.env.production` (frontend), `.env` (backend) |
-| Desplegar a nube | Push a git | Variables de entorno de la plataforma |
+| Probar producción localmente | `.\copy-frontend-to-wwwroot.ps1` + `dotnet run --launch-profile production` | `.env.production` (ambos) |
+| Desplegar a nube (Azure) | Push a git → GitHub Actions | Variables de entorno de Azure App Service |
 
 ### Cuándo Actualizar Cada Archivo
 
@@ -647,11 +792,22 @@ La belleza de esta configuración es que **nunca** necesitás editar manualmente
 - Cuando desplegás a un nuevo dominio
 - Cuando cambian las API keys de producción
 
-**Actualizar `TaskFlow.Api/.env`**:
-- Cuando cambia la conexión local a la base de datos
-- Cuando rotás credenciales SMTP locales
+**Actualizar `TaskFlow.Api/.env.development`**:
+- Cuando cambia la conexión a Azure SQL Database
+- Cuando rotás credenciales SMTP
 - Cuando generás nuevas claves JWT para testing
 - **Nunca commitear este archivo** (ya está en .gitignore)
+
+**Actualizar `TaskFlow.Api/.env.production`**:
+- Cuando cambia el connection string de Azure SQL en producción
+- Cuando rotás SMTP App Password
+- Cuando cambia la URL del frontend (FRONTEND_URL)
+- **Nunca commitear este archivo** (ya está en .gitignore)
+
+**Actualizar `launchSettings.json`**:
+- Para agregar nuevos perfiles de ejecución
+- Para cambiar variables de entorno por perfil
+- Podés commitear esto (no contiene secretos)
 
 **Actualizar `appsettings.Production.json`**:
 - Cuando agregás nuevas secciones de configuración

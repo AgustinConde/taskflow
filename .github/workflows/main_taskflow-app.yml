@@ -43,9 +43,9 @@ jobs:
           ConnectionStrings__DefaultConnection=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
           Smtp__Host=smtp.gmail.com
           Smtp__Port=587
-          Smtp__User=taskflow.noreply@gmail.com
+          Smtp__User=conde.agustin66@gmail.com
           Smtp__Pass=${{ secrets.SMTP_PASSWORD }}
-          Smtp__From=taskflow.noreply@gmail.com
+          Smtp__From=conde.agustin66@gmail.com
           Jwt__Key=${{ secrets.JWT_KEY }}
           Jwt__Issuer=TaskFlowApi
           Jwt__Audience=TaskFlowClient

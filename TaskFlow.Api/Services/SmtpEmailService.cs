@@ -20,7 +20,9 @@ namespace TaskFlow.Api.Services
             using var client = new SmtpClient(smtpHost, smtpPort)
             {
                 Credentials = new NetworkCredential(smtpUser, smtpPass),
-                EnableSsl = true
+                EnableSsl = true,
+                UseDefaultCredentials = false,
+                DeliveryMethod = SmtpDeliveryMethod.Network
             };
 
             var mail = new MailMessage(from, to, subject, body)

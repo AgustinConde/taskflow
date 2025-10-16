@@ -24,6 +24,8 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build and copy frontend
+        env:
+          NODE_ENV: production
         run: pwsh copy-frontend-to-wwwroot.ps1
 
       - name: Create .env.production file

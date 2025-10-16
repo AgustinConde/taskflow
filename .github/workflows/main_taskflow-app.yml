@@ -28,7 +28,7 @@ jobs:
           cd taskflow-frontend
           @"
           VITE_ROOT_URL=https://taskflow-app.azurewebsites.net
-          VITE_GOOGLE_MAPS_API_KEY=AIzaSyBdygZhw60blc4oVm1ygMvwUwL4YMGzbew
+          VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
           "@ | Out-File -FilePath .env.production -Encoding utf8
 
       - name: Build and copy frontend
@@ -91,4 +91,7 @@ jobs:
           app-name: 'taskflow-app'
           slot-name: 'Production'
           package: .
-          
+      
+      - name: Restart Azure Web App
+        run: |
+          az webapp restart --name taskflow-app --resource-group taskflow-rg

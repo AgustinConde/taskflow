@@ -23,7 +23,13 @@ Set-Location -Path "taskflow-frontend"
 # Install dependencies if needed
 if (-not (Test-Path "node_modules")) {
     Write-Host "[INSTALL] Installing dependencies..." -ForegroundColor Yellow
-    npm install
+    # Use npm ci in CI/CD for clean install, npm install in local
+    if ($env:CI -eq "true" -or $env:GITHUB_ACTIONS -eq "true") {
+        npm ci
+    }
+    else {
+        npm install
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to install dependencies" -ForegroundColor Red
         exit 1

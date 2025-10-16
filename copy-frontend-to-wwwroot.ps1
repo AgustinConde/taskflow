@@ -3,6 +3,20 @@
 
 Write-Host "[BUILD] Building and deploying TaskFlow frontend..." -ForegroundColor Cyan
 
+# Detect environment (default: development for local, production for CI/CD)
+$buildMode = $env:NODE_ENV
+if ([string]::IsNullOrEmpty($buildMode)) {
+    # Check if running in CI/CD environment
+    if ($env:CI -eq "true" -or $env:GITHUB_ACTIONS -eq "true") {
+        $buildMode = "production"
+    }
+    else {
+        $buildMode = "development"
+    }
+}
+
+Write-Host "[INFO] Build mode: $buildMode" -ForegroundColor Cyan
+
 # Navigate to frontend directory
 Set-Location -Path "taskflow-frontend"
 
@@ -16,8 +30,9 @@ if (-not (Test-Path "node_modules")) {
     }
 }
 
-# Build the frontend
-Write-Host "[BUILD] Building frontend..." -ForegroundColor Yellow
+# Build the frontend with detected environment
+Write-Host "[BUILD] Building frontend in $buildMode mode..." -ForegroundColor Yellow
+$env:NODE_ENV = $buildMode
 npm run build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Build failed" -ForegroundColor Red
@@ -57,6 +72,7 @@ Write-Host "[SUCCESS] Successfully copied $fileCount files to wwwroot" -Foregrou
 
 # Show summary
 Write-Host "`n[SUMMARY] Deployment Summary:" -ForegroundColor Cyan
+Write-Host "  Build mode: $buildMode" -ForegroundColor Gray
 Write-Host "  Source: $sourcePath" -ForegroundColor Gray
 Write-Host "  Destination: $destPath" -ForegroundColor Gray
 Write-Host "  Files: $fileCount" -ForegroundColor Gray

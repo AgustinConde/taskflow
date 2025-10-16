@@ -5,6 +5,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
 import App from './App.tsx'
 
+console.log('[MAIN] Starting application...');
+console.log('[MAIN] Root element:', document.getElementById('root'));
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -13,3 +16,5 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+console.log('[MAIN] React root created');

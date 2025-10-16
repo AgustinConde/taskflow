@@ -4,6 +4,7 @@ import Router from './Router';
 import './i18n';
 
 function App() {
+  console.log('[APP] App component rendered');
   return (
     <AuthProvider>
       <NotificationProvider>

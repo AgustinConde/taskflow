@@ -1,5 +1,5 @@
-const CACHE_NAME = 'taskflow-v1';
-const API_CACHE = 'taskflow-api-v1';
+const CACHE_NAME = 'taskflow-v2';
+const API_CACHE = 'taskflow-api-v2';
 
 const STATIC_RESOURCES = [
   '/',

@@ -23,12 +23,20 @@ jobs:
         with:
           dotnet-version: '9.x'
 
+      - name: Create frontend .env.production file
+        run: |
+          cd taskflow-frontend
+          @"
+          VITE_ROOT_URL=https://taskflow-app.azurewebsites.net
+          VITE_GOOGLE_MAPS_API_KEY=AIzaSyBdygZhw60blc4oVm1ygMvwUwL4YMGzbew
+          "@ | Out-File -FilePath .env.production -Encoding utf8
+
       - name: Build and copy frontend
         env:
           NODE_ENV: production
         run: pwsh copy-frontend-to-wwwroot.ps1
 
-      - name: Create .env.production file
+      - name: Create backend .env.production file
         run: |
           cd TaskFlow.Api
           @"

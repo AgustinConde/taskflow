@@ -6,13 +6,14 @@ using TaskFlow.Api.Models;
 
 namespace TaskFlow.Api.Services
 {
-    public class AuthService(TaskFlowDbContext context, JwtService jwtService, IAchievementService achievementService)
+    public class AuthService(TaskFlowDbContext context, JwtService jwtService, IAchievementService achievementService, EmailQueueService emailQueueService)
     {
         private readonly TaskFlowDbContext _context = context;
         private readonly JwtService _jwtService = jwtService;
         private readonly IAchievementService _achievementService = achievementService;
+        private readonly EmailQueueService _emailQueueService = emailQueueService;
 
-        private static async Task<bool> SendConfirmationEmailAsync(User user, string token, IEmailService emailService, string baseUrl)
+        private async Task<bool> SendConfirmationEmailAsync(User user, string token, string baseUrl)
         {
             var confirmLink = $"{baseUrl}/confirm-email?token={token}";
             var subject = "Confirm your TaskFlow account";
@@ -27,7 +28,7 @@ namespace TaskFlow.Api.Services
 
             try
             {
-                await emailService.SendEmailAsync(user.Email, subject, body);
+                await _emailQueueService.QueueEmailAsync(user.Email, subject, body);
                 return true;
             }
             catch
@@ -41,7 +42,7 @@ namespace TaskFlow.Api.Services
             return await _context.UserTokens.FirstOrDefaultAsync(t => t.Token == token && t.Type == TokenType.Confirmation);
         }
 
-        public async Task<bool> ResendConfirmationEmailAsync(string email, IEmailService emailService, string baseUrl)
+        public async Task<bool> ResendConfirmationEmailAsync(string email, string baseUrl)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null || user.EmailConfirmed)
@@ -61,10 +62,10 @@ namespace TaskFlow.Api.Services
                 await _context.SaveChangesAsync();
             }
 
-            return await SendConfirmationEmailAsync(user, userToken.Token, emailService, baseUrl);
+            return await SendConfirmationEmailAsync(user, userToken.Token, baseUrl);
         }
 
-        public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto, IEmailService emailService, string baseUrl)
+        public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto, string baseUrl)
         {
             if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
                 return null;
@@ -105,7 +106,7 @@ namespace TaskFlow.Api.Services
             _context.UserTokens.Add(userToken);
             await _context.SaveChangesAsync();
 
-            var emailSent = await SendConfirmationEmailAsync(user, confirmationToken, emailService, baseUrl);
+            var emailSent = await SendConfirmationEmailAsync(user, confirmationToken, baseUrl);
             if (!emailSent)
             {
                 _context.UserTokens.Remove(userToken);
@@ -224,7 +225,7 @@ namespace TaskFlow.Api.Services
             return ConfirmEmailResult.Success;
         }
 
-        public async System.Threading.Tasks.Task RequestPasswordResetAsync(string email, IEmailService emailService, string baseUrl)
+        public async System.Threading.Tasks.Task RequestPasswordResetAsync(string email, string baseUrl)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null) return;
@@ -248,7 +249,7 @@ namespace TaskFlow.Api.Services
                 "If you did not request this password reset, please ignore this email.\r\n\r\n" +
                 "Best regards,\r\n" +
                 "TaskFlow Team";
-            await emailService.SendEmailAsync(user.Email, subject, body);
+            await _emailQueueService.QueueEmailAsync(user.Email, subject, body);
             return;
         }
 

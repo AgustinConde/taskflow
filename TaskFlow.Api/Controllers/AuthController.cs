@@ -9,10 +9,24 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(AuthService authService, JwtService jwtService) : ControllerBase
+    public class AuthController : ControllerBase
     {
-        private readonly AuthService _authService = authService;
-        private readonly JwtService _jwtService = jwtService;
+        private readonly AuthService _authService;
+        private readonly JwtService _jwtService;
+        private readonly EmailQueueService _emailQueueService;
+        private readonly ILogger<AuthController> _logger;
+
+        public AuthController(
+            AuthService authService,
+            JwtService jwtService,
+            EmailQueueService emailQueueService,
+            ILogger<AuthController> logger)
+        {
+            _authService = authService;
+            _jwtService = jwtService;
+            _emailQueueService = emailQueueService;
+            _logger = logger;
+        }
 
         [HttpPost("resend-confirmation")]
         [EnableRateLimiting("auth")]
@@ -22,8 +36,7 @@ namespace TaskFlow.Api.Controllers
                 return BadRequest(ModelState);
 
             var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
-            var emailService = HttpContext.RequestServices.GetService(typeof(IEmailService)) as IEmailService;
-            var result = await _authService.ResendConfirmationEmailAsync(request.Email, emailService!, frontendUrl);
+            var result = await _authService.ResendConfirmationEmailAsync(request.Email, frontendUrl);
             if (!result)
                 return BadRequest(new { message = "auth.resend.not_eligible" });
             return Ok(new { message = "auth.resend.success" });
@@ -37,8 +50,7 @@ namespace TaskFlow.Api.Controllers
                 return BadRequest(ModelState);
 
             var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
-            var emailService = HttpContext.RequestServices.GetService(typeof(IEmailService)) as IEmailService;
-            var result = await _authService.RegisterAsync(registerDto, emailService!, frontendUrl);
+            var result = await _authService.RegisterAsync(registerDto, frontendUrl);
             if (result == null)
                 return Conflict(new { message = "auth.register.exists" });
 
@@ -137,10 +149,10 @@ namespace TaskFlow.Api.Controllers
 
         [HttpPost("forgot")]
         [EnableRateLimiting("auth")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, [FromServices] IEmailService emailService)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
             var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
-            await _authService.RequestPasswordResetAsync(dto.Email, emailService, frontendUrl);
+            await _authService.RequestPasswordResetAsync(dto.Email, frontendUrl);
             return Ok(new { message = "auth.forgot.sent" });
         }
 

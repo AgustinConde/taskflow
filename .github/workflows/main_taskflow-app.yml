@@ -49,6 +49,8 @@ jobs:
           Jwt__Key=${{ secrets.JWT_KEY }}
           Jwt__Issuer=TaskFlowApi
           Jwt__Audience=TaskFlowClient
+          AZURE_STORAGE_CONNECTION_STRING=${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          AZURE_STORAGE_CONTAINER_NAME=taskflowstorageaccount
           FRONTEND_URL=https://taskflow-app.azurewebsites.net
           "@ | Out-File -FilePath .env.production -Encoding utf8
 

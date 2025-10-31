@@ -23,6 +23,12 @@ catch { /* Ignore if env file is not found */ }
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Application Insights telemetry
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -84,6 +90,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<EmailQueueService>();
 
 // AI Assistant services
 builder.Services.AddHttpClient(); // For OllamaProvider

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskFlow.Api", "TaskFlow.Api\TaskFlow.Api.csproj", "{5C5D6541-7261-4385-8281-4E5BD6DDCB05}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskFlow.Functions", "TaskFlow.Functions\TaskFlow.Functions.csproj", "{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{5C5D6541-7261-4385-8281-4E5BD6DDCB05}.Release|x64.Build.0 = Release|Any CPU
 		{5C5D6541-7261-4385-8281-4E5BD6DDCB05}.Release|x86.ActiveCfg = Release|Any CPU
 		{5C5D6541-7261-4385-8281-4E5BD6DDCB05}.Release|x86.Build.0 = Release|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Debug|x64.Build.0 = Debug|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Debug|x86.Build.0 = Debug|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Release|x64.ActiveCfg = Release|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Release|x64.Build.0 = Release|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Release|x86.ActiveCfg = Release|Any CPU
+		{EAEF1DC8-CAB7-4D89-A29B-EB105C3F5041}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

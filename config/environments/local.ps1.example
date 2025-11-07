@@ -1,0 +1,33 @@
+# Copy this file to local.ps1 and adjust the paths so they point to the secret files you keep outside of git.
+# Each file path can be relative to the repository root.
+
+$EnvironmentConfig = @{
+    DisplayName = "Local Development (SQLExpress + Azurite)"
+    Description = @"
+Uses your local SQL Server Express instance and the Azurite storage emulator.
+Place the required secret files under config/secrets/local/ and update the paths below if needed.
+"@
+    Variables = @{
+        ASPNETCORE_ENVIRONMENT = "Development"
+        DOTNET_ENVIRONMENT = "Development"
+        FUNCTIONS_ENVIRONMENT = "Development"
+        VITE_TASKFLOW_ENV = "local"
+    }
+    Files = @(
+        @{
+            Source = "..\\config\\secrets\\local\\TaskFlow.Api.appsettings.json"
+            Target = "..\\TaskFlow.Api\\appsettings.Local.json"
+            Optional = $false
+        },
+        @{
+            Source = "..\\config\\secrets\\local\\TaskFlow.Functions.local.settings.json"
+            Target = "..\\TaskFlow.Functions\\local.settings.json"
+            Optional = $false
+        },
+        @{
+            Source = "..\\config\\secrets\\local\\frontend.env"
+            Target = "..\\taskflow-frontend\\.env.local"
+            Optional = $true
+        }
+    )
+}

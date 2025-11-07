@@ -9,17 +9,31 @@
 
 This document explains how to manage environment variables across different environments (development, production) in TaskFlow without manual file changes.
 
+> ⚠️ The sections below were updated for the profile-based workflow (November 2025). Legacy notes referencing `.env` files are kept later in the document for historical context and will be pruned as the migration completes.
+
 ## 📋 Overview
 
-TaskFlow uses environment-specific configuration files that are automatically selected based on the current environment:
+TaskFlow now keeps reusable **environment profiles** under `config/environments`. Each profile describes:
+
+- The environment variables to apply for API, Functions, and frontend projects.
+- The configuration files that should be copied into place (typically from `config/secrets/<profile>/`).
+
+Profiles are activated with the PowerShell helper:
+
+```powershell
+scripts\use-env.ps1 <profile-name>
+```
+
+The script sets the variables for the current shell and copies the referenced configuration files (API `appsettings.Local.json`, Functions `local.settings.json`, frontend `.env.local`, etc.). Real secrets live outside git inside `config/secrets/`, while `*.ps1.example` templates document the structure.
 
 ### Frontend (Vite)
-- **Development**: `.env.development` (automatically loaded with `npm run dev`)
-- **Production**: `.env.production` (automatically loaded with `npm run build`)
+- Local development: `.env.local` (generated/copied by the profile script)
+- Production build: hosting platform variables (`VITE_*`) or pipeline injection
 
 ### Backend (ASP.NET Core)
-- **Development**: `TaskFlow.Api/.env` + `appsettings.Development.json`
-- **Production**: Environment variables (Railway/Render/Azure) + `appsettings.Production.json`
+- Base configuration: `appsettings.json`
+- Environment overrides: `appsettings.Development.json`, `appsettings.Production.json`, …
+- Developer-specific secrets: `appsettings.Local.json` (copied by the profile script and ignored by git)
 
 ## 🎯 How It Works
 
@@ -37,49 +51,38 @@ Vite automatically detects which `.env` file to load based on the command you ru
 
 ### Backend Environment Detection
 
-ASP.NET Core uses a hierarchy of configuration sources (later sources override earlier ones):
+Aps.NET Core uses the default hierarchy of configuration sources (later sources override earlier ones):
 
 1. `appsettings.json` (base configuration)
 2. `appsettings.{Environment}.json` (environment-specific overrides)
-3. Environment variables
-4. `.env` or `.env.{Environment}` file (loaded via DotNetEnv library)
+3. `appsettings.Local.json` (optional, ignored by git, populated by the profile script)
+4. Environment variables (set by `scripts/use-env.ps1`, Azure App Settings, or GitHub Secrets)
 
 The environment is determined by the `ASPNETCORE_ENVIRONMENT` variable:
 - **Development**: Set automatically by Visual Studio / `dotnet run` / `launchSettings.json`
 - **Production**: Set by `--launch-profile production` or hosting platform (Azure, Railway, Render)
 
-#### Launch Profiles (New!)
-
-TaskFlow now includes multiple launch profiles in `Properties/launchSettings.json`:
-
-| Profile | Command | Environment | Env File Used |
-|---------|---------|-------------|---------------|
-| `http` | `dotnet run` | Development | `.env.development` |
-| `https` | N/A | Development | `.env.development` |
-| `production` | `dotnet run --launch-profile production` | Production | `.env.production` |
-
-This allows you to **test production configuration locally** without changing environment files.
+The `scripts/use-env.ps1` script also sets `ASPNETCORE_ENVIRONMENT`, `DOTNET_ENVIRONMENT`, and `FUNCTIONS_ENVIRONMENT`, so launch profiles and Functions worker pick up the correct configuration automatically. When you need to test another profile, re-run the script (remember each new shell needs to execute it).
 
 ## 📁 File Structure
 
 ```
 taskflow/
-├── taskflow-frontend/
-│   ├── .env.development          # Dev config (localhost:5149)
-│   ├── .env.production           # Production config (Azure/your domain)
-│   └── .env.example              # Template
+├── config/
+│   ├── environments/             # Reusable profiles (tracked templates + local overrides)
+│   └── secrets/                  # Local-only secret files referenced by profiles
 │
 ├── TaskFlow.Api/
-│   ├── .env.development          # Local dev secrets (localhost database)
-│   ├── .env.production           # Local prod secrets (Azure database)
 │   ├── appsettings.json          # Base config
-│   ├── appsettings.Development.json  # Dev overrides
-│   ├── appsettings.Production.json   # Prod overrides
-│   └── Properties/
-│       └── launchSettings.json   # Launch profiles (http, https, production)
+│   ├── appsettings.Development.json
+│   ├── appsettings.Production.json
+│   └── appsettings.Local.json    # Generated by scripts/use-env.ps1 (ignored by git)
 │
-└── .github/workflows/
-    └── main_taskflow-app.yml     # Azure CI/CD pipeline (creates .env files from secrets)
+├── TaskFlow.Functions/
+│   └── local.settings.json       # Generated by scripts/use-env.ps1 (ignored by git)
+│
+└── taskflow-frontend/
+   └── .env.local                # Generated by scripts/use-env.ps1 (ignored by git)
 ```
 
 ## ⚙️ Configuration Files
@@ -158,10 +161,13 @@ Template for production configuration (credentials filled by hosting platform):
     "Audience": "TaskFlowClient",
     "ExpiresInMinutes": 60
   },
-  "Ollama": {
-    "BaseUrl": "http://localhost:11434",
-    "Model": "llama3.2"
-  }
+   "AI": {
+      "Provider": "huggingface",
+      "ApiKey": "",
+      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
+      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "TimeoutSeconds": 90
+   }
 }
 ```
 
@@ -654,10 +660,13 @@ Plantilla para configuración de producción (credenciales completadas por la pl
     "Audience": "TaskFlowClient",
     "ExpiresInMinutes": 60
   },
-  "Ollama": {
-    "BaseUrl": "http://localhost:11434",
-    "Model": "llama3.2"
-  }
+   "AI": {
+      "Provider": "huggingface",
+      "ApiKey": "hf_your_token",
+      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
+      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "TimeoutSeconds": 90
+   }
 }
 ```
 
@@ -967,7 +976,105 @@ La belleza de esta configuración es que **nunca** necesitás editar manualmente
 
 5. Verificar que las migraciones estén aplicadas (Railway ejecuta migraciones automáticamente si está configurado)
 
-## 📚 Recursos Adicionales
+## � CI/CD Secrets Reference
+
+### GitHub Actions → Azure App Service
+
+| Purpose | GitHub Secret | Azure App Setting | Notes |
+|---------|---------------|-------------------|-------|
+| SQL connection string | `AZURE_SQL_CONNECTION_STRING` | `ConnectionStrings__DefaultConnection` | Required by API & Functions |
+| Storage connection | `AZURE_STORAGE_CONNECTION_STRING` | `AzureStorage__ConnectionString`, `AzureWebJobsStorage` | Functions need both values |
+| Storage container name | `AZURE_STORAGE_CONTAINER_NAME` | `AzureStorage__ContainerName` | Container must exist |
+| SMTP host | `SMTP_HOST` | `Smtp__Host` | |
+| SMTP port | `SMTP_PORT` | `Smtp__Port` | Keep as string in Azure |
+| SMTP user | `SMTP_USER` | `Smtp__User` | |
+| SMTP password | `SMTP_PASSWORD` | `Smtp__Pass` | Use app password |
+| SMTP from | `SMTP_FROM` | `Smtp__From` | Optional display name |
+| JWT signing key | `JWT_KEY` | `Jwt__Key` | ≥ 32 characters |
+| JWT issuer | `JWT_ISSUER` | `Jwt__Issuer` | |
+| JWT audience | `JWT_AUDIENCE` | `Jwt__Audience` | |
+| Frontend URL | `FRONTEND_URL` | `Frontend__Url` | Used for CORS & emails |
+| Vite root URL | `VITE_ROOT_URL` | (Vite `.env` only) | GitHub Actions writes `.env.production` |
+| Google Maps API key | `GOOGLE_MAPS_API_KEY` | `VITE_GOOGLE_MAPS_API_KEY` | Optional |
+| AI provider | `AI_PROVIDER` | `AI__PROVIDER` | Default `huggingface` |
+| AI token | `AI_API_KEY` | `AI__APIKEY` | Hugging Face Read token |
+| AI model | `AI_MODEL` | `AI__MODEL` | e.g. `mistralai/Mistral-7B-Instruct-v0.2` |
+| AI base URL | `AI_BASE_URL` | `AI__BASEURL` | Usually default |
+| AI timeout | `AI_TIMEOUT_SECONDS` | `AI__TIMEOUTSECONDS` | Optional |
+| Azure login client id | `AZUREAPPSERVICE_CLIENTID_*` | n/a | Used by `azure/login` |
+| Azure tenant id | `AZUREAPPSERVICE_TENANTID_*` | n/a | |
+| Azure subscription id | `AZUREAPPSERVICE_SUBSCRIPTIONID_*` | n/a | |
+| Azure Functions app name | `AZURE_FUNCTIONAPP_NAME` | n/a | Used in workflows for `taskflow-functions` |
+
+### Using `scripts\use-env.ps1`
+
+1. Store secret files under `config/secrets/<profile>/` (they stay out of git).
+2. Run `pwsh scripts/use-env.ps1 local` or `pwsh scripts/use-env.ps1 azure` in each PowerShell session (add `-Persist` to write user-level vars).
+3. The script sets process variables and copies:
+   - `TaskFlow.Api/appsettings.Local.json`
+   - `TaskFlow.Functions/local.settings.json`
+   - `taskflow-frontend/.env.local`
+4. Restart shells after rotations to pick up new values.
+
+### Rotating Sensitive Keys
+
+- **SQL**: rotate credentials in Azure SQL, then update `ConnectionStrings__DefaultConnection` (Azure + GitHub).
+- **JWT**: generate a new 256-bit key (`dotnet user-jwts key --display`) and update `Jwt__Key` everywhere.
+- **SMTP**: create a fresh app password and update `Smtp__Pass`.
+- **Storage**: rotate Storage Account keys; update `AzureStorage__ConnectionString` and `AzureWebJobsStorage`.
+- **Hugging Face**: revoke and recreate the Read token; update `AI__APIKEY` in secrets and local files.
+- Record rotation dates in your internal runbook.
+
+## 🔑 Referencia de Secrets
+
+### GitHub Actions → Azure App Service
+
+| Propósito | GitHub Secret | App Setting de Azure | Notas |
+|-----------|---------------|----------------------|-------|
+| Cadena de conexión SQL | `AZURE_SQL_CONNECTION_STRING` | `ConnectionStrings__DefaultConnection` | Obligatoria para API y Functions |
+| Conexión a Storage | `AZURE_STORAGE_CONNECTION_STRING` | `AzureStorage__ConnectionString`, `AzureWebJobsStorage` | Functions necesita ambos |
+| Nombre de contenedor | `AZURE_STORAGE_CONTAINER_NAME` | `AzureStorage__ContainerName` | Crear antes el contenedor |
+| Host SMTP | `SMTP_HOST` | `Smtp__Host` | |
+| Puerto SMTP | `SMTP_PORT` | `Smtp__Port` | Azure espera strings |
+| Usuario SMTP | `SMTP_USER` | `Smtp__User` | |
+| Password SMTP | `SMTP_PASSWORD` | `Smtp__Pass` | Usar app password |
+| Remitente SMTP | `SMTP_FROM` | `Smtp__From` | Se puede incluir nombre |
+| Clave JWT | `JWT_KEY` | `Jwt__Key` | ≥ 32 caracteres |
+| Issuer JWT | `JWT_ISSUER` | `Jwt__Issuer` | |
+| Audience JWT | `JWT_AUDIENCE` | `Jwt__Audience` | |
+| URL del frontend | `FRONTEND_URL` | `Frontend__Url` | Para CORS y correos |
+| Root URL de Vite | `VITE_ROOT_URL` | (solo `.env` de Vite) | Se escribe en el build |
+| API key de Google Maps | `GOOGLE_MAPS_API_KEY` | `VITE_GOOGLE_MAPS_API_KEY` | Opcional |
+| Proveedor de IA | `AI_PROVIDER` | `AI__PROVIDER` | Default `huggingface` |
+| Token de IA | `AI_API_KEY` | `AI__APIKEY` | Token de lectura de Hugging Face |
+| Modelo de IA | `AI_MODEL` | `AI__MODEL` | Ej. `mistralai/Mistral-7B-Instruct-v0.2` |
+| Base URL de IA | `AI_BASE_URL` | `AI__BASEURL` | Normalmente default |
+| Timeout IA | `AI_TIMEOUT_SECONDS` | `AI__TIMEOUTSECONDS` | Opcional |
+| Client ID de Azure | `AZUREAPPSERVICE_CLIENTID_*` | n/a | Uso exclusivo del action |
+| Tenant ID de Azure | `AZUREAPPSERVICE_TENANTID_*` | n/a | |
+| Subscription ID de Azure | `AZUREAPPSERVICE_SUBSCRIPTIONID_*` | n/a | |
+| Nombre de Function App | `AZURE_FUNCTIONAPP_NAME` | n/a | Usado en los workflows |
+
+### Cómo usar `scripts\use-env.ps1`
+
+1. Guardá tus archivos de secretos en `config/secrets/<perfil>/` (fuera de git).
+2. Ejecutá `pwsh scripts/use-env.ps1 local` o `pwsh scripts/use-env.ps1 azure` en cada sesión (sumá `-Persist` si querés guardarlos a nivel usuario).
+3. El script setea variables del proceso y copia:
+   - `TaskFlow.Api/appsettings.Local.json`
+   - `TaskFlow.Functions/local.settings.json`
+   - `taskflow-frontend/.env.local`
+4. Reiniciá las terminales después de rotaciones para tomar los nuevos valores.
+
+### Rotación de Credenciales
+
+- **SQL**: rotá la contraseña en Azure SQL y actualizá `ConnectionStrings__DefaultConnection` (Azure + GitHub).
+- **JWT**: generá una clave de 256 bits (`dotnet user-jwts key --display`) y actualizá `Jwt__Key`.
+- **SMTP**: pedí un app password nuevo y actualizá `Smtp__Pass`.
+- **Storage**: rotá las keys del Storage Account; actualizá `AzureStorage__ConnectionString` y `AzureWebJobsStorage`.
+- **Hugging Face**: revocá el token y cargá el nuevo en `AI__APIKEY` y archivos locales.
+- Anotá la fecha de cada rotación.
+
+## �📚 Recursos Adicionales
 
 - [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode.html)
 - [ASP.NET Core Configuration](https://learn.microsoft.com/es-es/aspnet/core/fundamentals/configuration/)

@@ -7,8 +7,15 @@
 .env
 .env.development
 .env.production
+taskflow-frontend/.env*
 !.env.example
 !**/.env.example
+TaskFlow.Functions/local.settings.json
+
+# Azure Storage emulator artifacts
+azurite/
+*.azurite
+TaskFlow.Functions/azurite/
 
 # User-specific files
 *.rsuser

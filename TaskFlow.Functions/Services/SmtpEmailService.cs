@@ -1,30 +1,37 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using TaskFlow.Configuration;
 
 namespace TaskFlow.Functions.Services;
 
 public class SmtpEmailService : IEmailService
 {
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<SmtpEmailService> _logger;
+    private readonly SmtpOptions _options;
 
-    public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
+    public SmtpEmailService(IOptions<SmtpOptions> options)
     {
-        _configuration = configuration;
-        _logger = logger;
+        _options = options.Value;
     }
 
     public async Task SendEmailAsync(string to, string subject, string body)
     {
-        var smtpHost = _configuration["Smtp:Host"] ?? "smtp.gmail.com";
-        var smtpPort = int.Parse(_configuration["Smtp:Port"] ?? "587");
-        var smtpUser = _configuration["Smtp:User"] ?? "";
-        var smtpPass = _configuration["Smtp:Pass"] ?? "";
-        var smtpFrom = _configuration["Smtp:From"] ?? smtpUser;
+        if (string.IsNullOrWhiteSpace(_options.Host))
+        {
+            throw new InvalidOperationException("SMTP host is not configured.");
+        }
 
-        using var client = new SmtpClient(smtpHost, smtpPort)
+        var smtpPort = _options.Port <= 0 ? 587 : _options.Port;
+        var smtpUser = _options.User;
+        var smtpPass = _options.Pass;
+        var smtpFrom = string.IsNullOrWhiteSpace(_options.From) ? smtpUser : _options.From;
+
+        if (string.IsNullOrWhiteSpace(smtpFrom))
+        {
+            throw new InvalidOperationException("SMTP 'From' address is not configured.");
+        }
+
+        using var client = new SmtpClient(_options.Host, smtpPort)
         {
             Credentials = new NetworkCredential(smtpUser, smtpPass),
             EnableSsl = true,
@@ -32,24 +39,16 @@ public class SmtpEmailService : IEmailService
             DeliveryMethod = SmtpDeliveryMethod.Network
         };
 
-        var mailMessage = new MailMessage
+        using var mailMessage = new MailMessage
         {
             From = new MailAddress(smtpFrom),
             Subject = subject,
             Body = body,
             IsBodyHtml = false
         };
+
         mailMessage.To.Add(to);
 
-        try
-        {
-            await client.SendMailAsync(mailMessage);
-            _logger.LogInformation("Email sent successfully to {To}", to);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send email to {To}", to);
-            throw;
-        }
+        await client.SendMailAsync(mailMessage);
     }
 }

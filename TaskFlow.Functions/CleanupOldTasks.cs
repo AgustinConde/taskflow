@@ -1,27 +1,45 @@
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using TaskFlow.Functions.Data;
 
 namespace TaskFlow.Functions;
 
-public class CleanupOldTasks(ILogger<CleanupOldTasks> logger)
+public class CleanupOldTasks
 {
-    private readonly ILogger<CleanupOldTasks> _logger = logger;
+    private readonly TaskFlowDbContext _dbContext;
+
+    public CleanupOldTasks(TaskFlowDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
 
     [Function("CleanupOldTasks")]
     public async Task Run([TimerTrigger("0 0 2 * * *")] TimerInfo timerInfo)     //2:00 AM UTC
     {
-        _logger.LogInformation("CleanupOldTasks function executed at: {Time}", DateTime.UtcNow);
+        var cutoffDate = DateTime.UtcNow.AddDays(-90);
 
-        try
-        {
-            // TODO: cleanup logic
-            _logger.LogInformation("Cleanup task would run here. Next execution: {NextRun}", timerInfo.ScheduleStatus?.Next);
+        var userIdsWithAutoDelete = await _dbContext.Users
+            .Where(u => u.AutoDeleteCompletedTasks)
+            .Select(u => u.Id)
+            .ToListAsync();
 
-            await Task.CompletedTask;
-        }
-        catch (Exception ex)
+        if (!userIdsWithAutoDelete.Any())
         {
-            _logger.LogError(ex, "Error during cleanup task");
+            return;
         }
+
+        var tasksToDelete = await _dbContext.Tasks
+            .Where(t => userIdsWithAutoDelete.Contains(t.UserId) &&
+                       t.IsCompleted &&
+                       t.CreatedAt < cutoffDate)
+            .ToListAsync();
+
+        if (!tasksToDelete.Any())
+        {
+            return;
+        }
+
+        _dbContext.Tasks.RemoveRange(tasksToDelete);
+        await _dbContext.SaveChangesAsync();
     }
 }

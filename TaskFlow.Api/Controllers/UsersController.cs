@@ -120,5 +120,42 @@ namespace TaskFlow.Api.Controllers
             await _dbContext.SaveChangesAsync();
             return Ok(new { message = "user.profile.updated", avatarUrl = user.AvatarUrl });
         }
+
+        // GET: api/users/settings
+        [HttpGet("settings")]
+        public async Task<IActionResult> GetSettings()
+        {
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null)
+                return Unauthorized();
+
+            var user = await _dbContext.Users.FindAsync(userId.Value);
+            if (user == null)
+                return NotFound();
+
+            return Ok(new UserSettingsDto
+            {
+                AutoDeleteCompletedTasks = user.AutoDeleteCompletedTasks
+            });
+        }
+
+        // PUT: api/users/settings
+        [HttpPut("settings")]
+        public async Task<IActionResult> UpdateSettings([FromBody] UpdateUserSettingsDto dto)
+        {
+            var userId = _jwtService.GetUserIdFromToken(User);
+            if (userId == null)
+                return Unauthorized();
+
+            var user = await _dbContext.Users.FindAsync(userId.Value);
+            if (user == null)
+                return NotFound();
+
+            if (dto.AutoDeleteCompletedTasks.HasValue)
+                user.AutoDeleteCompletedTasks = dto.AutoDeleteCompletedTasks.Value;
+
+            await _dbContext.SaveChangesAsync();
+            return Ok(new { message = "user.settings.updated" });
+        }
     }
 }

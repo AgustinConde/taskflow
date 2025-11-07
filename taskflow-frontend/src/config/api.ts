@@ -36,6 +36,11 @@ export const API_ENDPOINTS = {
         chat: `${API_BASE_URL}/ai-assistant/chat`,
         status: `${API_BASE_URL}/ai-assistant/status`,
     },
+    users: {
+        profile: `${API_BASE_URL}/users/profile`,
+        photo: `${API_BASE_URL}/users/photo`,
+        settings: `${API_BASE_URL}/users/settings`,
+    },
 } as const;
 
 // Root URL for non-API resources (like avatar images)

@@ -45,6 +45,7 @@ namespace TaskFlow.Api.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public string? AvatarUrl { get; set; }
+        public bool AutoDeleteCompletedTasks { get; set; }
     }
 
     public class UpdateProfileDto

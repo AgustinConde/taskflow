@@ -317,5 +317,24 @@
         "notAvailable": "AI Assistant is not available. Please make sure Ollama is running locally.",
         "disclaimer": "AI responses are generated and may not always be accurate",
         "restricted": "I can only help with task management topics. Please ask me something related to TaskFlow."
+    },
+    "settings": {
+        "title": "Settings",
+        "data_management": "Data Management",
+        "auto_delete_completed_tasks": "Automatically delete completed tasks",
+        "auto_delete_description": "Completed tasks older than 90 days will be automatically deleted daily at 2 AM UTC.",
+        "load_error": "Error loading settings",
+        "save_error": "Error saving settings",
+        "saved": "Settings saved successfully",
+        "info": "Your settings are synced across all devices.",
+        "appearance": "Appearance",
+        "theme": "Theme",
+        "light": "Light",
+        "dark": "Dark",
+        "language": "Language",
+        "language_description": "Choose the language for the interface.",
+        "english": "English",
+        "spanish": "Spanish",
+        "close": "Close"
     }
 }

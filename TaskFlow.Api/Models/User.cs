@@ -25,6 +25,7 @@ namespace TaskFlow.Api.Models
         public string? AvatarUrl { get; set; }
 
         public bool EmailConfirmed { get; set; } = false;
+        public bool AutoDeleteCompletedTasks { get; set; } = true;
 
         public virtual ICollection<Task> Tasks { get; set; } = [];
         public virtual ICollection<Category> Categories { get; set; } = [];

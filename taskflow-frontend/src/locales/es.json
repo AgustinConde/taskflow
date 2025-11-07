@@ -317,5 +317,24 @@
         "notAvailable": "El asistente de IA no está disponible. Por favor, asegúrate de que Ollama esté ejecutándose localmente.",
         "disclaimer": "Las respuestas de IA son generadas y pueden no ser siempre precisas",
         "restricted": "Solo puedo ayudarte con temas relacionados con la gestión de tareas. Por favor, pregúntame algo relacionado con TaskFlow."
+    },
+    "settings": {
+        "title": "Configuración",
+        "data_management": "Gestión de Datos",
+        "auto_delete_completed_tasks": "Eliminar automáticamente tareas completadas",
+        "auto_delete_description": "Las tareas completadas con más de 90 días se eliminarán automáticamente todos los días a las 2 AM UTC.",
+        "load_error": "Error al cargar la configuración",
+        "save_error": "Error al guardar la configuración",
+        "saved": "Configuración guardada exitosamente",
+        "info": "Tu configuración se sincroniza en todos tus dispositivos.",
+        "appearance": "Apariencia",
+        "theme": "Tema",
+        "light": "Claro",
+        "dark": "Oscuro",
+        "language": "Idioma",
+        "language_description": "Elegí el idioma de la interfaz.",
+        "english": "Inglés",
+        "spanish": "Español",
+        "close": "Cerrar"
     }
 }

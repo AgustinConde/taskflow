@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useAchievementIntegration } from '../useAchievementIntegration';
@@ -8,7 +9,8 @@ const mockTrackEvent = vi.fn();
 vi.mock('../useAchievementTracker', () => ({
     useAchievementTracker: () => ({
         trackEvent: mockTrackEvent
-    })
+    }),
+    AchievementTrackerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 
 const createWrapper = () => {

@@ -7,6 +7,8 @@ import { initReactI18next } from 'react-i18next';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
+import { AuthProvider } from '../../contexts/AuthContext';
+import { AchievementTrackerProvider } from '../../hooks/useAchievementTracker';
 
 const testTheme = createTheme();
 
@@ -63,7 +65,11 @@ export const TestProviders: React.FC<TestProvidersProps> = ({
             <ThemeProvider theme={testTheme}>
                 <CssBaseline />
                 <NotificationProvider>
-                    {children}
+                    <AuthProvider>
+                        <AchievementTrackerProvider>
+                            {children}
+                        </AchievementTrackerProvider>
+                    </AuthProvider>
                 </NotificationProvider>
             </ThemeProvider>
         </I18nextProvider>

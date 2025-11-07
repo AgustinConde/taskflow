@@ -34,7 +34,13 @@ vi.mock('../../services/achievementService', () => ({
 vi.mock('../../services/authService', () => ({
     authService: {
         getToken: vi.fn().mockReturnValue(null as string | null),
-        getCurrentUser: vi.fn().mockResolvedValue({ id: 1, username: 'test', email: 'test@test.com', createdAt: new Date().toISOString() })
+        isTokenExpired: vi.fn().mockReturnValue(false),
+        validateToken: vi.fn().mockResolvedValue(false),
+        getCurrentUser: vi.fn().mockResolvedValue({ id: 1, username: 'test', email: 'test@test.com', createdAt: new Date().toISOString(), autoDeleteCompletedTasks: false }),
+        removeToken: vi.fn(),
+        logout: vi.fn(),
+        login: vi.fn(),
+        register: vi.fn()
     }
 }));
 
@@ -314,7 +320,8 @@ describe('useAchievementTracker', () => {
             id: 123,
             username: 'testuser',
             email: 'test@example.com',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            autoDeleteCompletedTasks: false
         });
         mockAchievementService.getAchievements.mockResolvedValue([{
             id: 'backend_achievement',

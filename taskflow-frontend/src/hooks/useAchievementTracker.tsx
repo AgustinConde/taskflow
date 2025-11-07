@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotifications } from './useNotifications';
 import type {
@@ -14,8 +15,19 @@ import { achievementStorage } from '../utils/achievementStorage';
 import { achievementService } from '../services/achievementService';
 import { authService } from '../services/authService';
 import { calculateUserLevel } from '../types/Achievement';
+import { useAuth } from '../contexts/AuthContext';
 
-export const useAchievementTracker = () => {
+interface AchievementTrackerContextValue {
+    achievements: Achievement[];
+    progress: AchievementProgress[];
+    userStats: UserAchievementStats | null;
+    isInitialized: boolean;
+    trackEvent: (eventType: AchievementEventType, eventData?: any) => Promise<void>;
+}
+
+const AchievementTrackerContext = createContext<AchievementTrackerContextValue | undefined>(undefined);
+
+const useAchievementTrackerInternal = (): AchievementTrackerContextValue => {
     const { showSuccess } = useNotifications();
     const { t } = useTranslation();
     const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -23,65 +35,70 @@ export const useAchievementTracker = () => {
     const [userStats, setUserStats] = useState<UserAchievementStats | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
     const eventThrottleRef = useRef<Map<string, number>>(new Map());
+    const { user, loading: authLoading } = useAuth();
 
     useEffect(() => {
+        if (authLoading) {
+            return;
+        }
+
         const initializeAchievements = async () => {
             try {
                 const token = authService.getToken();
-                let userId = 'anonymous';
-                if (token) {
-                    try {
-                        const user = await authService.getCurrentUser();
-                        userId = user.id.toString();
-                    } catch (error) {
-                    }
-                }
+                const authenticated = !!user && !!token;
+                const userId = user ? user.id.toString() : 'anonymous';
                 achievementStorage.setUserId(userId);
 
-                let backendAchievements: Achievement[] = [];
-                let backendProgress: AchievementProgress[] = [];
-                let useBackend = false;
+                let catalog: Achievement[] = [];
+                let progressData: AchievementProgress[] = [];
+                let stats: UserAchievementStats | null = null;
 
-                if (token) {
+                if (authenticated) {
                     try {
-                        backendAchievements = await achievementService.getAchievements();
-                        backendProgress = await achievementService.getUserProgress();
+                        const [backendAchievements, backendProgress, backendStats] = await Promise.all([
+                            achievementService.getAchievements(),
+                            achievementService.getUserProgress(),
+                            achievementService.getUserStats()
+                        ]);
 
                         if (backendAchievements.length > 0) {
-                            useBackend = true;
-                            setAchievements(backendAchievements);
-                            setProgress(backendProgress);
+                            catalog = backendAchievements;
+                            progressData = backendProgress;
+                            stats = backendStats;
                         }
                     } catch (backendError) {
+                        console.error('Failed to load achievements from API, falling back to local storage:', backendError);
                     }
                 }
 
-                if (!useBackend) {
+                if (catalog.length === 0) {
                     try {
                         await achievementStorage.init();
-
                         const storedAchievements = await achievementStorage.getAchievements();
                         const storedProgress = await achievementStorage.getProgress();
 
                         if (storedAchievements.length === 0) {
                             await achievementStorage.initializeDefaultAchievements(achievementDefinitions);
-                            setAchievements(achievementDefinitions);
+                            catalog = achievementDefinitions;
                         } else {
-                            setAchievements(storedAchievements);
+                            catalog = storedAchievements;
                         }
 
-                        setProgress(storedProgress);
+                        progressData = storedProgress;
                     } catch (storageError) {
-                        console.error('Failed to initialize local storage, using fallback:', storageError);
-                        setAchievements(achievementDefinitions);
-                        setProgress([]);
+                        console.error('Failed to initialize local achievement storage, using defaults:', storageError);
+                        catalog = achievementDefinitions;
+                        progressData = [];
                     }
                 }
 
-                const progressData = useBackend ? backendProgress : await achievementStorage.getProgress();
-                const stats = await calculateUserStats(progressData);
-                setUserStats(stats);
+                if (!stats) {
+                    stats = await calculateUserStats(progressData, catalog);
+                }
 
+                setAchievements(catalog);
+                setProgress(progressData);
+                setUserStats(stats);
                 setIsInitialized(true);
             } catch (error) {
                 console.error('Failed to initialize achievement system:', error);
@@ -102,14 +119,18 @@ export const useAchievementTracker = () => {
         };
 
         initializeAchievements();
-    }, []);
+    }, [authLoading, user?.id]);
 
-    const calculateUserStats = async (progressData: AchievementProgress[]): Promise<UserAchievementStats> => {
+    const calculateUserStats = async (progressData: AchievementProgress[], achievementList?: Achievement[]): Promise<UserAchievementStats> => {
         let totalPoints = 0;
         let unlockedAchievements = 0;
 
+        const catalog = achievementList && achievementList.length > 0
+            ? achievementList
+            : (achievements.length > 0 ? achievements : achievementDefinitions);
+
         for (const prog of progressData) {
-            const achievement = achievementDefinitions.find(a => a.id === prog.achievementId);
+            const achievement = catalog.find(a => a.id === prog.achievementId);
             if (achievement) {
                 for (const tier of achievement.tiers) {
                     if (prog.unlockedTiers.includes(tier.level)) {
@@ -129,7 +150,7 @@ export const useAchievementTracker = () => {
 
         return {
             totalPoints,
-            totalAchievements: achievementDefinitions.length,
+            totalAchievements: catalog.length,
             unlockedAchievements,
             currentStreak: 0,
             longestStreak: 0,
@@ -185,8 +206,10 @@ export const useAchievementTracker = () => {
                         }
                     });
 
-                    const backendProgress = await achievementService.getUserProgress();
-                    const backendStats = await achievementService.getUserStats();
+                    const [backendProgress, backendStats] = await Promise.all([
+                        achievementService.getUserProgress(),
+                        achievementService.getUserStats()
+                    ]);
 
                     if (backendProgress && backendStats) {
                         setProgress(backendProgress);
@@ -395,4 +418,22 @@ export const useAchievementTracker = () => {
         isInitialized,
         trackEvent
     };
+};
+
+export const AchievementTrackerProvider = ({ children }: { children: ReactNode }) => {
+    // Share tracker state across the app to avoid re-running achievement initialization per hook consumer.
+    const value = useAchievementTrackerInternal();
+    return (
+        <AchievementTrackerContext.Provider value={value}>
+            {children}
+        </AchievementTrackerContext.Provider>
+    );
+};
+
+export const useAchievementTracker = (): AchievementTrackerContextValue => {
+    const context = useContext(AchievementTrackerContext);
+    if (!context) {
+        throw new Error('useAchievementTracker must be used within an AchievementTrackerProvider');
+    }
+    return context;
 };

@@ -1,7 +1,6 @@
 using Azure.Storage.Queues;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using TaskFlow.Api.DTOs;
 using TaskFlow.Configuration;
 
 namespace TaskFlow.Api.Services;
@@ -10,11 +9,13 @@ public class EmailQueueService
 {
     private readonly QueueClient _queueClient;
     private readonly ILogger<EmailQueueService> _logger;
+    private readonly IEmailService _emailService;
     private readonly string _queueName;
 
-    public EmailQueueService(IOptions<AzureStorageOptions> storageOptions, ILogger<EmailQueueService> logger)
+    public EmailQueueService(IOptions<AzureStorageOptions> storageOptions, ILogger<EmailQueueService> logger, IEmailService emailService)
     {
         _logger = logger;
+        _emailService = emailService;
         var options = storageOptions.Value;
         var connectionString = options.ConnectionString;
         _queueName = string.IsNullOrWhiteSpace(options.QueueName) ? "email-queue" : options.QueueName;
@@ -48,7 +49,8 @@ public class EmailQueueService
     {
         if (_queueClient == null)
         {
-            _logger.LogWarning("Queue client not initialized. Email will not be queued.");
+            _logger.LogWarning("Queue client not initialized. Sending email directly to {To}.", to);
+            await SendDirectAsync(to, subject, body);
             return;
         }
 
@@ -69,8 +71,8 @@ public class EmailQueueService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue email to {To}", to);
-            throw;
+            _logger.LogError(ex, "Failed to queue email to {To}. Attempting direct send fallback.", to);
+            await SendDirectAsync(to, subject, body, ex);
         }
     }
 
@@ -86,6 +88,34 @@ public class EmailQueueService
         catch
         {
             return false;
+        }
+    }
+
+    private async Task SendDirectAsync(string to, string subject, string body, Exception? queueFailure = null)
+    {
+        if (_emailService == null)
+        {
+            _logger.LogWarning("Fallback email service not available. Email to {To} cannot be sent.", to);
+            if (queueFailure != null)
+            {
+                throw queueFailure;
+            }
+            throw new InvalidOperationException("Email service not available for fallback.");
+        }
+
+        try
+        {
+            await _emailService.SendEmailAsync(to, subject, body);
+            _logger.LogInformation("Email sent directly to {To} via fallback SMTP.", to);
+        }
+        catch (Exception fallbackEx)
+        {
+            _logger.LogError(fallbackEx, "Fallback email send failed for {To}.", to);
+            if (queueFailure != null)
+            {
+                throw queueFailure;
+            }
+            throw;
         }
     }
 }

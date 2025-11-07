@@ -163,7 +163,8 @@ namespace TaskFlow.Api.Services
                 Email = user.Email,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
-                AvatarUrl = user.AvatarUrl
+                AvatarUrl = user.AvatarUrl,
+                AutoDeleteCompletedTasks = user.AutoDeleteCompletedTasks
             };
         }
 

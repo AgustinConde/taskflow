@@ -130,6 +130,30 @@ class AuthService {
             return true;
         }
     }
+
+    async getUserSettings(): Promise<{ autoDeleteCompletedTasks: boolean }> {
+        const response = await fetch(API_ENDPOINTS.users.settings, {
+            headers: this.getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get user settings');
+        }
+
+        return await response.json();
+    }
+
+    async updateUserSettings(settings: { autoDeleteCompletedTasks?: boolean }): Promise<void> {
+        const response = await fetch(API_ENDPOINTS.users.settings, {
+            method: 'PUT',
+            headers: this.getAuthHeaders(),
+            body: JSON.stringify(settings)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update user settings');
+        }
+    }
 }
 
 export const authService = new AuthService();

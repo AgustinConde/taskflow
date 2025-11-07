@@ -5,6 +5,7 @@ export interface User {
     createdAt: string;
     lastLoginAt?: string;
     avatarUrl?: string;
+    autoDeleteCompletedTasks: boolean;
 }
 
 export interface UserProfileFormData extends Partial<User> {

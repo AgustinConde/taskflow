@@ -164,8 +164,8 @@ Template for production configuration (credentials filled by hosting platform):
    "AI": {
       "Provider": "huggingface",
       "ApiKey": "",
-      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
-      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "Model": "HuggingFaceTB/SmolLM3-3B",
+      "BaseUrl": "https://router.huggingface.co",
       "TimeoutSeconds": 90
    }
 }
@@ -663,8 +663,8 @@ Plantilla para configuración de producción (credenciales completadas por la pl
    "AI": {
       "Provider": "huggingface",
       "ApiKey": "hf_your_token",
-      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
-      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "Model": "HuggingFaceTB/SmolLM3-3B",
+      "BaseUrl": "https://router.huggingface.co",
       "TimeoutSeconds": 90
    }
 }
@@ -998,7 +998,7 @@ La belleza de esta configuración es que **nunca** necesitás editar manualmente
 | Google Maps API key | `GOOGLE_MAPS_API_KEY` | `VITE_GOOGLE_MAPS_API_KEY` | Optional |
 | AI provider | `AI_PROVIDER` | `AI__PROVIDER` | Default `huggingface` |
 | AI token | `AI_API_KEY` | `AI__APIKEY` | Hugging Face Read token |
-| AI model | `AI_MODEL` | `AI__MODEL` | e.g. `mistralai/Mistral-7B-Instruct-v0.2` |
+| AI model | `AI_MODEL` | `AI__MODEL` | e.g. `HuggingFaceTB/SmolLM3-3B` |
 | AI base URL | `AI_BASE_URL` | `AI__BASEURL` | Usually default |
 | AI timeout | `AI_TIMEOUT_SECONDS` | `AI__TIMEOUTSECONDS` | Optional |
 | Azure login client id | `AZUREAPPSERVICE_CLIENTID_*` | n/a | Used by `azure/login` |
@@ -1047,7 +1047,7 @@ La belleza de esta configuración es que **nunca** necesitás editar manualmente
 | API key de Google Maps | `GOOGLE_MAPS_API_KEY` | `VITE_GOOGLE_MAPS_API_KEY` | Opcional |
 | Proveedor de IA | `AI_PROVIDER` | `AI__PROVIDER` | Default `huggingface` |
 | Token de IA | `AI_API_KEY` | `AI__APIKEY` | Token de lectura de Hugging Face |
-| Modelo de IA | `AI_MODEL` | `AI__MODEL` | Ej. `mistralai/Mistral-7B-Instruct-v0.2` |
+| Modelo de IA | `AI_MODEL` | `AI__MODEL` | Ej. `HuggingFaceTB/SmolLM3-3B` |
 | Base URL de IA | `AI_BASE_URL` | `AI__BASEURL` | Normalmente default |
 | Timeout IA | `AI_TIMEOUT_SECONDS` | `AI__TIMEOUTSECONDS` | Opcional |
 | Client ID de Azure | `AZUREAPPSERVICE_CLIENTID_*` | n/a | Uso exclusivo del action |

@@ -161,8 +161,8 @@ If you want to keep the TaskFlow AI Assistant enabled, provide the Hugging Face 
    "AI": {
       "Provider": "huggingface",
       "ApiKey": "hf_your_write_token",
-      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
-      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "Model": "HuggingFaceTB/SmolLM3-3B",
+      "BaseUrl": "https://router.huggingface.co",
       "TimeoutSeconds": 90
    }
 }
@@ -170,7 +170,7 @@ If you want to keep the TaskFlow AI Assistant enabled, provide the Hugging Face 
 
 **Hugging Face Requirements**:
 - Create a Write token at https://huggingface.co/settings/tokens and store it securely.
-- Choose a compatible text generation model (defaults to `mistralai/Mistral-7B-Instruct-v0.2`).
+- Choose a compatible text generation model (defaults to `HuggingFaceTB/SmolLM3-3B`; list available models with `curl -H "Authorization: Bearer <token>" https://router.huggingface.co/v1/models`).
 - Ensure the token has sufficient quota or paid plan to handle expected traffic.
 
 **Optional Local Mode**: If you prefer running everything locally, set `AI__PROVIDER=ollama` and keep your previous Ollama configuration files. The application will fall back to Ollama when the provider name is set to `ollama`.
@@ -494,7 +494,13 @@ After deployment, verify all features work correctly:
 ### Issue: AI Assistant not working
 **Solution**: 
 - Ensure the `AI` section in appsettings or the `AI__*` environment variables include a valid Hugging Face token and model.
-- Test the token against the model via curl: `curl -X POST https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2 -H "Authorization: Bearer <token>" -d '{"inputs":"ping"}'`
+- Test the token against the model via curl:
+   ```bash
+   curl -X POST https://router.huggingface.co/v1/chat/completions \
+      -H "Authorization: Bearer <token>" \
+      -H "Content-Type: application/json" \
+      --data "{\"model\":\"HuggingFaceTB/SmolLM3-3B\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"ping\"}]}]}"
+   ```
 - Verify GitHub Secrets `AI_API_KEY`, `AI_MODEL`, etc. are populated (see deployment workflow).
 - If running locally with Ollama, confirm the daemon is running and the model is downloaded (`ollama list`).
 
@@ -518,8 +524,8 @@ After deployment, verify all features work correctly:
 | `Jwt__Key` | Yes | None | JWT signing key (min 32 chars) |
 | `AI__PROVIDER` | No | `huggingface` | AI provider name (`huggingface` or `ollama`) |
 | `AI__APIKEY` | Yes (if Hugging Face) | None | Hugging Face Write token |
-| `AI__MODEL` | No | `mistralai/Mistral-7B-Instruct-v0.2` | Hugging Face model identifier |
-| `AI__BASEURL` | No | `https://api-inference.huggingface.co/models` | Hugging Face base endpoint |
+| `AI__MODEL` | No | `HuggingFaceTB/SmolLM3-3B` | Hugging Face model identifier |
+| `AI__BASEURL` | No | `https://router.huggingface.co` | Hugging Face base endpoint |
 | `AI__TIMEOUTSECONDS` | No | `90` | Request timeout to the AI provider |
 
 ## 🔒 Security Best Practices
@@ -704,8 +710,8 @@ Si querés mantener habilitado el asistente de IA de TaskFlow, cargá las creden
    "AI": {
       "Provider": "huggingface",
       "ApiKey": "hf_tu_token_write",
-      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
-      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "Model": "HuggingFaceTB/SmolLM3-3B",
+      "BaseUrl": "https://router.huggingface.co",
       "TimeoutSeconds": 90
    }
 }
@@ -713,7 +719,7 @@ Si querés mantener habilitado el asistente de IA de TaskFlow, cargá las creden
 
 **Requisitos de Hugging Face**:
 - Generá un token con permiso Write en https://huggingface.co/settings/tokens y guardalo de forma segura.
-- Elegí un modelo de generación compatible (por defecto `mistralai/Mistral-7B-Instruct-v0.2`).
+- Elegí un modelo habilitado para tu token (por defecto `HuggingFaceTB/SmolLM3-3B`; podés listar opciones con `curl -H "Authorization: Bearer <token>" https://router.huggingface.co/v1/models`).
 - Verificá que el plan tenga cuota suficiente para la carga esperada.
 
 **Modo local opcional**: Si preferís correr todo localmente, establecé `AI__PROVIDER=ollama` y mantené los archivos de configuración de Ollama. La aplicación va a utilizar Ollama cuando el proveedor sea `ollama`.
@@ -946,7 +952,13 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 ### Problema: Asistente de IA no funciona
 **Solución**: 
 - Asegurate de que la sección `AI` en appsettings o las variables `AI__*` tengan un token válido de Hugging Face y el modelo configurado.
-- Probá el token contra el modelo con curl: `curl -X POST https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2 -H "Authorization: Bearer <token>" -d '{"inputs":"ping"}'`
+- Probá el token contra el modelo con curl:
+   ```bash
+   curl -X POST https://router.huggingface.co/v1/chat/completions \
+      -H "Authorization: Bearer <token>" \
+      -H "Content-Type: application/json" \
+      --data "{\"model\":\"HuggingFaceTB/SmolLM3-3B\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"ping\"}]}]}"
+   ```
 - Verificá que los GitHub Secrets `AI_API_KEY`, `AI_MODEL`, etc. estén cargados (ver workflow de despliegue).
 - Si trabajás en modo local con Ollama, confirmá que el servicio esté activo y que el modelo se descargó (`ollama list`).
 
@@ -970,8 +982,8 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 | `Jwt__Key` | Sí | Ninguno | Clave de firma JWT (mín 32 chars) |
 | `AI__PROVIDER` | No | `huggingface` | Nombre del proveedor de IA (`huggingface` u `ollama`) |
 | `AI__APIKEY` | Sí (si usás Hugging Face) | Ninguno | Token Write de Hugging Face |
-| `AI__MODEL` | No | `mistralai/Mistral-7B-Instruct-v0.2` | Identificador del modelo en Hugging Face |
-| `AI__BASEURL` | No | `https://api-inference.huggingface.co/models` | Endpoint base de Hugging Face |
+| `AI__MODEL` | No | `HuggingFaceTB/SmolLM3-3B` | Identificador del modelo en Hugging Face |
+| `AI__BASEURL` | No | `https://router.huggingface.co` | Endpoint base de Hugging Face |
 | `AI__TIMEOUTSECONDS` | No | `90` | Timeout para las requests al proveedor de IA |
 
 ## 🔒 Mejores Prácticas de Seguridad

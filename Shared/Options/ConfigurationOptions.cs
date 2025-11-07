@@ -57,9 +57,9 @@ public sealed class AiOptions
 
     public string? ApiKey { get; set; }
 
-    public string? Model { get; set; } = "mistralai/Mistral-7B-Instruct-v0.2";
+    public string? Model { get; set; } = "HuggingFaceTB/SmolLM3-3B";
 
-    public string BaseUrl { get; set; } = "https://api-inference.huggingface.co/models";
+    public string BaseUrl { get; set; } = "https://router.huggingface.co";
 
     public int TimeoutSeconds { get; set; } = 90;
 }

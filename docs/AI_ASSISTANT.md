@@ -26,7 +26,7 @@ TaskFlow ships with an embedded AI assistant focused on task management. The bac
 
 1. Create or use an existing Hugging Face account.
 2. Generate a **Write** access token from https://huggingface.co/settings/tokens.
-3. Pick a text-generation model that supports the Inference API (tested with `mistralai/Mistral-7B-Instruct-v0.2`).
+3. Pick a text-generation model that is available to your token (the router exposes a catalog at `GET https://router.huggingface.co/v1/models`; the defaults below use `HuggingFaceTB/SmolLM3-3B`).
 4. (Optional) Upgrade the workspace if you need higher rate limits or private models.
 
 ### Optional: Ollama (Local Provider)
@@ -44,8 +44,8 @@ The assistant reads strongly-typed options from the `AI` configuration section. 
 	"AI": {
 		"Provider": "huggingface",
 		"ApiKey": "hf_your_write_token",
-		"Model": "mistralai/Mistral-7B-Instruct-v0.2",
-		"BaseUrl": "https://api-inference.huggingface.co/models",
+		"Model": "HuggingFaceTB/SmolLM3-3B",
+		"BaseUrl": "https://router.huggingface.co",
 		"TimeoutSeconds": 90
 	}
 }
@@ -129,7 +129,7 @@ TaskFlow incluye un asistente de IA enfocado en la gestión de tareas. El backen
 
 1. Crea o usa una cuenta existente en Hugging Face.
 2. Genera un token con permiso **Write** desde https://huggingface.co/settings/tokens.
-3. Elige un modelo de generación de texto compatible con la Inference API (probado con `mistralai/Mistral-7B-Instruct-v0.2`).
+3. Elegí un modelo de texto disponible para tu token (consultá `GET https://router.huggingface.co/v1/models`; el valor por defecto usa `HuggingFaceTB/SmolLM3-3B`).
 4. (Opcional) Mejora tu plan si necesitas más capacidad o modelos privados.
 
 ### Opcional: Ollama (Proveedor local)
@@ -147,8 +147,8 @@ El asistente lee las opciones desde la sección `AI` de configuración. Agrega l
 	"AI": {
 		"Provider": "huggingface",
 		"ApiKey": "hf_tu_token",
-		"Model": "mistralai/Mistral-7B-Instruct-v0.2",
-		"BaseUrl": "https://api-inference.huggingface.co/models",
+		"Model": "HuggingFaceTB/SmolLM3-3B",
+		"BaseUrl": "https://router.huggingface.co",
 		"TimeoutSeconds": 90
 	}
 }

@@ -36,6 +36,7 @@
 
 - **Frontend**: Node.js 18+ and npm
 - **Backend**: .NET 9 SDK, SQL Server (local or remote)
+- **Email Worker**: Azure Functions Core Tools v4 and Azurite (or an Azure Storage account) for the background email queue
 - **AI Assistant**: Ollama (optional, for AI-powered features)
 - **Optional**: SQL Server Management Studio (SSMS)
 
@@ -101,6 +102,29 @@
    ```
    API available at the port shown in console (typically `https://localhost:5149`)
 
+### Email Worker Setup (Azure Functions)
+
+The background email worker consumes queue messages and sends transactional emails.
+
+1. **Install tooling** (one-time):
+   - [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
+   - [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) (`npm install -g azurite`) or connect to an Azure Storage account
+2. **Start Azurite** for local development:
+   ```bash
+   npx azurite --silent --location ./azurite --debug ./azurite/azurite.log
+   ```
+3. **Configure the worker**:
+   ```bash
+   cd TaskFlow.Functions
+   cp local.settings.json.example local.settings.json
+   ```
+   Update `local.settings.json` with your SQL Server connection string and SMTP credentials. Set `Email__UseSmtp=true` and `Email__AllowSmtpInDevelopment=true` only when you want to send real emails while running locally.
+4. **Run the worker**:
+   ```bash
+   func start
+   ```
+   The worker listens to the `email-queue` queue and dispatches emails using your SMTP settings.
+
 ### Ollama Setup (Optional - For AI Assistant)
 
 1. **Install Ollama**:
@@ -125,20 +149,38 @@
 
 ## Environment Variables
 
-### Frontend (.env)
+The easiest way to switch environments locally is to run the helper script:
+
+```powershell
+scripts\use-env.ps1 <profile>
+```
+
+Profiles live in `config/environments/*.ps1` (ignored by git — copy the corresponding `*.ps1.example` file and fill in your secret file paths). The script sets process-level variables and copies the config files listed in the profile.
+
+### Frontend (`.env.local` via profile script)
 
 - `VITE_ROOT_URL` — Backend API URL (e.g., `http://localhost:5149`)
 - `VITE_GOOGLE_MAPS_API_KEY` — Google Maps API Key for geolocation features (optional but recommended)
 
-### Backend (.env)
+### Backend (`appsettings.Local.json` via profile script)
 
-- `ConnectionStrings__DefaultConnection` — SQL Server connection string
-- `Smtp__Host` — SMTP server host (e.g., `smtp.gmail.com`)
-- `Smtp__Port` — SMTP port (e.g., `587`)
-- `Smtp__User` — SMTP username
-- `Smtp__Pass` — SMTP password/app password
-- `Smtp__From` — From email address
-- `Jwt__Key` — JWT secret key (minimum 32 characters)
+- `ConnectionStrings:DefaultConnection` — SQL Server connection string
+- `Smtp:Host` — SMTP server host (e.g., `smtp.gmail.com`)
+- `Smtp:Port` — SMTP port (e.g., `587`)
+- `Smtp:User` — SMTP username
+- `Smtp:Pass` — SMTP password/app password
+- `Smtp:From` — From email address
+- `Jwt:Key` — JWT secret key (minimum 32 characters)
+- `AzureStorage:ConnectionString` — Storage account / Azurite connection string
+- `Frontend:Url` — Base URL used for email links
+
+### Email Worker (`TaskFlow.Functions/local.settings.json` via profile script)
+
+- `AzureWebJobsStorage` — Azure Storage connection string for queues (use `UseDevelopmentStorage=true` with Azurite)
+- `Email__UseSmtp` — `true` to send real emails instead of dropping them locally
+- `Email__AllowSmtpInDevelopment` — enable SMTP while the worker runs in development mode
+- The same `Smtp__*` keys as the API — forwarded to the worker when sending mail
+- `ConnectionStrings__DefaultConnection` — reused so the worker can access the application database when needed
 
 ## Available Scripts
 
@@ -151,8 +193,8 @@
 - `npm run test:coverage` — Test coverage
 
 ### Backend
-- `dotnet run` — Development server (uses `.env.development`)
-- `dotnet run --launch-profile production` — Local production mode (uses `.env.production`)
+- `dotnet run` — Development server (`ASPNETCORE_ENVIRONMENT` provided by `scripts\use-env.ps1` or launchSettings)
+- `dotnet run --launch-profile production` — Local production mode (remembers applied profile variables)
 - `dotnet build` — Build project
 - `dotnet test` — Run tests
 - `dotnet publish -c Release` — Production build
@@ -197,17 +239,10 @@ Serve frontend and backend together for local testing in production mode.
    .\copy-frontend-to-wwwroot.ps1
    ```
 
-2. **Configure** `TaskFlow.Api/.env.production`:
-   ```env
-   ConnectionStrings__DefaultConnection=Server=localhost\SQLEXPRESS;Database=TaskFlowDb;Trusted_Connection=True;TrustServerCertificate=True;
-   Smtp__Host=smtp.gmail.com
-   Smtp__Port=587
-   Smtp__User=your-email@gmail.com
-   Smtp__Pass=your-gmail-app-password
-   Smtp__From=your-email@gmail.com
-   Jwt__Key=your-secret-key-minimum-32-characters
-   FRONTEND_URL=http://localhost:5149
-   ```
+2. **Prepare the environment profile**:
+   - Copy `config/environments/azure.ps1.example` to `config/environments/azure.ps1` (or any name you prefer)
+   - Point the `Files` entries to the secret files you keep under `config/secrets/azure/`
+   - Run `scripts\use-env.ps1 azure` to copy those files into `TaskFlow.Api/appsettings.Local.json`, `TaskFlow.Functions/local.settings.json`, and `taskflow-frontend/.env.local`
 
 3. **Apply migrations**:
    ```bash
@@ -222,7 +257,7 @@ Serve frontend and backend together for local testing in production mode.
 
 5. **Access**: `http://localhost:5149`
 
-> 💡 **Tip**: Use `--launch-profile production` to test production configuration locally. For development with hot-reload, use separate terminals for `npm run dev` (frontend) and `dotnet run` (backend).
+> 💡 **Tip**: Run `scripts\use-env.ps1 <profile>` before launching the API so the right secrets are in place. For hot-reload development, keep separate terminals for `npm run dev` (frontend) and `dotnet run` (backend).
 
 ### Option 2: Separate Deployment (Development)
 
@@ -383,6 +418,7 @@ For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.m
 
 - **Frontend**: Node.js 18+ y npm
 - **Backend**: .NET 9 SDK, SQL Server (local o remoto)
+- **Worker de emails**: Azure Functions Core Tools v4 y Azurite (o una cuenta de Azure Storage) para la cola de correos
 - **Asistente de IA**: Ollama (opcional, para funcionalidades impulsadas por IA)
 - **Opcional**: SQL Server Management Studio (SSMS)
 
@@ -448,6 +484,29 @@ For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.m
    ```
    API disponible en el puerto mostrado en consola (típicamente `https://localhost:5149`)
 
+### Configuración del worker de emails (Azure Functions)
+
+El worker de segundo plano consume la cola `email-queue` y envía los correos transaccionales.
+
+1. **Instalá las herramientas** (una sola vez):
+   - [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
+   - [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) (`npm install -g azurite`) o conectate a una cuenta de Azure Storage
+2. **Levantá Azurite** para desarrollo local:
+   ```bash
+   npx azurite --silent --location ./azurite --debug ./azurite/azurite.log
+   ```
+3. **Configurá el worker**:
+   ```bash
+   cd TaskFlow.Functions
+   cp local.settings.json.example local.settings.json
+   ```
+   Completá `local.settings.json` con tu cadena de conexión de SQL Server y credenciales SMTP. Activá `Email__UseSmtp=true` y `Email__AllowSmtpInDevelopment=true` solo cuando quieras enviar correos reales desde tu entorno local.
+4. **Ejecutá el worker**:
+   ```bash
+   func start
+   ```
+   El worker escuchará la cola `email-queue` y despachará los correos usando tu configuración SMTP.
+
 ### Configuración de Ollama (Opcional - Para Asistente de IA)
 
 1. **Instalar Ollama**:
@@ -487,6 +546,14 @@ For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.m
 - `Smtp__From` — Dirección de email remitente
 - `Jwt__Key` — Clave secreta JWT (mínimo 32 caracteres)
 - `FRONTEND_URL` — URL del frontend para links de confirmación de email (ej., `http://localhost:5173` en desarrollo)
+
+### Worker de emails (`TaskFlow.Functions/local.settings.json`)
+
+- `AzureWebJobsStorage` — Cadena de conexión de Azure Storage para las colas (usá `UseDevelopmentStorage=true` con Azurite)
+- `Email__UseSmtp` — Ponelo en `true` para enviar correos reales en lugar de guardarlos localmente
+- `Email__AllowSmtpInDevelopment` — Permite SMTP mientras el worker corre en modo Development
+- Las mismas claves `Smtp__*` que la API — reutilizadas por el worker para enviar correos
+- `ConnectionStrings__DefaultConnection` — reutilizada si el worker necesita acceder a la base de datos
 
 ## Scripts disponibles
 

@@ -152,25 +152,28 @@ builder.Services.AddCors(options =>
 });
 ```
 
-### 6. Optional: Configure Ollama AI (if using AI Assistant)
+### 6. Configure the AI Assistant
 
-If you want to use the AI Assistant feature, configure Ollama in `appsettings.Development.json` or `appsettings.json`:
+If you want to keep the TaskFlow AI Assistant enabled, provide the Hugging Face Inference API credentials in `appsettings.Development.json`, `appsettings.json`, or via environment variables:
 
 ```json
 {
-  "Ollama": {
-    "BaseUrl": "http://localhost:11434",
-    "Model": "llama3.2"
-  }
+   "AI": {
+      "Provider": "huggingface",
+      "ApiKey": "hf_your_write_token",
+      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
+      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "TimeoutSeconds": 90
+   }
 }
 ```
 
-**Requirements**:
-- Install Ollama from https://ollama.ai
-- Pull the model: `ollama pull llama3.2`
-- Ensure Ollama service is running
+**Hugging Face Requirements**:
+- Create a Write token at https://huggingface.co/settings/tokens and store it securely.
+- Choose a compatible text generation model (defaults to `mistralai/Mistral-7B-Instruct-v0.2`).
+- Ensure the token has sufficient quota or paid plan to handle expected traffic.
 
-**Note**: AI features will be disabled if Ollama is not configured or unavailable.
+**Optional Local Mode**: If you prefer running everything locally, set `AI__PROVIDER=ollama` and keep your previous Ollama configuration files. The application will fall back to Ollama when the provider name is set to `ollama`.
 
 ## 🔧 Deployment Options
 
@@ -386,7 +389,7 @@ After deployment, verify all features work correctly:
 - [ ] AI understands task context
 - [ ] AI detects user's language (English/Spanish)
 - [ ] Response time < 5 seconds
-- [ ] Error handling if Ollama unavailable
+- [ ] Error handling when AI provider is unavailable
 
 #### ✅ Location Services
 - [ ] Google Places search works
@@ -490,9 +493,10 @@ After deployment, verify all features work correctly:
 
 ### Issue: AI Assistant not working
 **Solution**: 
-- Check Ollama is running: `curl http://localhost:11434/api/tags`
-- Verify model is downloaded: `ollama list`
-- Check `appsettings.json` has correct Ollama configuration
+- Ensure the `AI` section in appsettings or the `AI__*` environment variables include a valid Hugging Face token and model.
+- Test the token against the model via curl: `curl -X POST https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2 -H "Authorization: Bearer <token>" -d '{"inputs":"ping"}'`
+- Verify GitHub Secrets `AI_API_KEY`, `AI_MODEL`, etc. are populated (see deployment workflow).
+- If running locally with Ollama, confirm the daemon is running and the model is downloaded (`ollama list`).
 
 ### Issue: Achievements triggering multiple times
 **Solution**: Ensure `AddIsProcessedToAchievementEvents` migration has been applied
@@ -512,6 +516,11 @@ After deployment, verify all features work correctly:
 | `Smtp__User` | Yes | None | SMTP username |
 | `Smtp__Pass` | Yes | None | SMTP password |
 | `Jwt__Key` | Yes | None | JWT signing key (min 32 chars) |
+| `AI__PROVIDER` | No | `huggingface` | AI provider name (`huggingface` or `ollama`) |
+| `AI__APIKEY` | Yes (if Hugging Face) | None | Hugging Face Write token |
+| `AI__MODEL` | No | `mistralai/Mistral-7B-Instruct-v0.2` | Hugging Face model identifier |
+| `AI__BASEURL` | No | `https://api-inference.huggingface.co/models` | Hugging Face base endpoint |
+| `AI__TIMEOUTSECONDS` | No | `90` | Request timeout to the AI provider |
 
 ## 🔒 Security Best Practices
 
@@ -686,25 +695,28 @@ builder.Services.AddCors(options =>
 });
 ```
 
-### 6. Opcional: Configurar Ollama AI (si usás el Asistente de IA)
+### 6. Configurar el Asistente de IA
 
-Si querés usar la función de Asistente de IA, configurá Ollama en `appsettings.Development.json` o `appsettings.json`:
+Si querés mantener habilitado el asistente de IA de TaskFlow, cargá las credenciales de la Inference API de Hugging Face en `appsettings.Development.json`, `appsettings.json` o mediante variables de entorno:
 
 ```json
 {
-  "Ollama": {
-    "BaseUrl": "http://localhost:11434",
-    "Model": "llama3.2"
-  }
+   "AI": {
+      "Provider": "huggingface",
+      "ApiKey": "hf_tu_token_write",
+      "Model": "mistralai/Mistral-7B-Instruct-v0.2",
+      "BaseUrl": "https://api-inference.huggingface.co/models",
+      "TimeoutSeconds": 90
+   }
 }
 ```
 
-**Requisitos**:
-- Instalar Ollama desde https://ollama.ai
-- Descargar el modelo: `ollama pull llama3.2`
-- Asegurate de que el servicio Ollama esté corriendo
+**Requisitos de Hugging Face**:
+- Generá un token con permiso Write en https://huggingface.co/settings/tokens y guardalo de forma segura.
+- Elegí un modelo de generación compatible (por defecto `mistralai/Mistral-7B-Instruct-v0.2`).
+- Verificá que el plan tenga cuota suficiente para la carga esperada.
 
-**Nota**: Las funciones de IA estarán deshabilitadas si Ollama no está configurado o disponible.
+**Modo local opcional**: Si preferís correr todo localmente, establecé `AI__PROVIDER=ollama` y mantené los archivos de configuración de Ollama. La aplicación va a utilizar Ollama cuando el proveedor sea `ollama`.
 
 ## 🔧 Opciones de Deployment
 
@@ -829,7 +841,7 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 - [ ] IA entiende contexto de tareas
 - [ ] IA detecta idioma del usuario (Inglés/Español)
 - [ ] Tiempo de respuesta < 5 segundos
-- [ ] Manejo de errores si Ollama no está disponible
+- [ ] Manejo de errores cuando el proveedor de IA no está disponible
 
 #### ✅ Servicios de Ubicación
 - [ ] Búsqueda de Google Places funciona
@@ -933,9 +945,10 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 
 ### Problema: Asistente de IA no funciona
 **Solución**: 
-- Verificá que Ollama esté corriendo: `curl http://localhost:11434/api/tags`
-- Verificá que el modelo esté descargado: `ollama list`
-- Verificá que `appsettings.json` tenga la configuración correcta de Ollama
+- Asegurate de que la sección `AI` en appsettings o las variables `AI__*` tengan un token válido de Hugging Face y el modelo configurado.
+- Probá el token contra el modelo con curl: `curl -X POST https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2 -H "Authorization: Bearer <token>" -d '{"inputs":"ping"}'`
+- Verificá que los GitHub Secrets `AI_API_KEY`, `AI_MODEL`, etc. estén cargados (ver workflow de despliegue).
+- Si trabajás en modo local con Ollama, confirmá que el servicio esté activo y que el modelo se descargó (`ollama list`).
 
 ### Problema: Logros se disparan múltiples veces
 **Solución**: Asegurate de que la migración `AddIsProcessedToAchievementEvents` haya sido aplicada
@@ -955,6 +968,11 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 | `Smtp__User` | Sí | Ninguno | Usuario SMTP |
 | `Smtp__Pass` | Sí | Ninguno | Contraseña SMTP |
 | `Jwt__Key` | Sí | Ninguno | Clave de firma JWT (mín 32 chars) |
+| `AI__PROVIDER` | No | `huggingface` | Nombre del proveedor de IA (`huggingface` u `ollama`) |
+| `AI__APIKEY` | Sí (si usás Hugging Face) | Ninguno | Token Write de Hugging Face |
+| `AI__MODEL` | No | `mistralai/Mistral-7B-Instruct-v0.2` | Identificador del modelo en Hugging Face |
+| `AI__BASEURL` | No | `https://api-inference.huggingface.co/models` | Endpoint base de Hugging Face |
+| `AI__TIMEOUTSECONDS` | No | `90` | Timeout para las requests al proveedor de IA |
 
 ## 🔒 Mejores Prácticas de Seguridad
 

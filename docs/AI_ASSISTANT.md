@@ -7,238 +7,102 @@
 
 # TaskFlow AI Assistant (English)
 
-## **AI Assistant System with Ollama**
+## Overview
 
-TaskFlow includes a fully integrated AI assistant that helps users with task management, organization, and productivity.
+TaskFlow ships with an embedded AI assistant focused on task management. The backend now uses the [Hugging Face Inference API](https://huggingface.co/inference-api) by default and can still fall back to a local Ollama instance if you prefer running models on your own machine.
 
-## **Main Features**
+## Main Features
 
-- 💬 **Complete chat** with intuitive and modern interface
-- 🔒 **Restricted context** - Only answers questions about task management
-- 🎯 **Personalized suggestions** based on your tasks, categories, and achievements
-- 🌐 **Multilingual** - Automatically detects and responds in Spanish or English
-- 🔐 **Secure** - Requires JWT authentication, doesn't store conversations
-- 🏠 **Local and free** - Uses Ollama (no paid APIs needed)
-- 📊 **Context-aware** - Analyzes your current tasks to give better advice
+- 💬 Modern chat UI with conversation history
+- 🔒 Strict task-management scope enforced by a shared system prompt
+- 🎯 Personalized responses that incorporate your tasks, categories, and achievements
+- 🌐 Automatic language detection (Spanish or English)
+- 🔐 JWT-protected API; no conversation persistence
+- ⚙️ Pluggable providers (Hugging Face by default, Ollama optional)
 
-## **Requirements**
+## Requirements
 
-### **Ollama (Local AI)**
+### Hugging Face (Default)
 
-1. **Install Ollama**:
-   - **Windows**: Download from [ollama.com](https://ollama.com/download)
-   - **macOS**: `brew install ollama`
-   - **Linux**: `curl -fsSL https://ollama.com/install.sh | sh`
+1. Create or use an existing Hugging Face account.
+2. Generate a **Write** access token from https://huggingface.co/settings/tokens.
+3. Pick a text-generation model that supports the Inference API (tested with `mistralai/Mistral-7B-Instruct-v0.2`).
+4. (Optional) Upgrade the workspace if you need higher rate limits or private models.
 
-2. **Download recommended model**:
-   ```bash
-   ollama pull llama3.2:latest
-   ```
-   
-3. **Verify installation**:
-   ```bash
-   ollama list
-   ```
+### Optional: Ollama (Local Provider)
 
-## **Configuration**
+If you prefer fully local inference, install [Ollama](https://ollama.com) and download a supported model (`ollama pull llama3.2:latest`). Set `AI__PROVIDER=ollama` to switch providers.
 
-### **Backend (.NET)**
+## Configuration
 
-1. **Configure in `appsettings.Development.json`**:
-   ```json
-   {
-     "Ollama": {
-       "BaseUrl": "http://localhost:11434",
-       "ModelName": "llama3.2:latest"
-     }
-   }
-   ```
+### Backend (.NET)
 
-2. **Services are already registered** in `Program.cs`:
-   ```csharp
-   builder.Services.AddHttpClient();
-   builder.Services.AddScoped<IAIProvider, OllamaProvider>();
-   builder.Services.AddScoped<AIAssistantService>();
-   ```
-
-## **Usage**
-
-### **1. Start Ollama**
-
-Before using the assistant, make sure Ollama is running:
-
-```bash
-ollama serve
-```
-
-**On Windows**: Ollama runs automatically as a service after installation.
-
-### **2. Access the Assistant**
-
-1. Log in to TaskFlow
-2. You'll see a **purple floating button** in the bottom-right corner
-3. Click to open the chat
-4. The "Online/Offline" status indicates if Ollama is available
-
-### **3. Conversation Examples**
-
-#### ✅ **Allowed questions**:
-
-```
-User: "Suggest new tasks for this week"
-Assistant: "Based on your current tasks, I suggest:
-           1. Review important emails
-           2. Plan next week's meetings
-           3. Update project documentation..."
-
-User: "How can I better organize my tasks?"
-Assistant: "I recommend organizing by priority:
-           - Urgent and Important: Do it first
-           - Important but not urgent: Schedule time..."
-
-User: "Help me create a plan for tomorrow"
-Assistant: "Sure! I see you have 5 pending tasks.
-           Here's your suggested plan for tomorrow..."
-```
-
-#### ❌ **NOT allowed questions**:
-
-```
-User: "What's 2+2?"
-Assistant: "Sorry, I can only help you with task management in TaskFlow."
-
-User: "Who won the 2022 World Cup?"
-Assistant: "That's outside my scope. Ask me about your tasks or productivity."
-
-User: "Write a poem"
-Assistant: "I specialize in task organization, not creative writing."
-```
-
-## **Assistant Features**
-
-1. **Task Suggestions**:
-   - Analyzes your existing tasks
-   - Suggests new tasks based on patterns
-   - Considers your categories and achievements
-
-2. **Smart Organization**:
-   - Tips for prioritizing tasks
-   - Categorization suggestions
-   - Personalized productivity strategies
-
-3. **Planning**:
-   - Helps create daily/weekly plans
-   - Distributes tasks in a balanced way
-   - Considers due dates
-
-4. **Productivity Analysis**:
-   - Identifies patterns in your work
-   - Suggests improvements based on your history
-   - Motivation based on achievements
-
-## **Customization**
-
-### **Change AI Model**
-
-Edit `appsettings.Development.json`:
+The assistant reads strongly-typed options from the `AI` configuration section. Add the following to your environment-specific settings (or populate the corresponding environment variables):
 
 ```json
 {
-  "Ollama": {
-    "ModelName": "llama3:latest"  // Change here
-  }
+	"AI": {
+		"Provider": "huggingface",
+		"ApiKey": "hf_your_write_token",
+		"Model": "mistralai/Mistral-7B-Instruct-v0.2",
+		"BaseUrl": "https://api-inference.huggingface.co/models",
+		"TimeoutSeconds": 90
+	}
 }
 ```
 
-### **Adjust Temperature (Creativity)**
+Environment variable overrides are also supported:
 
-In `OllamaProvider.cs`, line ~70:
+- `AI__PROVIDER`
+- `AI__APIKEY` (or legacy `HUGGINGFACE_API_KEY`)
+- `AI__MODEL`
+- `AI__BASEURL`
+- `AI__TIMEOUTSECONDS`
 
-```csharp
-options = new
-{
-    temperature = 0.7,  // 0.0 = precise, 1.0 = creative
-    top_p = 0.9,
-    num_predict = 500  // Maximum response tokens
-}
-```
+The dependency injection container automatically selects the correct provider:
 
-### **Modify System Prompt**
+- `huggingface` → `HuggingFaceProvider`
+- `ollama` → `OllamaProvider`
+- anything else → defaults back to Hugging Face
 
-In `AIAssistantService.cs`, line ~24:
+### Frontend (.env)
 
-```csharp
-private const string SYSTEM_PROMPT = @"You are TaskFlow Assistant...";
-```
+No changes are required for the frontend, but the status banner surfaces when the provider is offline or misconfigured so users know to verify credentials.
 
-Customize the instructions to change the assistant's behavior.
+## Usage
 
-## **Troubleshooting**
+1. Log in to TaskFlow.
+2. Open the purple floating action button at the bottom-right corner.
+3. The header chip shows `Online` when the provider responds to health checks.
+4. Ask for task-planning advice, prioritization tips, or category suggestions. The assistant will decline unrelated topics.
 
-### **Problem: "AI Assistant is not available"**
+## Customization
 
-**Solutions**:
-1. Verify Ollama is running:
-   ```bash
-   ollama serve
-   ```
+- **System Prompt**: update `SYSTEM_PROMPT` in `TaskFlow.Api/Services/AIAssistantService.cs`.
+- **Prompt Formatting**: adjust `AiPromptBuilder` if you want to change how tasks/categories are injected.
+- **Generation Parameters**: tweak `MaxNewTokens`, `Temperature`, and `TopP` inside `TaskFlow.Api/Services/HuggingFaceProvider.cs`.
+- **Provider Swap**: set `AI__PROVIDER=ollama` and keep the original Ollama settings if you prefer running locally.
 
-2. Verify the model is downloaded:
-   ```bash
-   ollama list
-   ```
+## Troubleshooting
 
-3. Test the connection manually:
-   ```bash
-   curl http://localhost:11434/api/tags
-   ```
+| Symptom | Checks |
+| --- | --- |
+| `AI Assistant is not available` banner | Ensure `AI__APIKEY` is set, the selected model exists, and your Hugging Face account has quota. For Ollama, confirm the daemon is running and the model is downloaded. |
+| 401 Unauthorized responses | Regenerate the Hugging Face token and make sure it has **Write** permissions. |
+| 429 Too Many Requests | Upgrade your Hugging Face plan or slow down request frequency. |
+| Slow first response | Hugging Face may need to spin up the model; retry after a few seconds. For Ollama, the model loads into memory the first time. |
 
-4. Check backend (.NET) logs:
-   - Look for errors related to "Ollama"
-   - Verify the URL: `http://localhost:11434`
+## Security & Privacy
 
-### **Problem: Slow responses**
+- No conversation data is persisted in the database.
+- Requests are only sent to the configured provider (Hugging Face cloud or your local Ollama instance).
+- API access requires a valid JWT.
+- Only curated task/category summaries are shared with the provider.
 
-**Common causes**:
-- First execution (Ollama loads model into memory)
-- Model too large for your hardware
-- Too many tasks in context
+## References
 
-**Solutions**:
-1. Use a smaller model:
-   ```bash
-   ollama pull phi3:latest
-   ```
-
-2. Reduce context in `AIAssistantService.cs`:
-   ```csharp
-   .Take(20)  // Number of tasks grabbed by context
-   ```
-
-### **Problem: Responses in wrong language**
-
-The assistant automatically detects the user's message language. If it responds in the wrong language, write your next message in the desired language and the assistant will adapt automatically.
-
-### **Problem: Assistant responds about unrelated topics**
-
-If the system prompt isn't working correctly:
-
-1. Verify you're using `llama3.2` or higher (older models may ignore restrictions)
-2. Consider adjusting the system prompt to be more strict
-
-## **Security and Privacy**
-
--  **No persistent storage**: Conversations are not saved in database
--  **Local**: Everything runs on your machine, nothing is sent to the internet
--  **Authentication required**: Only authenticated users can use the assistant
--  **Limited context**: Only task summaries are sent, not complete sensitive data
--  **No tracking**: Conversations are not tracked or analyzed
-
-
-## **References**
-
+- [Hugging Face Inference API](https://huggingface.co/inference-api)
 - [Ollama Documentation](https://github.com/ollama/ollama)
-- [Llama 3.2 Model Card](https://ollama.com/library/llama3.2)
 
 </details>
 
@@ -246,238 +110,95 @@ If the system prompt isn't working correctly:
 
 # TaskFlow AI Assistant (Español)
 
-## **Sistema de Asistente IA con Ollama**
+## Descripción
 
-TaskFlow incluye un asistente de IA completamente integrado que ayuda a los usuarios con la gestión de tareas, organización y productividad.
+TaskFlow incluye un asistente de IA enfocado en la gestión de tareas. El backend ahora utiliza la [Inference API de Hugging Face](https://huggingface.co/inference-api) por defecto, aunque todavía puedes usar Ollama de forma local si lo prefieres.
 
-##  **Características Principales**
+## Características Principales
 
-- 💬 **Chat completo** con interfaz intuitiva y moderna
-- 🔒 **Contexto restringido** - Solo responde preguntas sobre gestión de tareas
-- 🎯 **Sugerencias personalizadas** basadas en tus tareas, categorías y logros
-- 🌐 **Multiidioma** - Detecta y responde en español o inglés automáticamente
-- 🔐 **Seguro** - Requiere autenticación JWT, no almacena conversaciones
-- 🏠 **Local y gratuito** - Usa Ollama (sin necesidad de APIs de pago)
-- 📊 **Consciente del contexto** - Analiza tus tareas actuales para dar mejores consejos
+- 💬 Interfaz de chat moderna con historial
+- 🔒 Ámbito restringido a temas de productividad y organización
+- 🎯 Respuestas personalizadas con tus tareas, categorías y logros
+- 🌐 Detección automática de idioma (español o inglés)
+- 🔐 API protegida con JWT; no se guardan las conversaciones
+- ⚙️ Proveedores intercambiables (Hugging Face por defecto, Ollama opcional)
 
-##  **Requisitos**
+## Requisitos
 
-### **Ollama (Local AI)**
+### Hugging Face (Modo predeterminado)
 
-1. **Instalar Ollama**:
-   - **Windows**: Descarga desde [ollama.com](https://ollama.com/download)
-   - **macOS**: `brew install ollama`
-   - **Linux**: `curl -fsSL https://ollama.com/install.sh | sh`
+1. Crea o usa una cuenta existente en Hugging Face.
+2. Genera un token con permiso **Write** desde https://huggingface.co/settings/tokens.
+3. Elige un modelo de generación de texto compatible con la Inference API (probado con `mistralai/Mistral-7B-Instruct-v0.2`).
+4. (Opcional) Mejora tu plan si necesitas más capacidad o modelos privados.
 
-2. **Descargar modelo recomendado**:
-   ```bash
-   ollama pull llama3.2:latest
-   ```
-   
-3. **Verificar instalación**:
-   ```bash
-   ollama list
-   ```
+### Opcional: Ollama (Proveedor local)
 
-##  **Configuración**
+Si prefieres correr todo localmente, instala [Ollama](https://ollama.com) y descarga un modelo soportado (`ollama pull llama3.2:latest`). Establece `AI__PROVIDER=ollama` para activarlo.
 
-### **Backend (.NET)**
+## Configuración
 
-1. **Configurar en `appsettings.Development.json`**:
-   ```json
-   {
-     "Ollama": {
-       "BaseUrl": "http://localhost:11434",
-       "ModelName": "llama3.2:latest"
-     }
-   }
-   ```
+### Backend (.NET)
 
-2. **Los servicios ya están registrados** en `Program.cs`:
-   ```csharp
-   builder.Services.AddHttpClient();
-   builder.Services.AddScoped<IAIProvider, OllamaProvider>();
-   builder.Services.AddScoped<AIAssistantService>();
-   ```
-
-
-##  **Uso**
-
-### **1. Iniciar Ollama**
-
-Antes de usar el asistente, asegúrate de que Ollama esté ejecutándose:
-
-```bash
-ollama serve
-```
-
-**En Windows**: Ollama se ejecuta automáticamente como servicio después de la instalación.
-
-### **2. Acceder al Asistente**
-
-1. Inicia sesión en TaskFlow
-2. Verás un **botón flotante morado** en la esquina inferior derecha
-3. Click para abrir el chat
-4. El estado "Online/Offline" indica si Ollama está disponible
-
-### **3. Ejemplos de Conversación**
-
-#### ✅ **Preguntas permitidas**:
-
-```
-Usuario: "Sugiere nuevas tareas para esta semana"
-Asistente: "Basándome en tus tareas actuales, te sugiero:
-           1. Revisar emails importantes
-           2. Planificar reuniones de la próxima semana
-           3. Actualizar documentación del proyecto..."
-
-Usuario: "¿Cómo organizo mejor mis tareas?"
-Asistente: "Te recomiendo organizar por prioridad:
-           - Urgente e Importante: Hazlo primero
-           - Importante pero no urgente: Programa tiempo..."
-
-Usuario: "Ayúdame a crear un plan para mañana"
-Asistente: "Claro! Veo que tienes 5 tareas pendientes.
-           Aquí está tu plan sugerido para mañana..."
-```
-
-#### ❌ **Preguntas NO permitidas**:
-
-```
-Usuario: "¿Cuánto es 2+2?"
-Asistente: "Lo siento, solo puedo ayudarte con la gestión de tareas en TaskFlow."
-
-Usuario: "¿Quién ganó el mundial 2022?"
-Asistente: "Eso está fuera de mi ámbito. Pregúntame sobre tus tareas o productividad."
-
-Usuario: "Escribe un poema"
-Asistente: "Me especializo en organización de tareas, no en escritura creativa."
-```
-
-##  **Funcionalidades del Asistente**
-
-1. **Sugerencia de Tareas**:
-   - Analiza tus tareas existentes
-   - Sugiere nuevas tareas basadas en patrones
-   - Considera tus categorías y logros
-
-2. **Organización Inteligente**:
-   - Consejos para priorizar tareas
-   - Sugerencias de categorización
-   - Estrategias de productividad personalizadas
-
-3. **Planificación**:
-   - Ayuda a crear planes diarios/semanales
-   - Distribuye tareas de forma equilibrada
-   - Considera fechas de vencimiento
-
-4. **Análisis de Productividad**:
-   - Identifica patrones en tu trabajo
-   - Sugiere mejoras basadas en tu historial
-   - Motivación basada en logros
-
-##  **Personalización**
-
-### **Cambiar Modelo de IA**
-
-Edita `appsettings.Development.json`:
+El asistente lee las opciones desde la sección `AI` de configuración. Agrega lo siguiente a tus settings o variables de entorno:
 
 ```json
 {
-  "Ollama": {
-    "ModelName": "llama3:latest"  // Cambiar aquí
-  }
+	"AI": {
+		"Provider": "huggingface",
+		"ApiKey": "hf_tu_token",
+		"Model": "mistralai/Mistral-7B-Instruct-v0.2",
+		"BaseUrl": "https://api-inference.huggingface.co/models",
+		"TimeoutSeconds": 90
+	}
 }
 ```
 
-### **Ajustar Temperatura (Creatividad)**
+Variables de entorno soportadas:
 
-En `OllamaProvider.cs`, línea ~70:
+- `AI__PROVIDER`
+- `AI__APIKEY` (o el legado `HUGGINGFACE_API_KEY`)
+- `AI__MODEL`
+- `AI__BASEURL`
+- `AI__TIMEOUTSECONDS`
 
-```csharp
-options = new
-{
-    temperature = 0.7,  // 0.0 = preciso, 1.0 = creativo
-    top_p = 0.9,
-    num_predict = 500  // Máximo tokens de respuesta
-}
-```
+El contenedor de dependencias elige el proveedor automáticamente (`huggingface`, `ollama` o Hugging Face como valor por omisión).
 
-### **Modificar System Prompt**
+### Frontend (.env)
 
-En `AIAssistantService.cs`, línea ~24:
+No se requieren cambios. El indicador de estado mostrará cuando el proveedor no esté disponible para que los usuarios revisen las credenciales.
 
-```csharp
-private const string SYSTEM_PROMPT = @"You are TaskFlow Assistant...";
-```
+## Uso
 
-Personaliza las instrucciones para cambiar el comportamiento del asistente.
+1. Inicia sesión en TaskFlow.
+2. Abre el botón flotante morado en la esquina inferior derecha.
+3. El chip en el encabezado mostrará `En línea` cuando el proveedor responda correctamente.
+4. Pide sugerencias sobre tus tareas, organización del día o prioridades. El asistente rechazará temas ajenos.
 
-##  **Troubleshooting**
+## Personalización
 
-### **Problema: "AI Assistant is not available"**
+- **System Prompt**: modifica `SYSTEM_PROMPT` en `TaskFlow.Api/Services/AIAssistantService.cs`.
+- **Formato del contexto**: ajusta `AiPromptBuilder` para cambiar cómo se envían las tareas/categorías.
+- **Parámetros de generación**: modifica `MaxNewTokens`, `Temperature` y `TopP` en `TaskFlow.Api/Services/HuggingFaceProvider.cs`.
+- **Cambiar proveedor**: establece `AI__PROVIDER=ollama` y conserva la configuración previa de Ollama si quieres seguir ejecutándolo localmente.
 
-**Soluciones**:
-1. Verifica que Ollama esté ejecutándose:
-   ```bash
-   ollama serve
-   ```
+## Resolución de Problemas
 
-2. Verifica que el modelo esté descargado:
-   ```bash
-   ollama list
-   ```
+| Síntoma | Verificaciones |
+| --- | --- |
+| Mensaje "El asistente de IA no está disponible" | Asegúrate de definir `AI__APIKEY`, que el modelo exista y que tu cuenta tenga cuota. En modo Ollama, confirma que el servicio está activo y el modelo descargado. |
+| Respuesta 401 Unauthorized | Regenera el token de Hugging Face y comprueba que tenga permisos **Write**. |
+| Respuesta 429 Too Many Requests | Incrementa tu plan en Hugging Face o reduce la frecuencia de llamadas. |
+| Primera respuesta lenta | Hugging Face puede demorar en activar el modelo; vuelve a intentar. En Ollama, el modelo se carga en memoria la primera vez. |
 
-3. Prueba la conexión manualmente:
-   ```bash
-   curl http://localhost:11434/api/tags
-   ```
+## Seguridad y Privacidad
 
-4. Revisa los logs del backend (.NET):
-   - Busca errores relacionados con "Ollama"
-   - Verifica la URL: `http://localhost:11434`
+- No se persisten conversaciones en la base de datos.
+- Las solicitudes solo se envían al proveedor configurado (Hugging Face o tu instancia de Ollama).
+- El acceso requiere un JWT válido.
+- Solo se comparten resúmenes de tareas y categorías necesarios para el contexto.
 
-### **Problema: Respuestas lentas**
+## Referencias
 
-**Causas comunes**:
-- Primera ejecución (Ollama carga el modelo en memoria)
-- Modelo muy grande para tu hardware
-- Muchas tareas en contexto
-
-**Soluciones**:
-1. Usa un modelo más pequeño:
-   ```bash
-   ollama pull phi3:latest
-   ```
-
-2. Reduce el contexto en `AIAssistantService.cs`:
-   ```csharp
-   .Take(20)  // Cantidad de tareas que agarra el contexto
-   ```
-
-### **Problema: Respuestas en idioma incorrecto**
-
-El asistente detecta automáticamente el idioma del mensaje del usuario. Si responde en el idioma incorrecto, escribe tu siguiente mensaje en el idioma deseado y el asistente se adaptará automáticamente
-
-### **Problema: El asistente responde sobre temas no relacionados**
-
-Si el system prompt no está funcionando correctamente:
-
-1. Verifica que estás usando `llama3.2` o superior (modelos más antiguos pueden ignorar restricciones)
-2. Considera ajustar el system prompt para ser más estricto
-
-##  **Seguridad y Privacidad**
-
--  **Sin almacenamiento persistente**: Las conversaciones no se guardan en base de datos
--  **Local**: Todo corre en tu máquina, no se envía nada a internet
--  **Autenticación requerida**: Solo usuarios autenticados pueden usar el asistente
--  **Contexto limitado**: Solo se envían resúmenes de tareas, no datos sensibles completos
--  **Sin tracking**: No se rastrean ni analizan las conversaciones
-
-
-##  **Referencias**
-
-- [Ollama Documentation](https://github.com/ollama/ollama)
-- [Llama 3.2 Model Card](https://ollama.com/library/llama3.2)
-
----
+- [Hugging Face Inference API](https://huggingface.co/inference-api)
+- [Documentación de Ollama](https://github.com/ollama/ollama)

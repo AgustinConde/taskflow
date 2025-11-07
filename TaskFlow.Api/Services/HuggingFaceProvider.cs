@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Models;
@@ -18,6 +20,10 @@ public class HuggingFaceProvider : IAIProvider
 
     public string ProviderName => "HuggingFace";
 
+    private bool UseRouterApi =>
+        !string.IsNullOrWhiteSpace(_options.BaseUrl) &&
+        _options.BaseUrl.Contains("router.huggingface.co", StringComparison.OrdinalIgnoreCase);
+
     public HuggingFaceProvider(
         IOptions<AiOptions> options,
         ILogger<HuggingFaceProvider> logger,
@@ -31,10 +37,25 @@ public class HuggingFaceProvider : IAIProvider
         _httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
     }
 
-    private string? InferenceUrl =>
-        string.IsNullOrWhiteSpace(_options.Model)
-            ? null
-            : $"{_options.BaseUrl.TrimEnd('/')}/{_options.Model}";
+    private string? InferenceUrl
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_options.BaseUrl) || string.IsNullOrWhiteSpace(_options.Model))
+            {
+                return null;
+            }
+
+            var baseUrl = _options.BaseUrl.TrimEnd('/');
+
+            if (UseRouterApi)
+            {
+                return $"{baseUrl}/v1/chat/completions";
+            }
+
+            return $"{baseUrl}/{_options.Model}";
+        }
+    }
 
     private string? StatusUrl
     {
@@ -45,13 +66,25 @@ public class HuggingFaceProvider : IAIProvider
                 return null;
             }
 
-            var baseUrl = _options.BaseUrl.TrimEnd('/');
+            var baseUrl = _options.BaseUrl?.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return null;
+            }
+
+            if (UseRouterApi)
+            {
+                return $"{baseUrl}/v1/models/{_options.Model}";
+            }
+
             if (baseUrl.EndsWith("/models", StringComparison.OrdinalIgnoreCase))
             {
                 baseUrl = baseUrl[..^"/models".Length];
+                return $"{baseUrl}/status/{_options.Model}";
             }
 
-            return $"{baseUrl}/status/{_options.Model}";
+            // Router endpoints currently do not expose a status route; skip the status probe.
+            return null;
         }
     }
 
@@ -90,15 +123,21 @@ public class HuggingFaceProvider : IAIProvider
                     return false;
                 }
 
-                if (statusResponse.IsSuccessStatusCode || statusResponse.StatusCode == HttpStatusCode.NotFound)
+                if (statusResponse.IsSuccessStatusCode)
                 {
-                    // NotFound typically means the model is loading but the service is reachable
                     return true;
+                }
+
+                if (statusResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.LogWarning(
+                        "Hugging Face status endpoint returned 404 for model {Model}. Falling back to a lightweight inference check.",
+                        _options.Model);
                 }
             }
 
             // Fall back to a lightweight inference request to confirm availability
-            var probeRequest = CreateInferenceRequest("ping");
+            var probeRequest = CreateInferenceRequest("ping", isProbe: true);
             using var response = await _httpClient.SendAsync(probeRequest);
             return response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.TooManyRequests;
         }
@@ -149,6 +188,25 @@ public class HuggingFaceProvider : IAIProvider
                     : "The free API limit was reached. Please try again later.";
             }
 
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogError(
+                    "Hugging Face returned 404 Not Found for model {Model}. Verify the model identifier and AI:BaseUrl configuration.",
+                    _options.Model);
+                return language == "es"
+                    ? "El modelo configurado no está disponible. Verifica el nombre del modelo y la URL base (https://router.huggingface.co)."
+                    : "The configured model was not found. Verify the model name and base URL (https://router.huggingface.co).";
+            }
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var friendly = BuildRouterErrorMessage(responseContent, language);
+                if (!string.IsNullOrWhiteSpace(friendly))
+                {
+                    return friendly;
+                }
+            }
+
             if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 _logger.LogWarning("Hugging Face model {Model} is loading", _options.Model);
@@ -166,6 +224,7 @@ public class HuggingFaceProvider : IAIProvider
             }
 
             var generatedText = ExtractGeneratedText(responseContent);
+            generatedText = SanitizeModelOutput(generatedText);
             if (string.IsNullOrWhiteSpace(generatedText))
             {
                 _logger.LogWarning("Hugging Face response did not include generated text. Raw: {Content}", Truncate(responseContent));
@@ -192,33 +251,79 @@ public class HuggingFaceProvider : IAIProvider
         }
     }
 
-    private HttpRequestMessage CreateInferenceRequest(string prompt)
+    private HttpRequestMessage CreateInferenceRequest(string prompt, bool isProbe = false)
     {
         var url = InferenceUrl ?? throw new InvalidOperationException("Inference URL is not configured");
 
-        var body = new HuggingFaceRequest
-        {
-            Inputs = prompt,
-            Parameters = new HuggingFaceParameters
-            {
-                MaxNewTokens = 400,
-                Temperature = 0.6,
-                TopP = 0.9
-            },
-            Options = new HuggingFaceOptions
-            {
-                WaitForModel = true
-            }
-        };
+        HttpContent content;
 
-        var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
+        if (!UseRouterApi)
         {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        });
+            var body = new HuggingFaceRequest
+            {
+                Inputs = prompt,
+                Parameters = new HuggingFaceParameters
+                {
+                    MaxNewTokens = 400,
+                    Temperature = 0.6,
+                    TopP = 0.9
+                },
+                Options = new HuggingFaceOptions
+                {
+                    WaitForModel = true
+                }
+            };
+
+            var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
+
+            var stringContent = new StringContent(json);
+            stringContent.Headers.ContentType = new MediaTypeHeaderValue("application/json")
+            {
+                CharSet = Encoding.UTF8.WebName
+            };
+            content = stringContent;
+        }
+        else
+        {
+            var routerRequest = new RouterChatRequest
+            {
+                Model = _options.Model ?? string.Empty,
+                Messages = new List<RouterChatMessage>
+                {
+                    new()
+                    {
+                        Role = "user",
+                        Content = new List<RouterMessageContent>
+                        {
+                            new()
+                            {
+                                Type = "text",
+                                Text = prompt
+                            }
+                        }
+                    }
+                },
+                MaxTokens = isProbe ? 32 : 400,
+                Temperature = 0.6,
+                TopP = 0.9,
+                Stream = false
+            };
+
+            var json = JsonSerializer.Serialize(routerRequest, new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
+
+            var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+            content = stringContent;
+        }
 
         var request = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
+            Content = content
         };
 
         if (!string.IsNullOrWhiteSpace(_options.ApiKey))
@@ -231,10 +336,15 @@ public class HuggingFaceProvider : IAIProvider
         return request;
     }
 
-    private static string? ExtractGeneratedText(string responseContent)
+    private string? ExtractGeneratedText(string responseContent)
     {
         try
         {
+            if (UseRouterApi)
+            {
+                return ExtractRouterContent(responseContent);
+            }
+
             var array = JsonSerializer.Deserialize<List<HuggingFaceResponse>>(responseContent, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -311,5 +421,198 @@ public class HuggingFaceProvider : IAIProvider
     {
         [JsonPropertyName("generated_text")]
         public string? GeneratedText { get; init; }
+    }
+
+    private string? BuildRouterErrorMessage(string responseContent, string language)
+    {
+        if (!UseRouterApi)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(responseContent);
+            if (!document.RootElement.TryGetProperty("error", out var errorElement))
+            {
+                return null;
+            }
+
+            string? message = null;
+            string? code = null;
+
+            if (errorElement.ValueKind == JsonValueKind.String)
+            {
+                message = errorElement.GetString();
+            }
+            else if (errorElement.ValueKind == JsonValueKind.Object)
+            {
+                if (errorElement.TryGetProperty("message", out var messageElement) && messageElement.ValueKind == JsonValueKind.String)
+                {
+                    message = messageElement.GetString();
+                }
+
+                if (errorElement.TryGetProperty("code", out var codeElement) && codeElement.ValueKind == JsonValueKind.String)
+                {
+                    code = codeElement.GetString();
+                }
+            }
+
+            if (string.Equals(code, "model_not_supported", StringComparison.OrdinalIgnoreCase))
+            {
+                var model = string.IsNullOrWhiteSpace(_options.Model) ? "(sin configurar)" : _options.Model;
+                return language == "es"
+                    ? $"El router de Hugging Face indica que el modelo '{model}' no está habilitado para tu token. Elige uno disponible con tu credencial desde https://router.huggingface.co/v1/models o actualiza AI__MODEL."
+                    : $"Hugging Face router reports that the model '{model}' is not enabled for your token. Pick one available to your credential via https://router.huggingface.co/v1/models or update AI__MODEL.";
+            }
+
+            return message;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string SanitizeModelOutput(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        var sanitized = Regex.Replace(text, "<think>.*?</think>", string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        sanitized = Regex.Replace(sanitized, "</?analysis>", string.Empty, RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, "</?reasoning>", string.Empty, RegexOptions.IgnoreCase);
+
+        return sanitized.Trim();
+    }
+
+    private static string? ExtractRouterContent(string responseContent)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseContent);
+            if (!document.RootElement.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            {
+                return null;
+            }
+
+            foreach (var choice in choices.EnumerateArray())
+            {
+                if (!choice.TryGetProperty("message", out var message) || message.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                if (message.TryGetProperty("content", out var content))
+                {
+                    var text = ExtractFromContentElement(content);
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+
+                if (message.TryGetProperty("text", out var textElement) && textElement.ValueKind == JsonValueKind.String)
+                {
+                    var text = textElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+            }
+
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string? ExtractFromContentElement(JsonElement content)
+    {
+        switch (content.ValueKind)
+        {
+            case JsonValueKind.String:
+                return content.GetString();
+            case JsonValueKind.Array:
+                foreach (var item in content.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String)
+                    {
+                        var candidate = item.GetString();
+                        if (!string.IsNullOrWhiteSpace(candidate))
+                        {
+                            return candidate;
+                        }
+                    }
+
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        if (item.TryGetProperty("text", out var textElement) && textElement.ValueKind == JsonValueKind.String)
+                        {
+                            var candidate = textElement.GetString();
+                            if (!string.IsNullOrWhiteSpace(candidate))
+                            {
+                                return candidate;
+                            }
+                        }
+
+                        if (item.TryGetProperty("content", out var nestedContent))
+                        {
+                            var candidate = ExtractFromContentElement(nestedContent);
+                            if (!string.IsNullOrWhiteSpace(candidate))
+                            {
+                                return candidate;
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+
+        return null;
+    }
+
+    private record RouterChatRequest
+    {
+        [JsonPropertyName("model")]
+        public string Model { get; init; } = string.Empty;
+
+        [JsonPropertyName("messages")]
+        public List<RouterChatMessage> Messages { get; init; } = new();
+
+        [JsonPropertyName("max_tokens")]
+        public int MaxTokens { get; init; }
+
+        [JsonPropertyName("temperature")]
+        public double Temperature { get; init; }
+
+        [JsonPropertyName("top_p")]
+        public double TopP { get; init; }
+
+        [JsonPropertyName("stream")]
+        public bool Stream { get; init; }
+    }
+
+    private record RouterChatMessage
+    {
+        [JsonPropertyName("role")]
+        public string Role { get; init; } = "user";
+
+        [JsonPropertyName("content")]
+        public List<RouterMessageContent> Content { get; init; } = new();
+    }
+
+    private record RouterMessageContent
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; init; } = "text";
+
+        [JsonPropertyName("text")]
+        public string Text { get; init; } = string.Empty;
     }
 }

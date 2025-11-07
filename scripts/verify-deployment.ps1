@@ -10,30 +10,19 @@ $envMode = $env:ASPNETCORE_ENVIRONMENT
 if ([string]::IsNullOrEmpty($envMode)) { $envMode = "Production" }
 Write-Host "[INFO] Environment: $envMode" -ForegroundColor Cyan
 
-# Backend env file selection
-if ($envMode -eq "Production") {
-    $backendEnvFile = "TaskFlow.Api\.env.production"
-    $backendSettingsFile = "TaskFlow.Api\appsettings.Production.json"
+$profileName = $env:TASKFLOW_ACTIVE_ENV
+if ([string]::IsNullOrEmpty($profileName)) {
+    switch ($envMode) {
+        "Development" { $profileName = "local" }
+        "Production" { $profileName = "azure" }
+        default { $profileName = $envMode.ToLowerInvariant() }
+    }
 }
-elseif ($envMode -eq "Development") {
-    $backendEnvFile = "TaskFlow.Api\.env.development"
-    $backendSettingsFile = "TaskFlow.Api\appsettings.Development.json"
-}
-else {
-    $backendEnvFile = "TaskFlow.Api\.env"
-    $backendSettingsFile = "TaskFlow.Api\appsettings.json"
-}
+Write-Host "[INFO] Active profile: $profileName" -ForegroundColor Cyan
 
-# Frontend env file selection
-if ($envMode -eq "Production") {
-    $frontendEnvFile = "taskflow-frontend\.env.production"
-}
-elseif ($envMode -eq "Development") {
-    $frontendEnvFile = "taskflow-frontend\.env.development"
-}
-else {
-    $frontendEnvFile = "taskflow-frontend\.env"
-}
+$backendLocalFile = "TaskFlow.Api\appsettings.Local.json"
+$functionsSettingsFile = "TaskFlow.Functions\local.settings.json"
+$frontendEnvLocalFile = "taskflow-frontend\.env.local"
 
 # Check 1: Frontend build exists
 Write-Host "[1/7] Checking frontend build..." -ForegroundColor Yellow
@@ -69,65 +58,137 @@ else {
 }
 
 # Check 3: Backend env file
-Write-Host "[3/7] Checking backend env file ($backendEnvFile)..." -ForegroundColor Yellow
-if (Test-Path $backendEnvFile) {
-    $envContent = Get-Content $backendEnvFile -Raw
-    $missingVars = @()
-    if ($envContent -notmatch "ConnectionStrings__DefaultConnection=(.+)") {
-        $missingVars += "ConnectionStrings__DefaultConnection missing"
+Write-Host "[3/7] Checking backend appsettings override ($backendLocalFile)..." -ForegroundColor Yellow
+if (Test-Path $backendLocalFile) {
+    try {
+        $config = Get-Content $backendLocalFile -Raw | ConvertFrom-Json
+        $missingVars = @()
+        if (-not $config.ConnectionStrings -or [string]::IsNullOrWhiteSpace($config.ConnectionStrings.DefaultConnection)) {
+            $missingVars += "ConnectionStrings.DefaultConnection missing"
+        }
+        if (-not $config.Smtp -or [string]::IsNullOrWhiteSpace($config.Smtp.Host)) {
+            $missingVars += "Smtp.Host missing"
+        }
+        if (-not $config.Smtp -or [string]::IsNullOrWhiteSpace($config.Smtp.User)) {
+            $missingVars += "Smtp.User missing"
+        }
+        if (-not $config.Jwt -or [string]::IsNullOrWhiteSpace($config.Jwt.Key)) {
+            $missingVars += "Jwt.Key missing"
+        }
+        if (-not $config.AI -or [string]::IsNullOrWhiteSpace($config.AI.ApiKey)) {
+            $missingVars += "AI.ApiKey missing"
+        }
+
+        if ($missingVars.Count -eq 0) {
+            Write-Host "  [OK] appsettings.Local.json contains required values" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  [ERROR] Missing values in appsettings.Local.json:" -ForegroundColor Red
+            foreach ($var in $missingVars) {
+                Write-Host "    - $var" -ForegroundColor Red
+            }
+            $allPassed = $false
+        }
     }
-    if ($envContent -notmatch "Smtp__Host=(.+)") {
-        $missingVars += "Smtp__Host missing"
+    catch {
+        Write-Host "  [ERROR] Unable to parse $backendLocalFile as JSON: $_" -ForegroundColor Red
+        $allPassed = $false
     }
-    if ($envContent -notmatch "Smtp__User=(.+)") {
-        $missingVars += "Smtp__User missing"
+}
+else {
+    Write-Host "  [ERROR] Backend override file not found: $backendLocalFile" -ForegroundColor Red
+    Write-Host "    Run: pwsh scripts/use-env.ps1 $profileName" -ForegroundColor Gray
+    $allPassed = $false
+}
+
+# Check 4: Azure Functions local settings
+Write-Host "[4/7] Checking Functions settings ($functionsSettingsFile)..." -ForegroundColor Yellow
+if (Test-Path $functionsSettingsFile) {
+    try {
+        $functionsConfig = Get-Content $functionsSettingsFile -Raw | ConvertFrom-Json
+        $values = $functionsConfig.Values
+        $missingValues = @()
+        if (-not $values -or [string]::IsNullOrWhiteSpace($values."AzureWebJobsStorage")) {
+            $missingValues += "Values.AzureWebJobsStorage missing"
+        }
+        if (-not $values -or [string]::IsNullOrWhiteSpace($values."ConnectionStrings__DefaultConnection")) {
+            $missingValues += "Values.ConnectionStrings__DefaultConnection missing"
+        }
+        if (-not $values -or [string]::IsNullOrWhiteSpace($values."Smtp__Host")) {
+            $missingValues += "Values.Smtp__Host missing"
+        }
+        if (-not $values -or [string]::IsNullOrWhiteSpace($values."Smtp__User")) {
+            $missingValues += "Values.Smtp__User missing"
+        }
+        if ($missingValues.Count -eq 0) {
+            Write-Host "  [OK] local.settings.json contains required values" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  [ERROR] Missing entries in local.settings.json:" -ForegroundColor Red
+            foreach ($var in $missingValues) {
+                Write-Host "    - $var" -ForegroundColor Red
+            }
+            $allPassed = $false
+        }
     }
-    if ($envContent -notmatch "Jwt__Key=(.+)") {
-        $missingVars += "Jwt__Key missing"
+    catch {
+        Write-Host "  [ERROR] Unable to parse $functionsSettingsFile as JSON: $_" -ForegroundColor Red
+        $allPassed = $false
     }
-    if ($missingVars.Count -eq 0) {
-        Write-Host "  [OK] All critical backend env variables present" -ForegroundColor Green
+}
+else {
+    Write-Host "  [ERROR] Functions settings file not found: $functionsSettingsFile" -ForegroundColor Red
+    Write-Host "    Run: pwsh scripts/use-env.ps1 $profileName" -ForegroundColor Gray
+    $allPassed = $false
+}
+
+# Check 5: Frontend .env.local
+Write-Host "[5/7] Checking frontend env file ($frontendEnvLocalFile)..." -ForegroundColor Yellow
+if (Test-Path $frontendEnvLocalFile) {
+    $envContent = Get-Content $frontendEnvLocalFile -Raw
+    $missingFrontend = @()
+    if ($envContent -match "VITE_ROOT_URL=(.+)") {
+        $viteUrl = $matches[1].Trim()
+        if ([string]::IsNullOrWhiteSpace($viteUrl)) {
+            $missingFrontend += "VITE_ROOT_URL is empty"
+        }
+        else {
+            Write-Host "  [OK] VITE_ROOT_URL is set" -ForegroundColor Green
+        }
     }
     else {
-        Write-Host "  [ERROR] Backend env file issues:" -ForegroundColor Red
-        foreach ($var in $missingVars) {
-            Write-Host "    - $var" -ForegroundColor Red
+        $missingFrontend += "VITE_ROOT_URL missing"
+    }
+
+    if ($envContent -match "VITE_GOOGLE_MAPS_API_KEY=(.*)") {
+        $mapsKey = $matches[1].Trim()
+        if ([string]::IsNullOrWhiteSpace($mapsKey)) {
+            Write-Host "  [WARN] VITE_GOOGLE_MAPS_API_KEY is blank" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "  [OK] VITE_GOOGLE_MAPS_API_KEY present" -ForegroundColor Green
+        }
+    }
+    else {
+        Write-Host "  [WARN] VITE_GOOGLE_MAPS_API_KEY not found (optional)" -ForegroundColor Yellow
+    }
+
+    if ($missingFrontend.Count -ne 0) {
+        Write-Host "  [ERROR] Missing values in .env.local:" -ForegroundColor Red
+        foreach ($item in $missingFrontend) {
+            Write-Host "    - $item" -ForegroundColor Red
         }
         $allPassed = $false
     }
 }
 else {
-    Write-Host "  [ERROR] Backend env file not found: $backendEnvFile" -ForegroundColor Red
+    Write-Host "  [ERROR] Frontend env file not found: $frontendEnvLocalFile" -ForegroundColor Red
+    Write-Host "    Run: pwsh scripts/use-env.ps1 $profileName" -ForegroundColor Gray
     $allPassed = $false
 }
 
-# Check 4: Frontend env file
-Write-Host "[4/7] Checking frontend env file ($frontendEnvFile)..." -ForegroundColor Yellow
-if (Test-Path $frontendEnvFile) {
-    $envContent = Get-Content $frontendEnvFile -Raw
-    if ($envContent -match "VITE_ROOT_URL=(.+)") {
-        $viteUrl = $matches[1].Trim()
-        Write-Host "  [OK] VITE_ROOT_URL = $viteUrl" -ForegroundColor Green
-    }
-    else {
-        Write-Host "  [WARN] VITE_ROOT_URL not found in $frontendEnvFile" -ForegroundColor Yellow
-    }
-    if ($envContent -match "VITE_GOOGLE_MAPS_API_KEY=(.+)") {
-        $apiKey = $matches[1].Trim()
-        if ($apiKey -eq "your_google_maps_api_key_here") {
-            Write-Host "  [WARN] Google Maps API key not configured" -ForegroundColor Yellow
-        }
-        else {
-            Write-Host "  [OK] Google Maps API key configured" -ForegroundColor Green
-        }
-    }
-}
-else {
-    Write-Host "  [WARN] Frontend env file not found: $frontendEnvFile" -ForegroundColor Yellow
-}
-
-# Check 5: Database migrations
-Write-Host "[5/7] Checking database migrations..." -ForegroundColor Yellow
+# Check 6: Database migrations
+Write-Host "[6/7] Checking database migrations..." -ForegroundColor Yellow
 $migrationsFolder = "TaskFlow.Api\Migrations"
 if (Test-Path $migrationsFolder) {
     $migrationFiles = Get-ChildItem -Path $migrationsFolder -Filter "*.cs" | Where-Object { $_.Name -notlike "*Designer.cs" }
@@ -140,8 +201,8 @@ else {
     $allPassed = $false
 }
 
-# Check 6: Node modules (for development)
-Write-Host "[6/7] Checking frontend dependencies..." -ForegroundColor Yellow
+# Check 7: Node modules (for development)
+Write-Host "[7/7] Checking frontend dependencies..." -ForegroundColor Yellow
 $nodeModules = "taskflow-frontend\node_modules"
 if (Test-Path $nodeModules) {
     Write-Host "  [OK] node_modules/ exists" -ForegroundColor Green
@@ -150,37 +211,6 @@ else {
     Write-Host "  [ERROR] node_modules/ not found" -ForegroundColor Red
     Write-Host "    Run: cd taskflow-frontend; npm install" -ForegroundColor Gray
     $allPassed = $false
-}
-
-# Check 7: appsettings file (optional)
-Write-Host "[7/7] Checking backend appsettings file ($backendSettingsFile)..." -ForegroundColor Yellow
-if (Test-Path $backendSettingsFile) {
-    $config = Get-Content $backendSettingsFile | ConvertFrom-Json
-    $issues = @()
-    if ($config.ConnectionStrings.DefaultConnection -eq "") {
-        $issues += "ConnectionString is empty (using env file is OK)"
-    }
-    if ($config.Smtp.Host -eq "") {
-        $issues += "SMTP Host is empty (using env file is OK)"
-    }
-    if ($config.Smtp.User -eq "") {
-        $issues += "SMTP User is empty (using env file is OK)"
-    }
-    if ($config.Jwt.Key -eq "") {
-        $issues += "JWT Key is empty (using env file is OK)"
-    }
-    if ($issues.Count -eq 0) {
-        Write-Host "  [OK] appsettings file present (values may be set via env file)" -ForegroundColor Green
-    }
-    else {
-        Write-Host "  [INFO] appsettings file present but values are empty (expected if using env files)" -ForegroundColor Yellow
-        foreach ($issue in $issues) {
-            Write-Host "    - $issue" -ForegroundColor Yellow
-        }
-    }
-}
-else {
-    Write-Host "  [INFO] appsettings file not found: $backendSettingsFile (expected if using env files)" -ForegroundColor Yellow
 }
 
 # Summary

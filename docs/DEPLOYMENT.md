@@ -173,7 +173,7 @@ If you want to keep the TaskFlow AI Assistant enabled, provide the Hugging Face 
 - Choose a compatible text generation model (defaults to `HuggingFaceTB/SmolLM3-3B`; list available models with `curl -H "Authorization: Bearer <token>" https://router.huggingface.co/v1/models`).
 - Ensure the token has sufficient quota or paid plan to handle expected traffic.
 
-**Optional Local Mode**: If you prefer running everything locally, set `AI__PROVIDER=ollama` and keep your previous Ollama configuration files. The application will fall back to Ollama when the provider name is set to `ollama`.
+**Optional Local Fallback (Ollama)**: Configure `AI__PROVIDER=ollama` only when you must run fully offline. Keep your existing Ollama settings; the app uses them when the provider is explicitly set to `ollama`.
 
 ## 🔧 Deployment Options
 
@@ -502,7 +502,7 @@ After deployment, verify all features work correctly:
       --data "{\"model\":\"HuggingFaceTB/SmolLM3-3B\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"ping\"}]}]}"
    ```
 - Verify GitHub Secrets `AI_API_KEY`, `AI_MODEL`, etc. are populated (see deployment workflow).
-- If running locally with Ollama, confirm the daemon is running and the model is downloaded (`ollama list`).
+- If you intentionally switched to Ollama, confirm the daemon is running and the model is downloaded (`ollama list`).
 
 ### Issue: Achievements triggering multiple times
 **Solution**: Ensure `AddIsProcessedToAchievementEvents` migration has been applied
@@ -522,7 +522,7 @@ After deployment, verify all features work correctly:
 | `Smtp__User` | Yes | None | SMTP username |
 | `Smtp__Pass` | Yes | None | SMTP password |
 | `Jwt__Key` | Yes | None | JWT signing key (min 32 chars) |
-| `AI__PROVIDER` | No | `huggingface` | AI provider name (`huggingface` or `ollama`) |
+| `AI__PROVIDER` | No | `huggingface` | AI provider name (`huggingface` recommended; use `ollama` only for offline fallback) |
 | `AI__APIKEY` | Yes (if Hugging Face) | None | Hugging Face Write token |
 | `AI__MODEL` | No | `HuggingFaceTB/SmolLM3-3B` | Hugging Face model identifier |
 | `AI__BASEURL` | No | `https://router.huggingface.co` | Hugging Face base endpoint |
@@ -722,7 +722,7 @@ Si querés mantener habilitado el asistente de IA de TaskFlow, cargá las creden
 - Elegí un modelo habilitado para tu token (por defecto `HuggingFaceTB/SmolLM3-3B`; podés listar opciones con `curl -H "Authorization: Bearer <token>" https://router.huggingface.co/v1/models`).
 - Verificá que el plan tenga cuota suficiente para la carga esperada.
 
-**Modo local opcional**: Si preferís correr todo localmente, establecé `AI__PROVIDER=ollama` y mantené los archivos de configuración de Ollama. La aplicación va a utilizar Ollama cuando el proveedor sea `ollama`.
+**Fallback local opcional (Ollama)**: Configurá `AI__PROVIDER=ollama` solo cuando necesites operar sin Internet. Conservá tu configuración actual; la app usará Ollama únicamente si lo definís explícitamente.
 
 ## 🔧 Opciones de Deployment
 
@@ -960,7 +960,7 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
       --data "{\"model\":\"HuggingFaceTB/SmolLM3-3B\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"ping\"}]}]}"
    ```
 - Verificá que los GitHub Secrets `AI_API_KEY`, `AI_MODEL`, etc. estén cargados (ver workflow de despliegue).
-- Si trabajás en modo local con Ollama, confirmá que el servicio esté activo y que el modelo se descargó (`ollama list`).
+- Si elegiste Ollama a propósito, confirmá que el servicio esté activo y que el modelo se descargó (`ollama list`).
 
 ### Problema: Logros se disparan múltiples veces
 **Solución**: Asegurate de que la migración `AddIsProcessedToAchievementEvents` haya sido aplicada
@@ -980,7 +980,7 @@ Después del deployment, verificá que todas las funcionalidades funcionen corre
 | `Smtp__User` | Sí | Ninguno | Usuario SMTP |
 | `Smtp__Pass` | Sí | Ninguno | Contraseña SMTP |
 | `Jwt__Key` | Sí | Ninguno | Clave de firma JWT (mín 32 chars) |
-| `AI__PROVIDER` | No | `huggingface` | Nombre del proveedor de IA (`huggingface` u `ollama`) |
+| `AI__PROVIDER` | No | `huggingface` | Nombre del proveedor de IA (`huggingface` recomendado; usá `ollama` solo como fallback offline) |
 | `AI__APIKEY` | Sí (si usás Hugging Face) | Ninguno | Token Write de Hugging Face |
 | `AI__MODEL` | No | `HuggingFaceTB/SmolLM3-3B` | Identificador del modelo en Hugging Face |
 | `AI__BASEURL` | No | `https://router.huggingface.co` | Endpoint base de Hugging Face |

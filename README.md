@@ -21,7 +21,7 @@
 - **User Authentication & Authorization**: Registration, login, email confirmation with JWT tokens
 - **Task Management**: Full CRUD operations with intuitive and responsive UI
 - **Location Support**: Geolocation with Google Maps integration for physical task locations
-- **AI Assistant**: Intelligent task companion powered by Ollama for suggestions, organization, and productivity insights
+- **AI Assistant**: Intelligent task companion powered by the Hugging Face router with optional Ollama fallback for offline scenarios
 - **Category Management**: Create, edit, and organize tasks by categories
 - **Dashboard & Analytics**: Visual metrics and charts for task progress tracking
 - **Drag & Drop**: Reorder tasks with hello-pangea/dnd
@@ -37,7 +37,7 @@
 - **Frontend**: Node.js 18+ and npm
 - **Backend**: .NET 9 SDK, SQL Server (local or remote)
 - **Email Worker**: Azure Functions Core Tools v4 and Azurite (or an Azure Storage account) for the background email queue
-- **AI Assistant**: Ollama (optional, for AI-powered features)
+- **AI Assistant**: Hugging Face router credentials (Write token); Ollama optional for offline fallback
 - **Optional**: SQL Server Management Studio (SSMS)
 
 ## Installation & Setup
@@ -125,27 +125,33 @@ The background email worker consumes queue messages and sends transactional emai
    ```
    The worker listens to the `email-queue` queue and dispatches emails using your SMTP settings.
 
-### Ollama Setup (Optional - For AI Assistant)
+### AI Assistant Setup
 
-1. **Install Ollama**:
-   - Windows: Download from [ollama.com](https://ollama.com)
-   - Linux/Mac: `curl -fsSL https://ollama.com/install.sh | sh`
+1. **Configure Hugging Face (default provider)**:
+   - Create or reuse a Hugging Face account and generate a token with **Write** permission at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+   - Update `TaskFlow.Api/appsettings.Local.json` (or environment variables) with:
+     ```json
+     "AI": {
+       "Provider": "huggingface",
+       "ApiKey": "hf_your_write_token",
+       "Model": "HuggingFaceTB/SmolLM3-3B",
+       "BaseUrl": "https://router.huggingface.co"
+     }
+     ```
+   - Optional: test the token with
+     ```bash
+     curl -H "Authorization: Bearer <token>" https://router.huggingface.co/v1/models
+     ```
 
-2. **Download the AI model**:
-   ```bash
-   ollama pull llama3.2
-   ```
+2. **Optional: Enable Ollama fallback (offline use)**:
+   - Install [Ollama](https://ollama.com) if you need a fully local mode (Windows installer or `curl -fsSL https://ollama.com/install.sh | sh`).
+   - Pull a compatible model:
+     ```bash
+     ollama pull llama3.2
+     ```
+   - Run Ollama (defaults to `http://localhost:11434`) and switch providers with `AI__PROVIDER=ollama` only when Hugging Face is unavailable.
 
-3. **Verify Ollama is running**:
-   - Ollama runs automatically on `http://localhost:11434`
-   - Test with: `curl http://localhost:11434/api/version`
-
-4. **Use the AI Assistant**:
-   - Click the chat button in the bottom-right corner
-   - Ask about task organization, suggestions, or productivity tips
-   - The AI only responds to TaskFlow-related questions
-
-> 💡 **Note**: The AI Assistant requires Ollama to be running. If Ollama is not installed, the feature will show as "Offline" but the rest of the app works normally.
+> 💡 **Note**: Without a valid Hugging Face token the assistant appears "Offline". Ollama support is kept solely for intentional offline or air-gapped deployments.
 
 ## Environment Variables
 
@@ -350,7 +356,7 @@ For active development with hot-reload:
 
 #### AI Assistant
 - `POST /api/ai-assistant/chat` — Send message to AI assistant (requires authentication)
-- `GET  /api/ai-assistant/status` — Check Ollama availability
+- `GET  /api/ai-assistant/status` — Check configured AI provider availability
 
 ## Usage
 
@@ -367,7 +373,7 @@ For active development with hot-reload:
 
 ## AI Assistant
 
-TaskFlow includes an intelligent AI assistant powered by Ollama that helps you manage your tasks more effectively. The assistant can:
+TaskFlow includes an intelligent AI assistant powered by the Hugging Face router (with optional Ollama fallback) that helps you manage your tasks more effectively. The assistant can:
 
 - **Suggest new tasks** based on your current workload and goals
 - **Organize existing tasks** by priority, category, or deadline
@@ -378,7 +384,7 @@ The AI assistant is **context-aware**, meaning it knows about your tasks, catego
 
 ### Quick Start
 
-1. **Install Ollama** (see Ollama Setup section above)
+1. **Configure Hugging Face** (see AI Assistant Setup above) and, if you need offline mode, start Ollama.
 2. **Click the chat icon** in the bottom-right corner of the app
 3. **Start chatting** - try asking:
    - "Help me organize my tasks for this week"
@@ -403,7 +409,7 @@ For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.m
 - **Autenticación y Autorización**: Registro, login, confirmación por email con tokens JWT
 - **Gestión de Tareas**: Operaciones CRUD completas con interfaz intuitiva y responsiva
 - **Soporte de Ubicación**: Geolocalización opcional con integración de Google Maps para ubicaciones físicas de tareas
-- **Asistente de IA**: Compañero inteligente impulsado por Ollama para sugerencias, organización y análisis de productividad
+- **Asistente de IA**: Compañero inteligente impulsado por el router de Hugging Face, con fallback opcional en Ollama para operar sin conexión
 - **Gestión de Categorías**: Crear, editar y organizar tareas por categorías
 - **Dashboard y Analíticas**: Métricas visuales y gráficos para seguimiento de progreso
 - **Drag & Drop**: Reordenar tareas con hello-pangea/dnd
@@ -419,7 +425,7 @@ For detailed documentation, see [AI Assistant Documentation](docs/AI_ASSISTANT.m
 - **Frontend**: Node.js 18+ y npm
 - **Backend**: .NET 9 SDK, SQL Server (local o remoto)
 - **Worker de emails**: Azure Functions Core Tools v4 y Azurite (o una cuenta de Azure Storage) para la cola de correos
-- **Asistente de IA**: Ollama (opcional, para funcionalidades impulsadas por IA)
+- **Asistente de IA**: Credenciales del router de Hugging Face (token con permiso Write); Ollama opcional como fallback offline
 - **Opcional**: SQL Server Management Studio (SSMS)
 
 ## Instalación y configuración
@@ -507,27 +513,33 @@ El worker de segundo plano consume la cola `email-queue` y envía los correos tr
    ```
    El worker escuchará la cola `email-queue` y despachará los correos usando tu configuración SMTP.
 
-### Configuración de Ollama (Opcional - Para Asistente de IA)
+### Configuración del Asistente de IA
 
-1. **Instalar Ollama**:
-   - Windows: Descargar desde [ollama.com](https://ollama.com)
-   - Linux/Mac: `curl -fsSL https://ollama.com/install.sh | sh`
+1. **Configurar Hugging Face (proveedor predeterminado)**:
+   - Creá o reutilizá una cuenta de Hugging Face y generá un token con permiso **Write** en [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+   - Actualizá `TaskFlow.Api/appsettings.Local.json` (o las variables de entorno) con:
+     ```json
+     "AI": {
+       "Provider": "huggingface",
+       "ApiKey": "hf_tu_token",
+       "Model": "HuggingFaceTB/SmolLM3-3B",
+       "BaseUrl": "https://router.huggingface.co"
+     }
+     ```
+   - Opcional: probá el token con
+     ```bash
+     curl -H "Authorization: Bearer <token>" https://router.huggingface.co/v1/models
+     ```
 
-2. **Descargar el modelo de IA**:
-   ```bash
-   ollama pull llama3.2
-   ```
+2. **Opcional: habilitar fallback en Ollama (modo sin conexión)**:
+   - Instalá [Ollama](https://ollama.com) solo si necesitás operar totalmente offline (instalador para Windows o `curl -fsSL https://ollama.com/install.sh | sh`).
+   - Descargá un modelo compatible:
+     ```bash
+     ollama pull llama3.2
+     ```
+   - Ejecutá Ollama (por defecto en `http://localhost:11434`) y cambiá el proveedor con `AI__PROVIDER=ollama` únicamente cuando Hugging Face no sea viable.
 
-3. **Verificar que Ollama está corriendo**:
-   - Ollama se ejecuta automáticamente en `http://localhost:11434`
-   - Probá con: `curl http://localhost:11434/api/version`
-
-4. **Usar el Asistente de IA**:
-   - Hacé clic en el botón de chat en la esquina inferior derecha
-   - Preguntá sobre organización de tareas, sugerencias o tips de productividad
-   - La IA solo responde preguntas relacionadas con TaskFlow
-
-> 💡 **Nota**: El Asistente de IA requiere que Ollama esté en ejecución. Si Ollama no está instalado, la función se mostrará como "Sin conexión" pero el resto de la app funciona normalmente.
+> 💡 **Nota**: Sin un token válido de Hugging Face el asistente se mostrará "Sin conexión". Ollama queda disponible solo para despliegues offline o aislados.
 
 ## Variables de entorno
 

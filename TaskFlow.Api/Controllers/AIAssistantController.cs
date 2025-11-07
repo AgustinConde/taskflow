@@ -68,7 +68,7 @@ namespace TaskFlow.Api.Controllers
                 provider = providerName,
                 message = isAvailable
                     ? "AI Assistant is ready"
-                    : "AI Assistant is not available. Please check that Ollama is running."
+                    : "AI Assistant is not available. Please review the AI provider configuration."
             });
         }
     }

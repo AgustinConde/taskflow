@@ -313,8 +313,8 @@
         "welcome": "¡Hola! Soy tu asistente de TaskFlow. ¿En qué puedo ayudarte hoy? Puedo sugerirte tareas, ayudarte a organizar tu día, o darte consejos de productividad.",
         "inputPlaceholder": "Escribe tu mensaje...",
         "thinking": "Pensando...",
-        "error": "Lo siento, ocurrió un error. Por favor, asegúrate de que Ollama esté ejecutándose.",
-        "notAvailable": "El asistente de IA no está disponible. Por favor, asegúrate de que Ollama esté ejecutándose localmente.",
+        "error": "Lo siento, ocurrió un error. Por favor, verifica la configuración del servicio de IA.",
+        "notAvailable": "El asistente de IA no está disponible. Revisa la configuración del proveedor de IA o inténtalo más tarde.",
         "disclaimer": "Las respuestas de IA son generadas y pueden no ser siempre precisas",
         "restricted": "Solo puedo ayudarte con temas relacionados con la gestión de tareas. Por favor, pregúntame algo relacionado con TaskFlow."
     },

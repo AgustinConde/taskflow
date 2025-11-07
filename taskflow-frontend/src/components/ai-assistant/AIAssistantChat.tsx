@@ -229,7 +229,7 @@ const AIAssistantChat: React.FC = () => {
                             icon={<InfoIcon />}
                             sx={{ m: 2, borderRadius: 2 }}
                         >
-                            {t('aiAssistant.notAvailable', 'AI Assistant is not available. Please make sure Ollama is running.')}
+                            {t('aiAssistant.notAvailable', 'AI Assistant is not available. Please verify the AI configuration and try again.')}
                         </Alert>
                     )}
 

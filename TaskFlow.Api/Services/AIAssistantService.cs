@@ -48,8 +48,8 @@ Remember: Stay focused on TaskFlow and task management ONLY. Respond ENTIRELY in
                 {
                     _logger.LogWarning("AI Provider {Provider} is not available", _aiProvider.ProviderName);
                     var errorMessage = language == "es"
-                        ? "Lo siento, el servicio de IA no está disponible actualmente. Por favor, asegúrate de que Ollama esté ejecutándose."
-                        : "Sorry, the AI service is currently unavailable. Please make sure Ollama is running.";
+                        ? "Lo siento, el servicio de IA no está disponible actualmente. Verifica la configuración de la integración de IA."
+                        : "Sorry, the AI service is currently unavailable. Please verify the AI integration configuration.";
                     return new ChatResponseDto
                     {
                         Message = errorMessage,

@@ -313,8 +313,8 @@
         "welcome": "Hello! I'm your TaskFlow assistant. How can I help you today? I can suggest tasks, help you organize your day, or give you productivity tips.",
         "inputPlaceholder": "Type your message...",
         "thinking": "Thinking...",
-        "error": "Sorry, an error occurred. Please make sure Ollama is running.",
-        "notAvailable": "AI Assistant is not available. Please make sure Ollama is running locally.",
+        "error": "Sorry, an error occurred. Please verify the AI configuration.",
+        "notAvailable": "AI Assistant is not available. Please check the AI configuration or try again later.",
         "disclaimer": "AI responses are generated and may not always be accurate",
         "restricted": "I can only help with task management topics. Please ask me something related to TaskFlow."
     },

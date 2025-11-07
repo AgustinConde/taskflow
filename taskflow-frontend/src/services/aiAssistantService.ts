@@ -23,7 +23,7 @@ class AIAssistantService {
                 throw new Error('Unauthorized - Please log in');
             }
             if (response.status === 503) {
-                throw new Error('AI Assistant is not available. Please make sure Ollama is running.');
+                throw new Error('AI Assistant is not available. Please verify the AI configuration.');
             }
             throw new Error('Failed to send message to AI Assistant');
         }

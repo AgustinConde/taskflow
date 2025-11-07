@@ -36,6 +36,40 @@ builder.Services
         }
     });
 
+builder.Services
+    .AddOptions<AiOptions>()
+    .Bind(builder.Configuration.GetSection(AiOptions.SectionName))
+    .PostConfigure(options =>
+    {
+        var envApiKey = builder.Configuration["AI__APIKEY"] ?? builder.Configuration["HUGGINGFACE_API_KEY"];
+        if (!string.IsNullOrWhiteSpace(envApiKey))
+        {
+            options.ApiKey = envApiKey;
+        }
+
+        var envModel = builder.Configuration["AI__MODEL"];
+        if (!string.IsNullOrWhiteSpace(envModel))
+        {
+            options.Model = envModel;
+        }
+
+        var envProvider = builder.Configuration["AI__PROVIDER"];
+        if (!string.IsNullOrWhiteSpace(envProvider))
+        {
+            options.Provider = envProvider;
+        }
+
+        var envBaseUrl = builder.Configuration["AI__BASEURL"];
+        if (!string.IsNullOrWhiteSpace(envBaseUrl))
+        {
+            options.BaseUrl = envBaseUrl;
+        }
+
+        if (options.TimeoutSeconds <= 0 && int.TryParse(builder.Configuration["AI__TIMEOUTSECONDS"], out var timeout))
+        {
+            options.TimeoutSeconds = timeout;
+        }
+    });
 
 // Add Application Insights telemetry
 builder.Services.AddApplicationInsightsTelemetry(options =>
@@ -108,7 +142,21 @@ builder.Services.AddScoped<EmailQueueService>();
 
 // AI Assistant services
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(nameof(HuggingFaceProvider));
+builder.Services.AddScoped<HuggingFaceProvider>();
 builder.Services.AddScoped<OllamaProvider>();
+builder.Services.AddScoped<IAIProvider>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<AiOptions>>().Value;
+    var provider = options.Provider?.Trim().ToLowerInvariant();
+
+    return provider switch
+    {
+        "ollama" => sp.GetRequiredService<OllamaProvider>(),
+        "huggingface" => sp.GetRequiredService<HuggingFaceProvider>(),
+        _ => sp.GetRequiredService<HuggingFaceProvider>()
+    };
+});
 builder.Services.AddScoped<AIAssistantService>();
 
 builder.Services.AddDbContext<TaskFlowDbContext>(options =>

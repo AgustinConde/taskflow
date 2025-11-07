@@ -27,31 +27,36 @@ jobs:
         run: |
           cd taskflow-frontend
           @"
-          VITE_ROOT_URL=https://taskflow-app.azurewebsites.net
+          VITE_ROOT_URL=${{ secrets.VITE_ROOT_URL }}
           VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
           "@ | Out-File -FilePath .env.production -Encoding utf8
 
       - name: Build and copy frontend
         env:
           NODE_ENV: production
-        run: pwsh copy-frontend-to-wwwroot.ps1
+        run: pwsh scripts\copy-frontend-to-wwwroot.ps1
 
       - name: Create backend .env.production file
         run: |
           cd TaskFlow.Api
           @"
           ConnectionStrings__DefaultConnection=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
-          Smtp__Host=smtp.gmail.com
-          Smtp__Port=587
-          Smtp__User=conde.agustin66@gmail.com
+          Smtp__Host=${{ secrets.SMTP_HOST }}
+          Smtp__Port=${{ secrets.SMTP_PORT }}
+          Smtp__User=${{ secrets.SMTP_USER }}
           Smtp__Pass=${{ secrets.SMTP_PASSWORD }}
-          Smtp__From=conde.agustin66@gmail.com
+          Smtp__From=${{ secrets.SMTP_FROM }}
           Jwt__Key=${{ secrets.JWT_KEY }}
-          Jwt__Issuer=TaskFlowApi
-          Jwt__Audience=TaskFlowClient
+          Jwt__Issuer=${{ secrets.JWT_ISSUER }}
+          Jwt__Audience=${{ secrets.JWT_AUDIENCE }}
           AZURE_STORAGE_CONNECTION_STRING=${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
-          AZURE_STORAGE_CONTAINER_NAME=taskflowstorageaccount
-          FRONTEND_URL=https://taskflow-app.azurewebsites.net
+          AZURE_STORAGE_CONTAINER_NAME=${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          AI__PROVIDER=${{ secrets.AI_PROVIDER }}
+          AI__APIKEY=${{ secrets.AI_API_KEY }}
+          AI__MODEL=${{ secrets.AI_MODEL }}
+          AI__BASEURL=${{ secrets.AI_BASE_URL }}
+          AI__TIMEOUTSECONDS=${{ secrets.AI_TIMEOUT_SECONDS }}
           "@ | Out-File -FilePath .env.production -Encoding utf8
 
       - name: Build with dotnet

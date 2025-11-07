@@ -88,10 +88,12 @@ export const AchievementNotificationDialog: React.FC<AchievementNotificationDial
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 3,
-                    overflow: 'visible'
+            slotProps={{
+                paper: {
+                    sx: {
+                        borderRadius: 3,
+                        overflow: 'visible'
+                    }
                 }
             }}
         >

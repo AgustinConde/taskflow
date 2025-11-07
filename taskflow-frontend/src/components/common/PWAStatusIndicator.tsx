@@ -126,8 +126,10 @@ const PWAStatusIndicator: React.FC = () => {
                 anchorEl={anchorEl}
                 open={open}
                 onClose={handleClose}
-                PaperProps={{
-                    sx: { minWidth: 200 }
+                slotProps={{
+                    paper: {
+                        sx: { minWidth: 200 }
+                    }
                 }}
             >
                 <MenuItem disabled>

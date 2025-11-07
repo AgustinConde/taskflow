@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using TaskFlow.Api.DTOs;
 using TaskFlow.Api.Services;
+using TaskFlow.Configuration;
 using static TaskFlow.Api.Services.AuthService;
 
 namespace TaskFlow.Api.Controllers
@@ -15,17 +17,20 @@ namespace TaskFlow.Api.Controllers
         private readonly JwtService _jwtService;
         private readonly EmailQueueService _emailQueueService;
         private readonly ILogger<AuthController> _logger;
+        private readonly FrontendOptions _frontendOptions;
 
         public AuthController(
             AuthService authService,
             JwtService jwtService,
             EmailQueueService emailQueueService,
-            ILogger<AuthController> logger)
+            ILogger<AuthController> logger,
+            IOptions<FrontendOptions> frontendOptions)
         {
             _authService = authService;
             _jwtService = jwtService;
             _emailQueueService = emailQueueService;
             _logger = logger;
+            _frontendOptions = frontendOptions.Value;
         }
 
         [HttpPost("resend-confirmation")]
@@ -35,7 +40,7 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+            var frontendUrl = _frontendOptions.Url;
             var result = await _authService.ResendConfirmationEmailAsync(request.Email, frontendUrl);
             if (!result)
                 return BadRequest(new { message = "auth.resend.not_eligible" });
@@ -49,7 +54,7 @@ namespace TaskFlow.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+            var frontendUrl = _frontendOptions.Url;
             var result = await _authService.RegisterAsync(registerDto, frontendUrl);
             if (result == null)
                 return Conflict(new { message = "auth.register.exists" });
@@ -151,7 +156,7 @@ namespace TaskFlow.Api.Controllers
         [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
-            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+            var frontendUrl = _frontendOptions.Url;
             await _authService.RequestPasswordResetAsync(dto.Email, frontendUrl);
             return Ok(new { message = "auth.forgot.sent" });
         }

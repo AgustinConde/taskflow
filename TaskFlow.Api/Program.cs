@@ -6,22 +6,36 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Threading.RateLimiting;
-
-
-// Load environment variables
-var aspnetEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-try
-{
-    if (aspnetEnv == "Production")
-        DotNetEnv.Env.Load(".env.production");
-    else if (aspnetEnv == "Development")
-        DotNetEnv.Env.Load(".env.development");
-    else
-        DotNetEnv.Env.Load(); // fallback to .env
-}
-catch { /* Ignore if env file is not found */ }
+using TaskFlow.Configuration;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddOptions<SmtpOptions>()
+    .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName));
+
+builder.Services
+    .AddOptions<AzureStorageOptions>()
+    .Bind(builder.Configuration.GetSection(AzureStorageOptions.SectionName))
+    .PostConfigure(options =>
+    {
+        options.ConnectionString ??= builder.Configuration["AZURE_STORAGE_CONNECTION_STRING"];
+        options.QueueName = string.IsNullOrWhiteSpace(options.QueueName) ? "email-queue" : options.QueueName;
+    });
+
+builder.Services
+    .AddOptions<FrontendOptions>()
+    .Bind(builder.Configuration.GetSection(FrontendOptions.SectionName))
+    .PostConfigure(options =>
+    {
+        var legacyUrl = builder.Configuration["FRONTEND_URL"];
+        if (!string.IsNullOrWhiteSpace(legacyUrl))
+        {
+            options.Url = legacyUrl;
+        }
+    });
+
 
 // Add Application Insights telemetry
 builder.Services.AddApplicationInsightsTelemetry(options =>
@@ -93,12 +107,19 @@ builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<EmailQueueService>();
 
 // AI Assistant services
-builder.Services.AddHttpClient(); // For OllamaProvider
-builder.Services.AddScoped<IAIProvider, OllamaProvider>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<OllamaProvider>();
 builder.Services.AddScoped<AIAssistantService>();
 
 builder.Services.AddDbContext<TaskFlowDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null
+        )
+    ));
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "your-256-bit-secret-key-here-make-it-long-enough-for-security";

@@ -1,6 +1,8 @@
 using Azure.Storage.Queues;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using TaskFlow.Api.DTOs;
+using TaskFlow.Configuration;
 
 namespace TaskFlow.Api.Services;
 
@@ -8,12 +10,14 @@ public class EmailQueueService
 {
     private readonly QueueClient _queueClient;
     private readonly ILogger<EmailQueueService> _logger;
+    private readonly string _queueName;
 
-    public EmailQueueService(IConfiguration config, ILogger<EmailQueueService> logger)
+    public EmailQueueService(IOptions<AzureStorageOptions> storageOptions, ILogger<EmailQueueService> logger)
     {
         _logger = logger;
-        var connectionString = config["AZURE_STORAGE_CONNECTION_STRING"];
-
+        var options = storageOptions.Value;
+        var connectionString = options.ConnectionString;
+        _queueName = string.IsNullOrWhiteSpace(options.QueueName) ? "email-queue" : options.QueueName;
         if (string.IsNullOrEmpty(connectionString))
         {
             _logger.LogWarning("Azure Storage connection string not found. Email queue service will not be available.");
@@ -21,16 +25,22 @@ public class EmailQueueService
             return;
         }
 
-        _queueClient = new QueueClient(connectionString, "email-queue");
+        _queueClient = new QueueClient(
+            connectionString,
+            _queueName,
+            new QueueClientOptions
+            {
+                MessageEncoding = QueueMessageEncoding.Base64
+            });
 
         try
         {
             _queueClient.CreateIfNotExists();
-            _logger.LogInformation("Email queue initialized successfully");
+            _logger.LogInformation("Email queue '{QueueName}' initialized successfully", _queueName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize email queue");
+            _logger.LogError(ex, "Failed to initialize email queue '{QueueName}'", _queueName);
         }
     }
 

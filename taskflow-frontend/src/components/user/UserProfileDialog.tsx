@@ -280,15 +280,32 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
             <DialogTitle
                 sx={{
                     textAlign: 'center',
-                    background: (theme: Theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    color: 'white',
+                    position: 'relative',
+                    background: (theme: Theme) => {
+                        const start = theme.palette.mode === 'dark'
+                            ? theme.palette.primary.dark
+                            : theme.palette.primary.main;
+                        const end = theme.palette.mode === 'dark'
+                            ? (theme.palette.secondary.dark || theme.palette.secondary.main)
+                            : theme.palette.secondary.main;
+                        return `linear-gradient(135deg, ${start}, ${end})`;
+                    },
+                    color: (theme: Theme) => theme.palette.getContrastText(
+                        theme.palette.mode === 'dark' ? theme.palette.primary.dark : theme.palette.primary.main
+                    ),
                     fontWeight: 700,
                     fontSize: '1.4rem',
                     py: 2.5,
-                    textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    textShadow: '0 1px 4px rgba(0,0,0,0.35)',
                     borderRadius: '12px 12px 0 0',
-                    position: 'relative',
                     overflow: 'hidden',
+                    boxShadow: theme => `0 10px 24px ${alpha(theme.palette.primary.main, 0.32)}`,
+                    borderBottom: theme => `1px solid ${alpha(theme.palette.primary.main, 0.45)}`,
+                    zIndex: 0,
+                    '& > *': {
+                        position: 'relative',
+                        zIndex: 1
+                    },
                     '&::before': {
                         content: '""',
                         position: 'absolute',
@@ -296,7 +313,8 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, user, onClo
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%)',
+                        zIndex: 0,
+                        background: 'linear-gradient(45deg, rgba(255,255,255,0.18) 0%, transparent 70%)',
                         pointerEvents: 'none'
                     }
                 }}

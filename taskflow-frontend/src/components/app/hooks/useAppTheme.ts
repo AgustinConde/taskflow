@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { createTheme } from '@mui/material';
 
 export const useAppTheme = () => {
@@ -50,17 +50,25 @@ export const useAppTheme = () => {
         },
     }), [mode]);
 
-    const toggleTheme = () => {
+    const setThemeMode = useCallback((newMode: 'light' | 'dark') => {
         setMode(prevMode => {
-            const newMode = prevMode === 'light' ? 'dark' : 'light';
+            if (prevMode === newMode) {
+                return prevMode;
+            }
+
             localStorage.setItem('themeMode', newMode);
             return newMode;
         });
-    };
+    }, []);
+
+    const toggleTheme = useCallback(() => {
+        setThemeMode(mode === 'light' ? 'dark' : 'light');
+    }, [mode, setThemeMode]);
 
     return {
         mode,
         theme,
-        toggleTheme
+        toggleTheme,
+        setThemeMode
     };
 };

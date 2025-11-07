@@ -10,7 +10,7 @@ import AuthenticatedApp from './AuthenticatedApp';
 
 const AppContent: React.FC = () => {
     const { isAuthenticated, loading } = useAuth();
-    const { mode, theme, toggleTheme } = useAppTheme();
+    const { mode, theme, toggleTheme, setThemeMode } = useAppTheme();
     const {
         currentTab,
         handleTabChange,
@@ -20,7 +20,7 @@ const AppContent: React.FC = () => {
     } = useAppNavigation();
     const [authDialogTab, setAuthDialogTab] = React.useState(0);
     const { tasks, categories, dataLoading } = useAppData();
-    const { currentLanguage, handleLanguageChange } = useAppLanguage();
+    const { currentLanguage, handleLanguageChange, setLanguage } = useAppLanguage();
     const { trackAppOpened, trackCalendarViewed, trackDashboardViewed } = useAchievementIntegration();
     const appOpenedTracked = React.useRef(false);
 
@@ -74,8 +74,8 @@ const AppContent: React.FC = () => {
                     categories={categories}
                     dataLoading={dataLoading}
                     onTabChange={handleTabChangeWithTracking}
-                    onToggleTheme={toggleTheme}
-                    onLanguageChange={handleLanguageChange}
+                    onSetThemeMode={setThemeMode}
+                    onSetLanguage={setLanguage}
                 />
             )}
         </ThemeProvider>

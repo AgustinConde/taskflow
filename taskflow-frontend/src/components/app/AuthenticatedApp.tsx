@@ -10,6 +10,7 @@ import AchievementsPage from '../../pages/AchievementsPage';
 import AppNavBar from './AppNavBar';
 import UserProfileDialog from '../user/UserProfileDialog';
 import { AIAssistantChat } from '../ai-assistant';
+import SettingsDialog from '../settings/SettingsDialog';
 import type { Task } from '../../types/Task';
 import type { Category } from '../../types/Category';
 
@@ -21,8 +22,8 @@ interface AuthenticatedAppProps {
     categories: Category[];
     dataLoading: boolean;
     onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard' | 'calendar' | 'achievements') => void;
-    onToggleTheme: () => void;
-    onLanguageChange: () => void;
+    onSetThemeMode: (mode: 'light' | 'dark') => void;
+    onSetLanguage: (language: 'en' | 'es') => void;
 }
 
 const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
@@ -33,14 +34,15 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
     categories,
     dataLoading,
     onTabChange,
-    onToggleTheme,
-    onLanguageChange
+    onSetThemeMode,
+    onSetLanguage
 }) => {
     const { t } = useTranslation();
     const { user, logout } = useAuth();
     const { showInfo } = useNotifications();
 
     const [profileDialogOpen, setProfileDialogOpen] = React.useState(false);
+    const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false);
 
     const handleOpenProfileDialog = () => setProfileDialogOpen(true);
     const handleCloseProfileDialog = () => setProfileDialogOpen(false);
@@ -48,6 +50,9 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
         setProfileDialogOpen(false);
         showInfo(t('profileUpdated'));
     };
+
+    const handleOpenSettings = () => setSettingsDialogOpen(true);
+    const handleCloseSettings = () => setSettingsDialogOpen(false);
 
     const handleLogout = () => {
         logout();
@@ -59,11 +64,8 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
             <AppNavBar
                 user={user}
                 currentTab={currentTab}
-                mode={mode}
-                currentLanguage={currentLanguage}
                 onTabChange={onTabChange}
-                onToggleTheme={onToggleTheme}
-                onLanguageChange={onLanguageChange}
+                onOpenSettings={handleOpenSettings}
                 onLogout={handleLogout}
                 onEditProfile={handleOpenProfileDialog}
             />
@@ -73,6 +75,15 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
                 user={user}
                 onClose={handleCloseProfileDialog}
                 onSave={handleSaveProfile}
+            />
+
+            <SettingsDialog
+                open={settingsDialogOpen}
+                onClose={handleCloseSettings}
+                mode={mode}
+                onThemeModeChange={onSetThemeMode}
+                currentLanguage={currentLanguage}
+                onLanguageChange={onSetLanguage}
             />
 
             <Box sx={{

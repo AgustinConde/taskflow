@@ -1,5 +1,4 @@
 import React from 'react';
-import CountryFlag from 'react-country-flag';
 import { useTranslation } from 'react-i18next';
 import {
     AppBar,
@@ -23,19 +22,15 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import EmojiEvents from '@mui/icons-material/EmojiEvents';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsIcon from '@mui/icons-material/Settings';
 import PWAStatusIndicator from '../common/PWAStatusIndicator';
 import type { User } from '../../types/Auth';
 
 interface AppNavBarProps {
     user: User | null;
     currentTab: 'tasks' | 'dashboard' | 'calendar' | 'achievements';
-    mode: 'light' | 'dark';
-    currentLanguage: string;
     onTabChange: (event: React.SyntheticEvent, newValue: 'tasks' | 'dashboard' | 'calendar' | 'achievements') => void;
-    onToggleTheme: () => void;
-    onLanguageChange: () => void;
+    onOpenSettings: () => void;
     onLogout: () => void;
     onEditProfile: () => void;
 }
@@ -43,11 +38,8 @@ interface AppNavBarProps {
 const AppNavBar: React.FC<AppNavBarProps> = ({
     user,
     currentTab,
-    mode,
-    currentLanguage,
     onTabChange,
-    onToggleTheme,
-    onLanguageChange,
+    onOpenSettings,
     onLogout,
     onEditProfile
 }) => {
@@ -62,6 +54,11 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
     };
     const handleMenuClose = () => {
         setAnchorEl(null);
+    };
+
+    const handleSettings = () => {
+        handleMenuClose();
+        onOpenSettings();
     };
 
     return (
@@ -307,67 +304,28 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                             <EditIcon sx={{ fontSize: 22, color: 'primary.main' }} />
                             {t('editProfile')}
                         </MenuItem>
-                        <Divider sx={{ mx: 2, my: 0.5 }} />
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2.5, px: 2.5, py: 1.3 }}>
-                            <Box
-                                component="button"
-                                onClick={onLanguageChange}
-                                sx={{
-                                    border: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    borderRadius: 999,
-                                    px: 1.2,
-                                    py: 0.5,
-                                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.07)',
-                                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    transition: 'background 0.2s',
-                                    borderColor: (theme) => theme.palette.primary.main,
-                                    borderWidth: 1,
-                                    borderStyle: 'solid',
-                                    '&:hover': {
-                                        bgcolor: (theme) => theme.palette.primary.light,
-                                        boxShadow: '0 2px 8px rgba(124,58,237,0.10)'
-                                    }
-                                }}
-                            >
-                                {currentLanguage === 'en'
-                                    ? <CountryFlag countryCode="US" svg style={{ width: 28, height: 20 }} title="English" />
-                                    : <CountryFlag countryCode="AR" svg style={{ width: 28, height: 20 }} title="Español" />}
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Box
-                                    component="button"
-                                    onClick={onToggleTheme}
-                                    sx={{
-                                        border: 'none',
-                                        outline: 'none',
-                                        cursor: 'pointer',
-                                        borderRadius: 999,
-                                        px: 1.2,
-                                        py: 0.5,
-                                        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.07)',
-                                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        transition: 'background 0.2s',
-                                        borderColor: (theme) => theme.palette.primary.main,
-                                        borderWidth: 1,
-                                        borderStyle: 'solid',
-                                        '&:hover': {
-                                            bgcolor: (theme) => theme.palette.primary.light,
-                                            boxShadow: '0 2px 8px rgba(124,58,237,0.10)'
-                                        }
-                                    }}
-                                >
-                                    {mode === 'dark'
-                                        ? <Brightness7Icon sx={{ fontSize: 22, color: 'primary.main' }} />
-                                        : <Brightness4Icon sx={{ fontSize: 22, color: 'primary.main' }} />}
-                                </Box>
-                            </Box>
-                        </Box>
+                        <MenuItem
+                            onClick={handleSettings}
+                            sx={{
+                                borderRadius: 2,
+                                px: 2.5,
+                                py: 1.3,
+                                fontWeight: 500,
+                                fontSize: '1rem',
+                                color: 'text.primary',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2,
+                                transition: 'background 0.2s',
+                                '&:hover, &.Mui-focusVisible': {
+                                    background: (theme) => theme.palette.primary.light,
+                                    color: (theme) => theme.palette.primary.contrastText
+                                }
+                            }}
+                        >
+                            <SettingsIcon sx={{ fontSize: 22, color: 'primary.main' }} />
+                            {t('settings.title')}
+                        </MenuItem>
                         <Divider sx={{ mx: 2, my: 0.5 }} />
                         <MenuItem
                             onClick={onLogout}

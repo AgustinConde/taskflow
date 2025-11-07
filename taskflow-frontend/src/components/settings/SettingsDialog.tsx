@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import CountryFlag from 'react-country-flag';
 import {
     Alert,
     Box,
@@ -26,6 +25,7 @@ import TranslateIcon from '@mui/icons-material/Translate';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { authService } from '../../services/authService';
+import CountryFlagIcon from '../common/CountryFlagIcon';
 
 interface SettingsDialogProps {
     open: boolean;
@@ -387,13 +387,13 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
                                     }}
                                 >
                                     <ToggleButton value="en">
-                                        <CountryFlag countryCode="US" svg style={{ width: 22, height: 16 }} title="English" />
+                                        <CountryFlagIcon countryCode="US" width={22} height={16} title="English" />
                                         <Typography variant="body2" fontWeight={600}>
                                             {t('settings.english')}
                                         </Typography>
                                     </ToggleButton>
                                     <ToggleButton value="es">
-                                        <CountryFlag countryCode="AR" svg style={{ width: 22, height: 16 }} title="Español" />
+                                        <CountryFlagIcon countryCode="AR" width={22} height={16} title="Español" />
                                         <Typography variant="body2" fontWeight={600}>
                                             {t('settings.spanish')}
                                         </Typography>

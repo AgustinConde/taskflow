@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import CountryFlag from 'react-country-flag';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { API_ENDPOINTS } from '../config/api';
@@ -20,6 +19,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useAppTheme } from '../components/app/hooks/useAppTheme';
 import { useAppLanguage } from '../components/app/hooks/useAppLanguage';
+import CountryFlagIcon from '../components/common/CountryFlagIcon';
 
 const ResetPasswordPage: React.FC = () => {
     const { t } = useTranslation();
@@ -94,9 +94,9 @@ const ResetPasswordPage: React.FC = () => {
                     }}
                 >
                     {currentLanguage === 'en' ? (
-                        <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
+                        <CountryFlagIcon countryCode="US" width={28} height={22} title="English" />
                     ) : (
-                        <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
+                        <CountryFlagIcon countryCode="AR" width={28} height={22} title="Español" />
                     )}
                 </Button>
             </Box>

@@ -12,15 +12,6 @@ vi.mock('react-i18next', () => ({
     })
 }));
 
-vi.mock('react-country-flag', () => ({
-    __esModule: true,
-    default: ({ countryCode, title }: { countryCode: string; title: string }) => (
-        <span data-testid={`flag-${countryCode}`} title={title}>
-            {countryCode}
-        </span>
-    )
-}));
-
 const defaultProps = {
     mode: 'light' as const,
     currentLanguage: 'en',
@@ -92,7 +83,7 @@ describe('UnauthenticatedApp', () => {
                 </TestWrapper>
             );
 
-            expect(screen.getByTestId('flag-US')).toBeInTheDocument();
+            expect(screen.getByTitle('English')).toBeInTheDocument();
         });
     });
 
@@ -142,7 +133,7 @@ describe('UnauthenticatedApp', () => {
                 </TestWrapper>
             );
 
-            expect(screen.getByTestId('flag-US')).toBeInTheDocument();
+            expect(screen.getByAltText('English')).toBeInTheDocument();
             expect(screen.getByTitle('English')).toBeInTheDocument();
         });
 
@@ -153,7 +144,7 @@ describe('UnauthenticatedApp', () => {
                 </TestWrapper>
             );
 
-            expect(screen.getByTestId('flag-AR')).toBeInTheDocument();
+            expect(screen.getByAltText('Español')).toBeInTheDocument();
             expect(screen.getByTitle('Español')).toBeInTheDocument();
         });
 
@@ -167,7 +158,7 @@ describe('UnauthenticatedApp', () => {
                 </TestWrapper>
             );
 
-            const languageButton = screen.getByRole('button', { name: 'US' });
+            const languageButton = screen.getByRole('button', { name: 'English' });
             await user.click(languageButton);
 
             expect(onLanguageChange).toHaveBeenCalledOnce();

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import CountryFlag from 'react-country-flag';
 import { authService } from '../services/authService';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +20,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useAppTheme } from '../components/app/hooks/useAppTheme';
 import { useAppLanguage } from '../components/app/hooks/useAppLanguage';
+import CountryFlagIcon from '../components/common/CountryFlagIcon';
 
 const ConfirmEmailPage: React.FC = () => {
     const { t } = useTranslation();
@@ -91,9 +91,9 @@ const ConfirmEmailPage: React.FC = () => {
                     }}
                 >
                     {currentLanguage === 'en' ? (
-                        <CountryFlag countryCode="US" svg style={{ width: 28, height: 22 }} title="English" />
+                        <CountryFlagIcon countryCode="US" width={28} height={22} title="English" />
                     ) : (
-                        <CountryFlag countryCode="AR" svg style={{ width: 28, height: 22 }} title="Español" />
+                        <CountryFlagIcon countryCode="AR" width={28} height={22} title="Español" />
                     )}
                 </Button>
             </Box>

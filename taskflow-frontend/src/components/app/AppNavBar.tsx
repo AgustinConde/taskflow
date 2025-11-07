@@ -47,6 +47,7 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
     const currentTheme = useTheme();
     const isSmallScreen = useMediaQuery(currentTheme.breakpoints.down('sm'));
     const isMediumScreen = useMediaQuery(currentTheme.breakpoints.down('md'));
+    const compactTabs = useMediaQuery(currentTheme.breakpoints.down('lg'));
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(anchorEl);
     const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -77,7 +78,8 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                 minHeight: { xs: 56, sm: 64 },
                 gap: { xs: 0.5, sm: 1, md: 2 },
                 flexWrap: 'nowrap',
-                overflow: 'hidden'
+                overflowX: compactTabs ? 'auto' : 'visible',
+                overflowY: 'visible'
             }}>
                 <Box sx={{
                     display: 'flex',
@@ -85,7 +87,8 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                     gap: { xs: 1, sm: 2, md: 3 },
                     flex: '1 1 auto',
                     minWidth: 0,
-                    overflow: 'hidden'
+                    overflowX: compactTabs ? 'auto' : 'visible',
+                    overflowY: 'visible'
                 }}>
                     <Box sx={{
                         display: 'flex',
@@ -117,6 +120,9 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                         value={currentTab}
                         onChange={onTabChange}
                         textColor="inherit"
+                        variant={compactTabs ? 'scrollable' : 'standard'}
+                        scrollButtons={compactTabs ? 'auto' : false}
+                        allowScrollButtonsMobile
                         slotProps={{
                             indicator: {
                                 style: {
@@ -129,14 +135,20 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                         sx={{
                             minWidth: 0,
                             flexShrink: 1,
+                            overflow: 'visible',
+                            '& .MuiTabs-flexContainer': {
+                                flexWrap: compactTabs ? 'nowrap' : 'wrap'
+                            },
                             '& .MuiTab-root': {
                                 color: 'rgba(255,255,255,0.7)',
                                 minHeight: 48,
-                                minWidth: { xs: 'auto', sm: 90 },
-                                px: { xs: 1, sm: 2 },
+                                minWidth: compactTabs ? 'auto' : { xs: 80, sm: 90 },
+                                px: { xs: compactTabs ? 1 : 1.2, sm: 2 },
+                                flex: compactTabs ? '0 0 auto' : undefined,
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9rem' },
+                                fontSize: compactTabs ? { xs: '0.7rem', sm: '0.8rem' } : { xs: '0.75rem', sm: '0.875rem', md: '0.9rem' },
+                                whiteSpace: 'nowrap',
                                 '&.Mui-selected': {
                                     color: 'white',
                                 },
@@ -145,7 +157,7 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                                     backgroundColor: 'rgba(255,255,255,0.1)'
                                 },
                                 '& .MuiSvgIcon-root': {
-                                    fontSize: { xs: '1.1rem', sm: '1.3rem' }
+                                    fontSize: compactTabs ? { xs: '1rem', sm: '1.15rem' } : { xs: '1.1rem', sm: '1.3rem' }
                                 }
                             }
                         }}
@@ -154,25 +166,25 @@ const AppNavBar: React.FC<AppNavBarProps> = ({
                             value="tasks"
                             label={t('tasks')}
                             icon={<TaskIcon />}
-                            iconPosition="start"
+                            iconPosition={compactTabs ? 'top' : 'start'}
                         />
                         <Tab
                             value="dashboard"
                             label={t('dashboard')}
                             icon={<DashboardIcon />}
-                            iconPosition="start"
+                            iconPosition={compactTabs ? 'top' : 'start'}
                         />
                         <Tab
                             value="calendar"
                             label={t('calendar')}
                             icon={<CalendarMonthIcon />}
-                            iconPosition="start"
+                            iconPosition={compactTabs ? 'top' : 'start'}
                         />
                         <Tab
                             value="achievements"
                             label={t('achievements')}
                             icon={<EmojiEvents />}
-                            iconPosition="start"
+                            iconPosition={compactTabs ? 'top' : 'start'}
                         />
                     </Tabs>
                 </Box>

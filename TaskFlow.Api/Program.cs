@@ -9,10 +9,26 @@ using System.Threading.RateLimiting;
 using TaskFlow.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.AzureAppServices;
+using Microsoft.Extensions.Logging.ApplicationInsights;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+var appInsightsConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]
+    ?? builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+    ?? builder.Configuration["APPINSIGHTS_CONNECTIONSTRING"];
+
+if (string.IsNullOrWhiteSpace(appInsightsConnectionString))
+{
+    var instrumentationKey = builder.Configuration["ApplicationInsights:InstrumentationKey"]
+        ?? builder.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+
+    if (!string.IsNullOrWhiteSpace(instrumentationKey))
+    {
+        appInsightsConnectionString = $"InstrumentationKey={instrumentationKey}";
+    }
+}
 
 if (builder.Environment.IsProduction())
 {
@@ -28,6 +44,16 @@ if (builder.Environment.IsProduction())
         options.BlobName = "taskflow-log.txt";
     });
 }
+
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+    {
+        options.ConnectionString = appInsightsConnectionString;
+    }
+});
+
+builder.Logging.AddApplicationInsights();
 
 builder.Services
     .AddOptions<SmtpOptions>()
@@ -88,12 +114,6 @@ builder.Services
             options.TimeoutSeconds = timeout;
         }
     });
-
-// Add Application Insights telemetry
-builder.Services.AddApplicationInsightsTelemetry(options =>
-{
-    options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
-});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

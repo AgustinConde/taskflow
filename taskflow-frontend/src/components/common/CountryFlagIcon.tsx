@@ -1,10 +1,19 @@
 import type { CSSProperties } from 'react';
-import arFlag from '../../assets/flags/ar.svg';
-import usFlag from '../../assets/flags/us.svg';
 
-const flagMap: Record<string, string> = {
-    AR: arFlag,
-    US: usFlag
+const flagModules = import.meta.glob('../../assets/flags/*.svg', {
+    eager: true,
+    import: 'default'
+}) as Record<string, string>;
+
+const getFlagSource = (countryCode: string) => {
+    const upperCode = countryCode.toUpperCase();
+    const lowerCode = countryCode.toLowerCase();
+
+    return (
+        flagModules[`../../assets/flags/${upperCode}.svg`] ??
+        flagModules[`../../assets/flags/${lowerCode}.svg`] ??
+        null
+    );
 };
 
 type CountryFlagIconProps = {
@@ -25,7 +34,7 @@ const CountryFlagIcon = ({
     className
 }: CountryFlagIconProps) => {
     const code = countryCode.toUpperCase();
-    const src = flagMap[code];
+    const src = getFlagSource(code);
 
     if (!src) {
         return null;

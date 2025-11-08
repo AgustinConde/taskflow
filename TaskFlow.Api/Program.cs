@@ -8,10 +8,26 @@ using System.Text;
 using System.Threading.RateLimiting;
 using TaskFlow.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.AzureAppServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+if (builder.Environment.IsProduction())
+{
+    builder.Logging.AddAzureWebAppDiagnostics();
+    builder.Services.Configure<AzureFileLoggerOptions>(options =>
+    {
+        options.FileName = "taskflow";
+        options.FileSizeLimit = 1024 * 1024 * 10;
+        options.RetainedFileCountLimit = 5;
+    });
+    builder.Services.Configure<AzureBlobLoggerOptions>(options =>
+    {
+        options.BlobName = "taskflow-log.txt";
+    });
+}
 
 builder.Services
     .AddOptions<SmtpOptions>()

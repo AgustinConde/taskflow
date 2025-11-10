@@ -7,7 +7,7 @@ namespace TaskFlow.Api.Services;
 
 public class EmailQueueService
 {
-    private readonly QueueClient _queueClient;
+    private readonly QueueClient? _queueClient;
     private readonly ILogger<EmailQueueService> _logger;
     private readonly IEmailService _emailService;
     private readonly string _queueName;

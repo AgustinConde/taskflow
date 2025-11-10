@@ -334,11 +334,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed achievements
+// Seed achievements with resilience in case the SQL instance is waking up
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var context = scope.ServiceProvider.GetRequiredService<TaskFlowDbContext>();
-    await AchievementSeeder.SeedAchievementsAsync(context);
+    logger.LogInformation("Starting achievements seeding against {DataSource}/{Database}",
+        context.Database.GetDbConnection().DataSource,
+        context.Database.GetDbConnection().Database);
+
+    var strategy = context.Database.CreateExecutionStrategy();
+
+    await strategy.ExecuteAsync(async () =>
+    {
+        await AchievementSeeder.SeedAchievementsAsync(context);
+    });
+
+    logger.LogInformation("Achievements seeding completed");
 }
 
 // Fallback to SPA

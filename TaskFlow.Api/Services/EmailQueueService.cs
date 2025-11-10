@@ -8,21 +8,40 @@ namespace TaskFlow.Api.Services;
 public class EmailQueueService
 {
     private readonly QueueClient? _queueClient;
+    private readonly bool _queueEnabled;
     private readonly ILogger<EmailQueueService> _logger;
     private readonly IEmailService _emailService;
     private readonly string _queueName;
 
-    public EmailQueueService(IOptions<AzureStorageOptions> storageOptions, ILogger<EmailQueueService> logger, IEmailService emailService)
+    public EmailQueueService(IOptions<AzureStorageOptions> storageOptions, IOptions<EmailOptions> emailOptions, ILogger<EmailQueueService> logger, IEmailService emailService)
     {
         _logger = logger;
         _emailService = emailService;
         var options = storageOptions.Value;
         var connectionString = options.ConnectionString;
         _queueName = string.IsNullOrWhiteSpace(options.QueueName) ? "email-queue" : options.QueueName;
+        var emailConfig = emailOptions.Value;
+        var envForceFallback = Environment.GetEnvironmentVariable("EMAIL_FORCE_SMTP_FALLBACK")
+            ?? Environment.GetEnvironmentVariable("EMAIL_FORCE_FALLBACK");
+        var forceFallback = emailConfig.ForceSmtpFallback;
+        if (!forceFallback && bool.TryParse(envForceFallback, out var envFallbackEnabled))
+        {
+            forceFallback = envFallbackEnabled;
+        }
+
+        if (forceFallback)
+        {
+            _queueClient = null;
+            _queueEnabled = false;
+            _logger.LogWarning("Email queue disabled by configuration. Emails will be sent via SMTP directly.");
+            return;
+        }
+
         if (string.IsNullOrEmpty(connectionString))
         {
             _logger.LogWarning("Azure Storage connection string not found. Email queue service will not be available.");
-            _queueClient = null!;
+            _queueClient = null;
+            _queueEnabled = false;
             return;
         }
 
@@ -38,16 +57,19 @@ public class EmailQueueService
         {
             _queueClient.CreateIfNotExists();
             _logger.LogInformation("Email queue '{QueueName}' initialized successfully", _queueName);
+            _queueEnabled = true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize email queue '{QueueName}'", _queueName);
+            _queueEnabled = false;
+            _queueClient = null;
         }
     }
 
     public async Task QueueEmailAsync(string to, string subject, string body)
     {
-        if (_queueClient == null)
+        if (!_queueEnabled || _queueClient == null)
         {
             _logger.LogWarning("Queue client not initialized. Sending email directly to {To}.", to);
             await SendDirectAsync(to, subject, body);
@@ -78,7 +100,7 @@ public class EmailQueueService
 
     public async Task<bool> IsQueueAvailableAsync()
     {
-        if (_queueClient == null) return false;
+        if (!_queueEnabled || _queueClient == null) return false;
 
         try
         {

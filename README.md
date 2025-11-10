@@ -184,6 +184,7 @@ Profiles live in `config/environments/*.ps1` (ignored by git — copy the corres
 
 - `AzureWebJobsStorage` — Azure Storage connection string for queues (use `UseDevelopmentStorage=true` with Azurite)
 - `Email__UseSmtp` — `true` to send real emails instead of dropping them locally
+- `Email__ForceSmtpFallback` — set to `true` to bypass the queue and send via SMTP directly (e.g., if Azure Functions are down)
 - `Email__AllowSmtpInDevelopment` — enable SMTP while the worker runs in development mode
 - The same `Smtp__*` keys as the API — forwarded to the worker when sending mail
 - `ConnectionStrings__DefaultConnection` — reused so the worker can access the application database when needed
@@ -563,6 +564,7 @@ El worker de segundo plano consume la cola `email-queue` y envía los correos tr
 
 - `AzureWebJobsStorage` — Cadena de conexión de Azure Storage para las colas (usá `UseDevelopmentStorage=true` con Azurite)
 - `Email__UseSmtp` — Ponelo en `true` para enviar correos reales en lugar de guardarlos localmente
+- `Email__ForceSmtpFallback` — Ponelo en `true` para saltar la cola y enviar por SMTP directo (útil si Azure Functions está caído)
 - `Email__AllowSmtpInDevelopment` — Permite SMTP mientras el worker corre en modo Development
 - Las mismas claves `Smtp__*` que la API — reutilizadas por el worker para enviar correos
 - `ConnectionStrings__DefaultConnection` — reutilizada si el worker necesita acceder a la base de datos

@@ -39,6 +39,8 @@ public sealed class EmailOptions
     public bool AllowSmtpInDevelopment { get; set; }
 
     public string? DebugDropFolder { get; set; }
+
+    public bool ForceSmtpFallback { get; set; }
 }
 
 public sealed class FrontendOptions

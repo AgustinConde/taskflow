@@ -69,6 +69,17 @@ builder.Services
     });
 
 builder.Services
+    .AddOptions<EmailOptions>()
+    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+    .PostConfigure(options =>
+    {
+        if (!options.ForceSmtpFallback && bool.TryParse(builder.Configuration["EMAIL_FORCE_SMTP_FALLBACK"], out var forceFallback) && forceFallback)
+        {
+            options.ForceSmtpFallback = true;
+        }
+    });
+
+builder.Services
     .AddOptions<FrontendOptions>()
     .Bind(builder.Configuration.GetSection(FrontendOptions.SectionName))
     .PostConfigure(options =>

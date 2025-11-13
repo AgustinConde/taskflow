@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { subDays } from 'date-fns';
 import { useFilteredTasks, useActivityChartData } from '../useChartData';
 import type { Task } from '../../../../types/Task';
@@ -33,6 +33,11 @@ describe('useChartData', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         setupMocks();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.clearAllMocks();
     });
 
     describe('useFilteredTasks', () => {

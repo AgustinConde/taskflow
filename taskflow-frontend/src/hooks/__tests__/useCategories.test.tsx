@@ -18,7 +18,19 @@ vi.mock('../../services/categoryService', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback || key
+    t: (key: string, fallback?: string) => fallback || key,
+    i18n: {
+      language: 'en',
+      changeLanguage: vi.fn()
+    }
+  })
+}));
+
+vi.mock('../useAchievementIntegration', () => ({
+  useAchievementIntegration: () => ({
+    trackCategoryCreated: vi.fn(),
+    trackCategoryUpdated: vi.fn(),
+    trackCategoryDeleted: vi.fn()
   })
 }));
 

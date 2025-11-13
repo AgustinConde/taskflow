@@ -12,7 +12,22 @@ vi.mock('../../services/taskService', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-    useTranslation: () => ({ t: (key: string) => key })
+    useTranslation: () => ({
+        t: (key: string) => key,
+        i18n: {
+            language: 'en',
+            changeLanguage: vi.fn()
+        }
+    })
+}));
+
+vi.mock('../useAchievementIntegration', () => ({
+    useAchievementIntegration: () => ({
+        trackTaskCreated: vi.fn(),
+        trackTaskCompleted: vi.fn(),
+        trackTaskUpdated: vi.fn(),
+        trackTaskDeleted: vi.fn()
+    })
 }));
 
 vi.mock('../../contexts/AuthContext', async () => {

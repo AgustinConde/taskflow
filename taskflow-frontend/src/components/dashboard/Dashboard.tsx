@@ -54,18 +54,15 @@ const CHART_OPTIONS = {
 const Dashboard = memo(({ tasks, categories }: DashboardProps) => {
     const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
-    // Memoize expensive calculations
     const filteredTasks = useFilteredTasks(tasks, timeRange);
     const metrics = useDashboardMetrics(filteredTasks);
     const activityChartData = useActivityChartData(tasks, filteredTasks, timeRange);
     const categoryChartData = useCategoryChartData(filteredTasks, categories);
 
-    // Memoize chart data validation
     const hasChartData = useMemo(() => {
         return categoryChartData.datasets[0].data.some(d => d > 0);
     }, [categoryChartData]);
 
-    // Memoize callback to prevent unnecessary re-renders
     const handleTimeRangeChange = useCallback((newTimeRange: TimeRange) => {
         setTimeRange(newTimeRange);
     }, []);

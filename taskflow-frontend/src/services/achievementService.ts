@@ -79,7 +79,17 @@ class AchievementService {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to track achievement event: ${response.status}`);
+                let errorMessage = `Failed to track achievement event: ${response.status}`;
+                try {
+                    const details = await response.text();
+                    if (details) {
+                        errorMessage = `${errorMessage} - ${details}`;
+                    }
+                } catch {
+                    // ignore body read failures
+                }
+
+                throw new Error(errorMessage);
             }
         } catch (error) {
             console.error('Error tracking achievement event:', error);

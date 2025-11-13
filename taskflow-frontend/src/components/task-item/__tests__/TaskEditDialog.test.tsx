@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -6,7 +6,21 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import TaskEditDialog from '../TaskEditDialog';
 
 const mockT = vi.fn((key: string) => key);
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: mockT }) }));
+vi.mock('react-i18next', () => ({
+    __esModule: true,
+    useTranslation: () => ({
+        t: mockT,
+        i18n: {
+            language: 'en',
+            changeLanguage: vi.fn()
+        }
+    })
+}));
+
+vi.mock('../location', () => ({
+    __esModule: true,
+    LocationPicker: () => <div data-testid="mock-location-picker" />
+}));
 
 const mockCategories = [
     { id: 1, name: 'Development', color: '#FF5722', userId: 1, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
@@ -29,19 +43,33 @@ const setupMocks = (overrides: any = {}) => ({
     ...overrides
 });
 
+const createTestQueryClient = () => new QueryClient({
+    defaultOptions: {
+        queries: {
+            retry: false,
+            gcTime: 0
+        },
+        mutations: {
+            retry: false
+        }
+    }
+});
+
 const renderWithProviders = (props = {}, themeOptions = {}) => {
     const theme = createTheme(themeOptions);
     const mockProps = setupMocks(props);
+    const queryClient = createTestQueryClient();
 
     return {
         ...render(
-            <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+            <QueryClientProvider client={queryClient}>
                 <ThemeProvider theme={theme}>
                     <TaskEditDialog {...mockProps} />
                 </ThemeProvider>
             </QueryClientProvider>
         ),
-        props: mockProps
+        props: mockProps,
+        queryClient
     };
 };
 
@@ -97,16 +125,18 @@ describe('TaskEditDialog', () => {
             const user = userEvent.setup();
             const { props } = renderWithProviders();
 
-            const categorySelect = screen.getByRole('combobox');
-            await user.click(categorySelect);
+            const categorySelect = screen.getByRole('combobox', { name: /category/i });
+            fireEvent.mouseDown(categorySelect);
 
-            const developmentOptions = screen.getAllByText('Development');
-            const reviewOptions = screen.getAllByText('Review');
-            expect(developmentOptions.length).toBeGreaterThan(0);
-            expect(reviewOptions.length).toBeGreaterThan(0);
-            expect(screen.getByText('no_category')).toBeInTheDocument();
+            const listbox = await screen.findByRole('listbox');
+            const developmentOption = within(listbox).getByText('Development');
+            const reviewOption = within(listbox).getByText('Review');
+            const noCategoryOption = within(listbox).getByText('no_category');
+            expect(developmentOption).toBeInTheDocument();
+            expect(reviewOption).toBeInTheDocument();
+            expect(noCategoryOption).toBeInTheDocument();
 
-            await user.click(reviewOptions[0]);
+            await user.click(reviewOption);
             expect(props.setLocalCategoryId).toHaveBeenCalledWith(2);
         });
 
@@ -114,9 +144,11 @@ describe('TaskEditDialog', () => {
             const user = userEvent.setup();
             const { props } = renderWithProviders();
 
-            const categorySelect = screen.getByRole('combobox');
-            await user.click(categorySelect);
-            await user.click(screen.getByText('no_category'));
+            const categorySelect = screen.getByRole('combobox', { name: /category/i });
+            fireEvent.mouseDown(categorySelect);
+            const listbox = await screen.findByRole('listbox');
+            const noCategoryOption = within(listbox).getByText('no_category');
+            await user.click(noCategoryOption);
 
             expect(props.setLocalCategoryId).toHaveBeenCalledWith(undefined);
         });
@@ -133,7 +165,7 @@ describe('TaskEditDialog', () => {
             });
 
             expect(screen.getByText('edit_task')).toBeInTheDocument();
-            expect(screen.getByRole('combobox')).toBeInTheDocument();
+            expect(screen.getByTestId('category-select')).toBeInTheDocument();
             expect(screen.getByLabelText('title')).toHaveValue('');
             expect(screen.getByLabelText('description')).toHaveValue('');
         });
@@ -142,13 +174,14 @@ describe('TaskEditDialog', () => {
             const user = userEvent.setup();
             renderWithProviders();
 
-            const categorySelect = screen.getByRole('combobox');
-            await user.click(categorySelect);
+            const categorySelect = screen.getByRole('combobox', { name: /category/i });
+            fireEvent.mouseDown(categorySelect);
 
-            const developmentOptions = screen.getAllByText('Development');
-            const reviewOptions = screen.getAllByText('Review');
-            expect(developmentOptions.length).toBeGreaterThan(0);
-            expect(reviewOptions.length).toBeGreaterThan(0);
+            const listbox = await screen.findByRole('listbox');
+            const developmentOption = within(listbox).getByText('Development');
+            const reviewOption = within(listbox).getByText('Review');
+            expect(developmentOption).toBeInTheDocument();
+            expect(reviewOption).toBeInTheDocument();
         });
     });
 

@@ -167,7 +167,11 @@ describe('TaskList', () => {
             renderTaskList();
             await waitFor(() => expect(screen.getByTestId('create-task-btn')).toBeInTheDocument());
             await user.click(screen.getByTestId('create-task-btn'));
-            expect(mutateAsync).toHaveBeenCalledWith({ title: 'New Task', description: 'Test' });
+            expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+                title: 'New Task',
+                description: 'Test',
+                isCompleted: false
+            }));
         });
     });
 

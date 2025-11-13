@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import type { Category } from '../../types/Category';
 import type { TaskLocation } from '../../types/Location';
 import { LocationPicker } from '../location';
+import { useId } from 'react';
 
 interface TaskEditDialogProps {
     open: boolean;
@@ -43,6 +44,7 @@ const TaskEditDialog = ({
     setLocalLocation
 }: TaskEditDialogProps) => {
     const { t } = useTranslation();
+    const categoryLabelId = useId();
 
     return (
         <Dialog
@@ -183,8 +185,10 @@ const TaskEditDialog = ({
                     />
 
                     <FormControl fullWidth>
-                        <InputLabel>{t('category')}</InputLabel>
+                        <InputLabel id={categoryLabelId}>{t('category')}</InputLabel>
                         <Select
+                            data-testid="category-select"
+                            labelId={categoryLabelId}
                             value={localCategoryId || ''}
                             onChange={(e) => setLocalCategoryId(e.target.value ? Number(e.target.value) : undefined)}
                             label={t('category')}

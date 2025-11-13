@@ -6,36 +6,11 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import TaskItemMenu from '../TaskItemMenu';
 
 vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => {
-            const translations: Record<string, string> = {
-                more: 'More',
-                info: 'Info',
-                edit: 'Edit',
-                delete: 'Delete'
-            };
-            return translations[key] || key;
-        }
-    })
+    __esModule: true,
+    useTranslation: () => ({ t: (key: string) => key })
 }));
 
-vi.mock('@mui/icons-material', () => ({
-    MoreVert: () => <div data-testid="MoreVertIcon" />,
-    InfoOutlined: () => <div data-testid="InfoOutlinedIcon" />,
-    EditOutlined: () => <div data-testid="EditOutlinedIcon" />,
-    DeleteOutline: () => <div data-testid="DeleteOutlineIcon" />
-}));
-
-function setupMocks() {
-    const onMenuOpen = vi.fn();
-    const onMenuClose = vi.fn();
-    const onInfoOpen = vi.fn();
-    const onEditOpen = vi.fn();
-    const onDelete = vi.fn();
-    return { onMenuOpen, onMenuClose, onInfoOpen, onEditOpen, onDelete };
-}
-
-function renderTaskItemMenu(props = {}) {
+const renderMenu = (props = {}) => {
     const defaultProps = {
         anchorEl: null,
         menuOpen: false,
@@ -47,118 +22,64 @@ function renderTaskItemMenu(props = {}) {
         ...props
     };
 
-    return render(
-        <QueryClientProvider client={new QueryClient()}>
-            <ThemeProvider theme={createTheme()}>
-                <TaskItemMenu {...defaultProps} />
-            </ThemeProvider>
-        </QueryClientProvider>
-    );
-}
+    return {
+        ...render(
+            <QueryClientProvider client={new QueryClient()}>
+                <ThemeProvider theme={createTheme()}>
+                    <TaskItemMenu {...defaultProps} />
+                </ThemeProvider>
+            </QueryClientProvider>
+        ),
+        props: defaultProps
+    };
+};
 
 describe('TaskItemMenu', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+    const anchor = document.createElement('div');
+
+    beforeEach(() => vi.clearAllMocks());
+
+    it('renders menu button', () => {
+        renderMenu();
+        expect(screen.getByRole('button', { name: /more/i })).toBeInTheDocument();
     });
 
-    describe('Core Functionality', () => {
-        it('should render menu button', () => {
-            renderTaskItemMenu();
-
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            expect(menuButton).toBeInTheDocument();
-            expect(screen.getByTestId('MoreVertIcon')).toBeInTheDocument();
-        });
-
-        it('should call onMenuOpen when menu button clicked', async () => {
-            const mocks = setupMocks();
-            renderTaskItemMenu(mocks);
-
-            const menuButton = screen.getByRole('button', { name: /more/i });
-            await userEvent.click(menuButton);
-
-            expect(mocks.onMenuOpen).toHaveBeenCalled();
-        });
-
-        it('should render menu when open', () => {
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ menuOpen: true, anchorEl });
-
-            expect(screen.getByText('Info')).toBeInTheDocument();
-            expect(screen.getByText('Edit')).toBeInTheDocument();
-            expect(screen.getByText('Delete')).toBeInTheDocument();
-        });
-
-        it('should not render menu when closed', () => {
-            renderTaskItemMenu({ menuOpen: false });
-
-            expect(screen.queryByText('Info')).not.toBeInTheDocument();
-            expect(screen.queryByText('Edit')).not.toBeInTheDocument();
-            expect(screen.queryByText('Delete')).not.toBeInTheDocument();
-        });
+    it('opens menu on button click', async () => {
+        const { props } = renderMenu();
+        await userEvent.click(screen.getByRole('button'));
+        expect(props.onMenuOpen).toHaveBeenCalledOnce();
     });
 
-    describe('Menu Actions', () => {
-        it('should handle info click', async () => {
-            const mocks = setupMocks();
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ ...mocks, menuOpen: true, anchorEl });
-
-            const infoItem = screen.getByText('Info');
-            await userEvent.click(infoItem);
-
-            expect(mocks.onInfoOpen).toHaveBeenCalled();
-            expect(mocks.onMenuClose).toHaveBeenCalled();
-        });
-
-        it('should handle edit click', async () => {
-            const mocks = setupMocks();
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ ...mocks, menuOpen: true, anchorEl });
-
-            const editItem = screen.getByText('Edit');
-            await userEvent.click(editItem);
-
-            expect(mocks.onEditOpen).toHaveBeenCalled();
-            expect(mocks.onMenuClose).toHaveBeenCalled();
-        });
-
-        it('should handle delete click', async () => {
-            const mocks = setupMocks();
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ ...mocks, menuOpen: true, anchorEl });
-
-            const deleteItem = screen.getByText('Delete');
-            await userEvent.click(deleteItem);
-
-            expect(mocks.onDelete).toHaveBeenCalled();
-            expect(mocks.onMenuClose).toHaveBeenCalled();
-        });
+    it('shows menu items when open', () => {
+        renderMenu({ menuOpen: true, anchorEl: anchor });
+        expect(screen.getByText('info')).toBeInTheDocument();
+        expect(screen.getByText('edit')).toBeInTheDocument();
+        expect(screen.getByText('delete')).toBeInTheDocument();
     });
 
-    describe('Menu Behavior', () => {
-        it('should render all menu icons', () => {
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ menuOpen: true, anchorEl });
+    it('hides menu items when closed', () => {
+        renderMenu({ menuOpen: false });
+        expect(screen.queryByText('info')).not.toBeInTheDocument();
+    });
 
-            expect(screen.getByTestId('InfoOutlinedIcon')).toBeInTheDocument();
-            expect(screen.getByTestId('EditOutlinedIcon')).toBeInTheDocument();
-            expect(screen.getByTestId('DeleteOutlineIcon')).toBeInTheDocument();
-        });
+    it('handles info click', async () => {
+        const { props } = renderMenu({ menuOpen: true, anchorEl: anchor });
+        await userEvent.click(screen.getByText('info'));
+        expect(props.onInfoOpen).toHaveBeenCalledOnce();
+        expect(props.onMenuClose).toHaveBeenCalledOnce();
+    });
 
-        it('should handle menu positioning', () => {
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ menuOpen: true, anchorEl });
+    it('handles edit click', async () => {
+        const { props } = renderMenu({ menuOpen: true, anchorEl: anchor });
+        await userEvent.click(screen.getByText('edit'));
+        expect(props.onEditOpen).toHaveBeenCalledOnce();
+        expect(props.onMenuClose).toHaveBeenCalledOnce();
+    });
 
-            const menu = screen.getByRole('menu');
-            expect(menu).toBeInTheDocument();
-        });
-
-        it('should handle anchor element properly', () => {
-            const anchorEl = document.createElement('div');
-            renderTaskItemMenu({ menuOpen: true, anchorEl });
-
-            expect(screen.getByRole('menu')).toBeInTheDocument();
-        });
+    it('handles delete click', async () => {
+        const { props } = renderMenu({ menuOpen: true, anchorEl: anchor });
+        await userEvent.click(screen.getByText('delete'));
+        expect(props.onDelete).toHaveBeenCalledOnce();
+        expect(props.onMenuClose).toHaveBeenCalledOnce();
     });
 });

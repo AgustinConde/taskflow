@@ -50,7 +50,7 @@ export interface LocationPickerProps {
 }
 
 export interface LocationDisplayProps {
-    location: TaskLocation;
+    location: TaskLocation | null;
     showMap?: boolean;
     mapHeight?: number;
     interactive?: boolean;

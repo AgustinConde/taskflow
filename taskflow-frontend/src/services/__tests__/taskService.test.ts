@@ -54,6 +54,15 @@ describe('TaskService', () => {
     });
 
     describe('createTask', () => {
+        it('creates task with UTC date conversion', async () => {
+            const newTask = { title: 'Test', description: 'Desc', categoryId: 1, dueDate: '2024-12-31T23:59' };
+            global.fetch = mockFetch({ ...newTask, id: 123, isCompleted: false });
+            await taskService.createTask(newTask);
+            const callArgs = (global.fetch as any).mock.calls[0][1];
+            const body = JSON.parse(callArgs.body);
+            expect(body.dueDate).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+        });
+
         it('creates a new task', async () => {
             const newTask = { title: 'Test', description: 'Desc', categoryId: 1 };
             global.fetch = mockFetch({ ...newTask, id: 123, isCompleted: false });

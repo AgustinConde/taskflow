@@ -294,7 +294,29 @@ describe('AuthService', () => {
         });
     });
 
+    describe('user settings', () => {
+        it('gets user settings successfully', async () => {
+            const settings = { autoDeleteCompletedTasks: true };
+            global.fetch = mockFetch(settings);
+            const result = await authService.getUserSettings();
+            expect(result).toEqual(settings);
+        });
 
+        it('throws error on failed get settings', async () => {
+            global.fetch = mockFetch({}, false);
+            await expect(authService.getUserSettings()).rejects.toThrow('Failed to get user settings');
+        });
+
+        it('updates user settings successfully', async () => {
+            global.fetch = mockFetch({});
+            await expect(authService.updateUserSettings({ autoDeleteCompletedTasks: false })).resolves.toBeUndefined();
+        });
+
+        it('throws error on failed update settings', async () => {
+            global.fetch = mockFetch({}, false);
+            await expect(authService.updateUserSettings({})).rejects.toThrow('Failed to update user settings');
+        });
+    });
 });
 
 function createMockJWT(payload: any): string {

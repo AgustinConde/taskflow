@@ -28,6 +28,10 @@ vi.mock('react-i18next', () => ({
                 colorRequired: 'Color is required'
             };
             return translations[key] || key;
+        },
+        i18n: {
+            language: 'en',
+            changeLanguage: vi.fn()
         }
     })
 }));

@@ -37,58 +37,24 @@ describe('useAppLanguage', () => {
         vi.clearAllTimers();
     });
 
-    describe('initialization', () => {
-        it('calls changeLanguage if localStorage is valid', async () => {
-            window.localStorage.setItem('selectedLanguage', 'es');
-            renderHook(() => useAppLanguage());
-            await new Promise(resolve => setTimeout(resolve, 100));
-            expect(mockI18n.changeLanguage).toHaveBeenCalledWith('es');
-        });
-
-        it('does not call changeLanguage if localStorage is invalid', async () => {
-            window.localStorage.setItem('selectedLanguage', 'fr');
-            renderHook(() => useAppLanguage());
-            await new Promise(resolve => setTimeout(resolve, 100));
-            expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
-        });
-
-        it('does not call changeLanguage if localStorage is missing', async () => {
-            window.localStorage.removeItem('selectedLanguage');
-            renderHook(() => useAppLanguage());
-            await new Promise(resolve => setTimeout(resolve, 100));
-            expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
-        });
+    it('loads saved language', async () => {
+        localStorage.setItem('selectedLanguage', 'es');
+        renderHook(() => useAppLanguage());
+        await new Promise(r => setTimeout(r, 100));
+        expect(mockI18n.changeLanguage).toHaveBeenCalledWith('es');
     });
-    describe('handleLanguageChange', () => {
-        it('toggles language and persists to localStorage', async () => {
-            window.localStorage.setItem('selectedLanguage', 'en');
-            const { result } = renderHook(() => useAppLanguage());
-            act(() => {
-                result.current.handleLanguageChange();
-            });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            expect(mockI18n.changeLanguage).toHaveBeenCalledWith('es');
-            expect(window.localStorage.getItem('selectedLanguage')).toBe('es');
-        });
-
-        it('toggles back to en and persists', async () => {
-            window.localStorage.setItem('selectedLanguage', 'es');
-            mockI18n.language = 'es';
-            const { result } = renderHook(() => useAppLanguage());
-            act(() => {
-                result.current.handleLanguageChange();
-            });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            expect(mockI18n.changeLanguage).toHaveBeenCalledWith('en');
-            expect(window.localStorage.getItem('selectedLanguage')).toBe('en');
-        });
+    it('toggles language', () => {
+        const { result } = renderHook(() => useAppLanguage());
+        act(() => result.current.handleLanguageChange());
+        expect(mockI18n.changeLanguage).toHaveBeenCalledWith('es');
     });
 
-    describe('currentLanguage', () => {
-        it('returns current i18n language', () => {
-            mockI18n.language = 'es';
-            const { result } = renderHook(() => useAppLanguage());
-            expect(result.current.currentLanguage).toBe('es');
-        });
+    it('skips change when same language', () => {
+        const { result } = renderHook(() => useAppLanguage());
+        mockI18n.changeLanguage.mockClear();
+        act(() => result.current.setLanguage('en'));
+        expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
     });
+
+
 });

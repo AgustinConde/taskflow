@@ -213,7 +213,7 @@ describe('UnauthenticatedApp', () => {
             );
 
             const themeButton = screen.getByTestId('Brightness4Icon').closest('button');
-            const languageButton = screen.getByRole('button', { name: 'US' });
+            const languageButton = screen.getByRole('button', { name: 'English' });
 
             expect(themeButton).toBeInTheDocument();
             expect(languageButton).toBeInTheDocument();

@@ -16,7 +16,13 @@ export const useDateTimeUtils = () => {
 
     const localDateTimeToUTCISOString = useCallback((local: string) => {
         if (!local) return null;
-        return local;
+
+        const date = new Date(local);
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        return date.toISOString();
     }, []);
 
     return {

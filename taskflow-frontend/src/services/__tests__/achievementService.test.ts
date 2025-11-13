@@ -345,4 +345,19 @@ describe('AchievementService', () => {
             );
         });
     });
+
+    describe('getNotifications', () => {
+        it('fetches notifications successfully', async () => {
+            const notifications = [{ id: 1, message: 'Achievement unlocked!' }];
+            global.fetch = mockFetch(notifications);
+            const result = await achievementService.getNotifications();
+            expect(result).toEqual(notifications);
+        });
+
+        it('returns empty array on error', async () => {
+            global.fetch = mockFetch({}, false);
+            const result = await achievementService.getNotifications();
+            expect(result).toEqual([]);
+        });
+    });
 });

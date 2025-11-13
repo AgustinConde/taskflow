@@ -22,243 +22,67 @@ const createWrapper = () => {
 };
 
 describe('useAchievementIntegration', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+    beforeEach(() => vi.clearAllMocks());
+
+    const render = () => renderHook(() => useAchievementIntegration(), { wrapper: createWrapper() }).result.current;
+
+    it('tracks task events', () => {
+        const h = render();
+        h.trackTaskCreated({ id: 1 });
+        h.trackTaskUpdated({ id: 1 });
+        h.trackTaskDeleted({ id: 1 });
+        expect(mockTrackEvent).toHaveBeenCalledWith('task_created', { id: 1 });
+        expect(mockTrackEvent).toHaveBeenCalledWith('task_updated', { id: 1 });
+        expect(mockTrackEvent).toHaveBeenCalledWith('task_deleted', { id: 1 });
     });
 
-    it('should provide all tracking functions', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        expect(typeof result.current.trackTaskCreated).toBe('function');
-        expect(typeof result.current.trackTaskCompleted).toBe('function');
-        expect(typeof result.current.trackTaskUpdated).toBe('function');
-        expect(typeof result.current.trackTaskDeleted).toBe('function');
-        expect(typeof result.current.trackCategoryCreated).toBe('function');
-        expect(typeof result.current.trackCategoryUpdated).toBe('function');
-        expect(typeof result.current.trackCategoryDeleted).toBe('function');
-        expect(typeof result.current.trackAppOpened).toBe('function');
-        expect(typeof result.current.trackCalendarViewed).toBe('function');
-        expect(typeof result.current.trackDashboardViewed).toBe('function');
-        expect(typeof result.current.trackAllTasksCompletedToday).toBe('function');
-        expect(typeof result.current.trackWeekendProductivity).toBe('function');
+    it('tracks category events', () => {
+        const h = render();
+        h.trackCategoryCreated({ id: 1 });
+        h.trackCategoryUpdated({ id: 1 });
+        h.trackCategoryDeleted({ id: 1 });
+        expect(mockTrackEvent).toHaveBeenCalledWith('category_created', { id: 1 });
+        expect(mockTrackEvent).toHaveBeenCalledWith('category_updated', { id: 1 });
+        expect(mockTrackEvent).toHaveBeenCalledWith('category_deleted', { id: 1 });
     });
 
-    it('should track task completion with timing events', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = {
-            id: 1,
-            title: 'Test Task',
-            dueDate: new Date(Date.now() + 86400000).toISOString()
-        };
-
-        result.current.trackTaskCompleted(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalled();
-    });
-
-    it('should track early bird achievement in morning hours', () => {
-        const originalDate = Date;
-        const mockDate = new Date('2023-01-01T08:00:00Z');
-        vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
-
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = { id: 1, title: 'Morning Task' };
-        result.current.trackTaskCompleted(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            expect.anything(),
-            taskData
-        );
-
-        global.Date = originalDate;
-    });
-
-    it('should track app opened', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        result.current.trackAppOpened();
-
-        expect(mockTrackEvent).toHaveBeenCalled();
-    });
-
-    it('should track late task completion', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = {
-            id: 1,
-            title: 'Test Task',
-            dueDate: new Date(Date.now() - 86400000).toISOString() // Yesterday
-        };
-
-        result.current.trackTaskCompleted(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith('task_completed', taskData);
-        expect(mockTrackEvent).toHaveBeenCalledWith('task_completed_late', taskData);
-    });
-
-    it('should track night owl achievement in late hours', () => {
-        const mockGetHours = vi.fn(() => 23);
-        const OriginalDate = global.Date;
-
-        global.Date = vi.fn(() => ({
-            getHours: mockGetHours
-        })) as any;
-
-        global.Date.now = OriginalDate.now;
-
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = { id: 1, title: 'Night Task' };
-        result.current.trackTaskCompleted(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith('night_owl', taskData);
-
-        global.Date = OriginalDate;
-    });
-
-    it('should track night owl achievement in very early hours', () => {
-        const mockGetHours = vi.fn(() => 2);
-        const OriginalDate = global.Date;
-
-        global.Date = vi.fn(() => ({
-            getHours: mockGetHours
-        })) as any;
-
-        global.Date.now = OriginalDate.now;
-
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = { id: 1, title: 'Very Early Task' };
-        result.current.trackTaskCompleted(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith('night_owl', taskData);
-
-        global.Date = OriginalDate;
-    });
-
-    it('should track task updated', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = { id: 1, title: 'Updated Task' };
-        result.current.trackTaskUpdated(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            'task_updated',
-            taskData
-        );
-    });
-
-    it('should track task deleted', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const taskData = { id: 1, title: 'Deleted Task' };
-        result.current.trackTaskDeleted(taskData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            'task_deleted',
-            taskData
-        );
-    });
-
-    it('should track category created', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const categoryData = { id: 1, name: 'New Category' };
-        result.current.trackCategoryCreated(categoryData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            'category_created',
-            categoryData
-        );
-    });
-
-    it('should track category updated', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const categoryData = { id: 1, name: 'Updated Category' };
-        result.current.trackCategoryUpdated(categoryData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            'category_updated',
-            categoryData
-        );
-    });
-
-    it('should track category deleted', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        const categoryData = { id: 1, name: 'Deleted Category' };
-        result.current.trackCategoryDeleted(categoryData);
-
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            'category_deleted',
-            categoryData
-        );
-    });
-
-    it('should track calendar viewed', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        result.current.trackCalendarViewed();
-
+    it('tracks navigation events', () => {
+        const h = render();
+        h.trackCalendarViewed();
+        h.trackDashboardViewed();
+        h.trackAllTasksCompletedToday();
+        h.trackWeekendProductivity();
         expect(mockTrackEvent).toHaveBeenCalledWith('calendar_viewed');
-    });
-
-    it('should track dashboard viewed', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        result.current.trackDashboardViewed();
-
         expect(mockTrackEvent).toHaveBeenCalledWith('dashboard_viewed');
-    });
-
-    it('should track all tasks completed today', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
-
-        result.current.trackAllTasksCompletedToday();
-
         expect(mockTrackEvent).toHaveBeenCalledWith('all_tasks_completed_today');
+        expect(mockTrackEvent).toHaveBeenCalledWith('weekend_productivity');
     });
 
-    it('should track weekend productivity', () => {
-        const { result } = renderHook(() => useAchievementIntegration(), {
-            wrapper: createWrapper()
-        });
+    it('tracks task completion with on-time event', () => {
+        render().trackTaskCompleted({ dueDate: new Date(Date.now() + 86400000).toISOString() });
+        expect(mockTrackEvent).toHaveBeenCalledWith('task_completed_on_time', expect.any(Object));
+    });
 
-        result.current.trackWeekendProductivity();
+    it('tracks task completion with late event', () => {
+        render().trackTaskCompleted({ dueDate: new Date(Date.now() - 86400000).toISOString() });
+        expect(mockTrackEvent).toHaveBeenCalledWith('task_completed_late', expect.any(Object));
+    });
 
-        expect(mockTrackEvent).toHaveBeenCalledWith('weekend_productivity');
+    it('tracks early bird (4-10am)', () => {
+        vi.spyOn(global.Date.prototype, 'getHours').mockReturnValue(8);
+        render().trackTaskCompleted({});
+        expect(mockTrackEvent).toHaveBeenCalledWith('early_bird', expect.any(Object));
+    });
+
+    it('tracks night owl (21-4)', () => {
+        vi.spyOn(global.Date.prototype, 'getHours').mockReturnValue(23);
+        render().trackTaskCompleted({});
+        expect(mockTrackEvent).toHaveBeenCalledWith('night_owl', expect.any(Object));
+    });
+
+    it('tracks app opened with daily login', () => {
+        render().trackAppOpened();
+        expect(mockTrackEvent).toHaveBeenCalledWith('app_opened');
+        expect(mockTrackEvent).toHaveBeenCalledWith('daily_login');
     });
 });

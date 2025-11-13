@@ -11,7 +11,7 @@ export const API_ENDPOINTS = {
         logout: `${API_BASE_URL}/auth/logout`,
         me: `${API_BASE_URL}/auth/me`,
         validate: `${API_BASE_URL}/auth/validate`,
-        forgotPassword: `${API_BASE_URL}/auth/forgot-password`,
+        forgotPassword: `${API_BASE_URL}/auth/forgot`,
         resetPassword: `${API_BASE_URL}/auth/reset`,
         confirmEmail: `${API_BASE_URL}/auth/confirm`,
         resendConfirmation: `${API_BASE_URL}/auth/resend-confirmation`,
